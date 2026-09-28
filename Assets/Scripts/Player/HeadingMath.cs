@@ -7,6 +7,7 @@ namespace FlyingFishMomentum
     public static class HeadingMath
     {
         const float MaxPitch = 60f;
+        const float MaxYaw = 60f; // forward cone (§34.1): backward travel unreachable.
 
         public static (float yaw, float pitch) Step(
             float yaw, float pitch, Vector2 input,
@@ -15,7 +16,7 @@ namespace FlyingFishMomentum
             yaw += input.x * turnRate * dt;
             pitch += input.y * pitchScale * turnRate * dt;
             pitch = Mathf.Clamp(pitch, -MaxPitch, MaxPitch);
-            yaw = Mathf.Repeat(yaw + 180f, 360f) - 180f;
+            yaw = Mathf.Clamp(yaw, -MaxYaw, MaxYaw);
             return (yaw, pitch);
         }
 

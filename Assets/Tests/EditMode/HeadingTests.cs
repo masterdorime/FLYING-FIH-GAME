@@ -23,11 +23,32 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void PitchClampsAndYawWraps()
+        public void PitchClampsAndYawClampsToCone()
         {
             var h = HeadingMath.Step(170f, 0f, new Vector2(1f, 1f), 200f, 1f, 1f);
             Assert.AreEqual(60f, h.pitch, 0.001f);
-            Assert.AreEqual(10f, h.yaw, 0.001f); // 370 wraps to 10
+            Assert.AreEqual(60f, h.yaw, 0.001f); // 370 clamps to cone edge
+        }
+
+        [Test]
+        public void YawClampsToForwardConeBothDirections()
+        {
+            var right = HeadingMath.Step(0f, 0f, new Vector2(1f, 0f), 200f, 1f, 1f);
+            Assert.AreEqual(60f, right.yaw, 0.001f);
+            var left = HeadingMath.Step(0f, 0f, new Vector2(-1f, 0f), 200f, 1f, 1f);
+            Assert.AreEqual(-60f, left.yaw, 0.001f);
+        }
+
+        [Test]
+        public void SustainedFullStickNeverExceedsCone()
+        {
+            float yaw = 0f;
+            for (int i = 0; i < 60; i++)
+            {
+                yaw = HeadingMath.Step(yaw, 0f, new Vector2(1f, 0f), 200f, 1f, 0.1f).yaw;
+                Assert.LessOrEqual(Mathf.Abs(yaw), 60.0001f);
+            }
+            Assert.AreEqual(60f, yaw, 0.001f);
         }
 
         [Test]
