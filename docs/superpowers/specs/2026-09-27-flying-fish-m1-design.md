@@ -110,3 +110,12 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - M3 adds `FlightGaugeSystem`; gauge events call existing `FlightStateMachine.SetTier`;
   breach rule keeps its shape, threshold source becomes tier.
 - M5 removes all `[M1-SCAFFOLD]` code and implements penalties, juice, menus, audio.
+
+## Change record — yaw deviation drag (§34.1, 2026-09-28, approved + implemented fa74e2c)
+
+- **Current requirement:** free yaw wrapping [-180, 180]; drag depends only on swim/fly branch (§2).
+- **Reason for conflict:** free 180° turns let the player fly backward indefinitely, breaking the endless-forward-runner fantasy (PRD §§1.1, 1.5); Haste sustains forward pressure via consequences, not locks.
+- **Proposed change:** drag scales with angle off forward: effective drag = branch drag × (1 + `DeviationDragGain` × |yaw|/180°), new tunable default 3 (≈4× drag flying fully backward). Forward flight is numerically identical to before.
+- **Affected systems:** `PlayerMomentumController.Tick` (new optional `deviationDeg` param), `PlayerMovementController.TickMove` (passes `|Yaw|`), `MomentumSettings` (new field + asset value), `M1DebugOverlay` (shows deviation).
+- **New behavior:** turns/dodges work at any angle, but sustained backward headings bleed to `MinSpeed` in ~1–2s; recovery = re-aim forward.
+- **Updated acceptance:** `ZeroDeviationBehavesExactlyAsBefore`, `FullBackwardDeviationMultipliesDrag`, `DeviationDragNeverBreachesMinSpeed` (all green); M1 sign-off gains "flying backward is self-defeating."
