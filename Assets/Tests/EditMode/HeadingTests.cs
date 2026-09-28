@@ -1,0 +1,33 @@
+using NUnit.Framework;
+using UnityEngine;
+
+namespace FlyingFishMomentum.Tests.EditMode
+{
+    public class HeadingTests
+    {
+        [Test]
+        public void ZeroInputHoldsHeadingWithoutNaN()
+        {
+            var h = HeadingMath.Step(45f, 10f, Vector2.zero, 200f, 1f, 1f);
+            Assert.IsFalse(float.IsNaN(h.yaw) || float.IsNaN(h.pitch));
+            Assert.AreEqual(45f, h.yaw, 0.001f);
+            Assert.AreEqual(10f, h.pitch, 0.001f);
+        }
+
+        [Test]
+        public void RightInputTurnsRight_UpInputClimbs()
+        {
+            var h = HeadingMath.Step(0f, 0f, new Vector2(1f, 1f), 200f, 1f, 0.25f);
+            Assert.AreEqual(50f, h.yaw, 0.001f);
+            Assert.AreEqual(50f, h.pitch, 0.001f);
+        }
+
+        [Test]
+        public void PitchClampsAndYawWraps()
+        {
+            var h = HeadingMath.Step(170f, 0f, new Vector2(1f, 1f), 200f, 1f, 1f);
+            Assert.AreEqual(60f, h.pitch, 0.001f);
+            Assert.AreEqual(10f, h.yaw, 0.001f); // 370 wraps to 10
+        }
+    }
+}

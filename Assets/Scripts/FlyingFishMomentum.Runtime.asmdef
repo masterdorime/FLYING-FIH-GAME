@@ -1,7 +1,9 @@
 {
     "name": "FlyingFishMomentum.Runtime",
     "rootNamespace": "FlyingFishMomentum",
-    "references": [],
+    "references": [
+        "Unity.InputSystem"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,0 +1,20 @@
+{
+    "name": "FlyingFishMomentum.Tests.PlayMode",
+    "rootNamespace": "FlyingFishMomentum.Tests.PlayMode",
+    "references": [
+        "FlyingFishMomentum.Runtime",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
