@@ -72,6 +72,33 @@ namespace FlyingFishMomentum.Tests.PlayMode
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "downward crossing did not re-enter Swim");
         }
         [UnityTest]
+        public IEnumerator FlyingAtSpeedWithFullUpInputClimbs()
+        {
+            // Glide fantasy check: flight with speed + full climb input must
+            // gain altitude (no speed = glide/sink is by design, untested here).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
+            float t = 0f;
+            while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
+            {
+                t += Time.deltaTime;
+                mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
+                yield return null;
+            }
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            float y0 = mover.transform.position.y;
+            t = 0f;
+            while (t < 1f)
+            {
+                t += Time.deltaTime;
+                mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
+                yield return null;
+            }
+            Assert.Greater(mover.transform.position.y - y0, 10f, "full climb input at Max speed did not climb in Fly");
+        }
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
