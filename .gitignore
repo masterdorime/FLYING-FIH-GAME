@@ -11,3 +11,5 @@
 *.user
 *.userprefs
 .vs/
+test-results.xml
+TestResults/
