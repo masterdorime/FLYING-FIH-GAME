@@ -19,6 +19,14 @@ namespace FlyingFishMomentum
             return (yaw, pitch);
         }
 
+        // Visual facing for a yaw/pitch heading. By construction,
+        // Orientation(yaw, pitch) * Vector3.forward == Forward(yaw, pitch),
+        // so the model always faces its direction of motion.
+        public static Quaternion Orientation(float yawDeg, float pitchDeg)
+        {
+            return Quaternion.Euler(-pitchDeg, yawDeg, 0f);
+        }
+
         public static Vector3 Forward(float yawDeg, float pitchDeg)
         {
             float yaw = yawDeg * Mathf.Deg2Rad;

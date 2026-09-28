@@ -92,6 +92,7 @@ namespace FlyingFishMomentum
             var h = HeadingMath.Step(Yaw, Pitch, input, rate, pitchScale, dt);
             Yaw = h.yaw;
             Pitch = h.pitch;
+            transform.rotation = HeadingMath.Orientation(Yaw, Pitch);
 
             float drag = swimming ? _settings.DragSwimming : _settings.DragFlying;
             Momentum.Tick(dt, drag);

@@ -29,5 +29,25 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(60f, h.pitch, 0.001f);
             Assert.AreEqual(10f, h.yaw, 0.001f); // 370 wraps to 10
         }
+
+        [Test]
+        public void OrientationMatchesForwardVector()
+        {
+            // The visual orientation must agree exactly with the motion
+            // direction, or the fish strafes sideways instead of turning.
+            foreach (var (yaw, pitch) in new[] { (0f, 0f), (90f, 0f), (0f, 60f), (-45f, -30f), (170f, 20f) })
+            {
+                Vector3 nose = HeadingMath.Orientation(yaw, pitch) * Vector3.forward;
+                Assert.Less((nose - HeadingMath.Forward(yaw, pitch)).magnitude, 0.001f,
+                    $"orientation disagrees with Forward at yaw={yaw} pitch={pitch}");
+            }
+        }
+
+        [Test]
+        public void OrientationPitchUpTiltsNoseUp()
+        {
+            Vector3 nose = HeadingMath.Orientation(0f, 60f) * Vector3.forward;
+            Assert.Greater(nose.y, 0.8f); // sin60 ≈ 0.866
+        }
     }
 }
