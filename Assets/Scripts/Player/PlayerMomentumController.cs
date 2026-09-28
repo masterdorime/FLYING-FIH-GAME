@@ -33,12 +33,16 @@ namespace FlyingFishMomentum
             CurrentSpeed = Mathf.Min(CurrentSpeed + amount, _maxSpeed);
         }
 
-        public void Tick(float dt, float dragRate)
+        public void Tick(float dt, float dragRate, float deviationDeg = 0f)
         {
+            // Forward pressure (§34.1 change): off-forward headings bleed
+            // speed. Deviation 0 behaves exactly as before.
+            float drag = dragRate *
+                (1f + _settings.DeviationDragGain * Mathf.Clamp01(Mathf.Abs(deviationDeg) / 180f));
             if (CurrentSpeed < TargetSpeed)
                 CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, TargetSpeed, _accelRate * dt);
             else
-                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, TargetSpeed, dragRate * dt);
+                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, TargetSpeed, drag * dt);
             CurrentSpeed = Mathf.Clamp(CurrentSpeed, _settings.MinSpeed, _maxSpeed);
         }
     }

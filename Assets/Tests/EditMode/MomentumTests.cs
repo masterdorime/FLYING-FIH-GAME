@@ -14,6 +14,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             s.DragSwimming = 1.5f;
             s.DragFlying = 0.6f;
             s.BreachSpeedThreshold = 30f;
+            s.DeviationDragGain = 3f;
             m.Configure(s);
             m.SetLimits(max, accel);
             return m;
@@ -55,6 +56,33 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.TargetSpeed = 35f;
             m.Tick(0.5f, 1.5f); // 45 * 0.5 = 22.5 -> 30.5
             Assert.AreEqual(30.5f, m.CurrentSpeed, 0.01f);
+        }
+
+        [Test]
+        public void ZeroDeviationBehavesExactlyAsBefore()
+        {
+            var m = NewMomentum(max: 120f);
+            m.CurrentSpeed = 60f; m.TargetSpeed = 8f;
+            m.Tick(1f, 1.5f, 0f);
+            Assert.AreEqual(58.5f, m.CurrentSpeed, 0.01f); // 60 - 1.5
+        }
+
+        [Test]
+        public void FullBackwardDeviationMultipliesDrag()
+        {
+            var m = NewMomentum(max: 120f);
+            m.CurrentSpeed = 60f; m.TargetSpeed = 8f;
+            m.Tick(1f, 1.5f, 180f); // gain 3 -> x4 -> 6.0 drag
+            Assert.AreEqual(54f, m.CurrentSpeed, 0.01f);
+        }
+
+        [Test]
+        public void DeviationDragNeverBreachesMinSpeed()
+        {
+            var m = NewMomentum();
+            m.CurrentSpeed = 9f; m.TargetSpeed = 8f;
+            for (int i = 0; i < 200; i++) m.Tick(1f, 1.5f, 180f);
+            Assert.AreEqual(8f, m.CurrentSpeed, 0.01f);
         }
     }
 }

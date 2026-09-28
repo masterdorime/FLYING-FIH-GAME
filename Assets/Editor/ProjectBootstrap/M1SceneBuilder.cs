@@ -114,7 +114,7 @@ namespace ProjectBootstrap
             var dbgInput = debug.AddComponent<M1DebugInput>();
             dbgInput.Configure(sm, reactor, movement);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            overlay.Configure(momentum, sm, momSettings);
+            overlay.Configure(momentum, sm, momSettings, movement);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");

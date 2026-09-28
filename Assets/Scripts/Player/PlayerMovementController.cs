@@ -95,7 +95,7 @@ namespace FlyingFishMomentum
             transform.rotation = HeadingMath.Orientation(Yaw, Pitch);
 
             float drag = swimming ? _settings.DragSwimming : _settings.DragFlying;
-            Momentum.Tick(dt, drag);
+            Momentum.Tick(dt, drag, Mathf.Abs(Yaw));
 
             if (swimming) _vertVel = 0f;
             else _vertVel -= StandardGravity * _gravityScale * dt;

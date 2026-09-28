@@ -10,16 +10,19 @@ namespace FlyingFishMomentum
         [SerializeField] PlayerMomentumController _momentum;
         [SerializeField] FlightStateMachine _sm;
         [SerializeField] MomentumSettings _settings;
+        [SerializeField] PlayerMovementController _movement;
         float _fps;
 
         public void Configure(
             PlayerMomentumController momentum,
             FlightStateMachine sm,
-            MomentumSettings settings)
+            MomentumSettings settings,
+            PlayerMovementController movement)
         {
             _momentum = momentum;
             _sm = sm;
             _settings = settings;
+            _movement = movement;
         }
 
         void Update()
@@ -30,11 +33,11 @@ namespace FlyingFishMomentum
         void OnGUI()
         {
             if (!Debug.isDebugBuild && !Application.isEditor) return;
-            if (_momentum == null || _sm == null || _settings == null) return;
-            GUI.Label(new Rect(10, 10, 420, 110),
+            if (_momentum == null || _sm == null || _settings == null || _movement == null) return;
+            GUI.Label(new Rect(10, 10, 420, 130),
                 $"Speed {_momentum.CurrentSpeed:F1} / Target {_momentum.TargetSpeed:F1}\n" +
                 $"State {_sm.Locomotion} Tier {_sm.ActiveTier}\n" +
-                $"Breach >= {_settings.BreachSpeedThreshold:F0}\n" +
+                $"Breach >= {_settings.BreachSpeedThreshold:F0} Deviate {Mathf.Abs(_movement.Yaw):F0}°\n" +
                 $"FPS {_fps:F0}");
         }
     }
