@@ -11,7 +11,8 @@ namespace FlyingFishMomentum
         public float TargetSpeed { get; set; }
         public float CurrentMaxSpeed => _maxSpeed;
 
-        MomentumSettings _settings;
+        // Serialized so scene/prefab wiring (set via Configure at build time) survives save/load.
+        [SerializeField] MomentumSettings _settings;
         float _maxSpeed;
         float _accelRate;
 

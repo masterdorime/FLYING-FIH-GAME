@@ -21,9 +21,11 @@ namespace FlyingFishMomentum
         public PlayerMomentumController Momentum => _momentum;
         public PlayerInputActions Input => _input;
 
-        FlightStateMachine _sm;
-        PlayerMomentumController _momentum;
-        MomentumSettings _settings;
+        // Serialized so scene/prefab wiring (set via Configure at build time)
+        // survives save/load.
+        [SerializeField] FlightStateMachine _sm;
+        [SerializeField] PlayerMomentumController _momentum;
+        [SerializeField] MomentumSettings _settings;
         CharacterController _controller;
         PlayerInputActions _input;
 
@@ -51,19 +53,19 @@ namespace FlyingFishMomentum
         void OnEnable()
         {
             _input.Gameplay.Enable();
-            if (_sm != null) _sm.OnTierChanged += ApplyProfile;
+            if (_sm != null)
+            {
+                _sm.OnTierChanged += ApplyProfile;
+                // Apply the current profile: tier state is authoritative from
+                // Awake-time bootstrap, never from Start() ordering.
+                if (_sm.ActiveProfile != null) ApplyProfile(_sm.ActiveTier, _sm.ActiveTier);
+            }
         }
 
         void OnDisable()
         {
             _input.Gameplay.Disable();
             if (_sm != null) _sm.OnTierChanged -= ApplyProfile;
-        }
-
-        void Start()
-        {
-            if (_sm != null && _sm.ActiveProfile != null)
-                ApplyProfile(_sm.ActiveTier, _sm.ActiveTier);
         }
 
         void Update()

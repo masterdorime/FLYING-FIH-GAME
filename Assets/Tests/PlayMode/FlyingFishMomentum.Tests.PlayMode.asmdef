@@ -6,9 +6,10 @@
         "Unity.InputSystem",
         "Unity.InputSystem.TestFramework"
     ],
-    "includePlatforms": [
-        "Editor"
+    "optionalUnityReferences": [
+        "TestAssemblies"
     ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

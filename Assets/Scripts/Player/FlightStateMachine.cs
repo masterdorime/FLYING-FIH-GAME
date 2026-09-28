@@ -15,12 +15,34 @@ namespace FlyingFishMomentum
         public FlightTierProfile ActiveProfile { get; private set; }
         public PlayerLocomotionState Locomotion { get; private set; } = PlayerLocomotionState.Swimming;
 
-        public PlayerMomentumController Momentum { get; private set; }
+        public PlayerMomentumController Momentum => _momentum;
 
         public event Action<FlightTier, FlightTier> OnTierChanged;
 
-        List<FlightTierProfile> _profiles = new List<FlightTierProfile>();
-        MomentumSettings _settings;
+        // Serialized so scene/prefab wiring (set via Configure at build time)
+        // survives save/load. State (ActiveTier/Locomotion) stays unserialized
+        // and always starts at None/Swimming.
+        [SerializeField] List<FlightTierProfile> _profiles = new List<FlightTierProfile>();
+        [SerializeField] PlayerMomentumController _momentum;
+        [SerializeField] MomentumSettings _settings;
+
+        // Self-bootstrap: the initial None tier is APPLIED here (not via an
+        // event) because Awake runs synchronously at load while subscribers
+        // only attach in OnEnable — an event fired here would reach nobody.
+        // Consumers also apply the current profile when they subscribe, so
+        // tier state never depends on Start() ordering.
+        void Awake()
+        {
+            var profile = _profiles.Find(p => p != null && p.Tier == FlightTier.None);
+            if (profile == null) return;
+            ActiveTier = FlightTier.None;
+            ActiveProfile = profile;
+            if (Momentum != null)
+            {
+                Momentum.SetLimits(profile.MaxSpeed, profile.Acceleration);
+                Momentum.TargetSpeed = profile.MaxSpeed;
+            }
+        }
 
         public void Configure(
             List<FlightTierProfile> profiles,
@@ -28,7 +50,7 @@ namespace FlyingFishMomentum
             MomentumSettings settings)
         {
             _profiles = profiles ?? new List<FlightTierProfile>();
-            Momentum = momentum;
+            _momentum = momentum;
             _settings = settings;
         }
 
@@ -40,7 +62,7 @@ namespace FlyingFishMomentum
             var old = ActiveTier;
             ActiveTier = tier;
             ActiveProfile = profile;
-            if (Momentum != null) Momentum.SetLimits(profile.MaxSpeed, profile.Acceleration);
+            if (_momentum != null) _momentum.SetLimits(profile.MaxSpeed, profile.Acceleration);
             OnTierChanged?.Invoke(old, tier);
         }
 
@@ -51,9 +73,9 @@ namespace FlyingFishMomentum
 
         public void EvaluateSurface(float prevY, float newY)
         {
-            if (_settings == null || Momentum == null) return;
+            if (_settings == null || _momentum == null) return;
             SetLocomotion(SurfaceCrossing.Evaluate(
-                prevY, newY, Momentum.CurrentSpeed,
+                prevY, newY, _momentum.CurrentSpeed,
                 _settings.BreachSpeedThreshold, Locomotion));
         }
     }

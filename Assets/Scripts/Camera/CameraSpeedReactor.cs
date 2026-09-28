@@ -37,6 +37,23 @@ namespace FlyingFishMomentum
             _cam = GetComponent<Camera>();
         }
 
+        // Headless/scene-builder wiring. Prefab keeps inspector refs as backup.
+        public void Configure(
+            CameraSettings camSettings,
+            MomentumSettings momSettings,
+            PlayerMomentumController momentum,
+            FlightStateMachine stateMachine,
+            PlayerMovementController movement,
+            Transform target)
+        {
+            _camSettings = camSettings;
+            _momSettings = momSettings;
+            _momentum = momentum;
+            _stateMachine = stateMachine;
+            _movement = movement;
+            _target = target;
+        }
+
         public void PlayTierUpKick() => KickEnvelope = 1f;
         public void PlayMissShake() => ShakeEnvelope = 1f;
 
