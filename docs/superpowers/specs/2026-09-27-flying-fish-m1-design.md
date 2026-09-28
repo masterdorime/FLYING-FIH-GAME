@@ -119,3 +119,12 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - **Affected systems:** `PlayerMomentumController.Tick` (new optional `deviationDeg` param), `PlayerMovementController.TickMove` (passes `|Yaw|`), `MomentumSettings` (new field + asset value), `M1DebugOverlay` (shows deviation).
 - **New behavior:** turns/dodges work at any angle, but sustained backward headings bleed to `MinSpeed` in ~1–2s; recovery = re-aim forward.
 - **Updated acceptance:** `ZeroDeviationBehavesExactlyAsBefore`, `FullBackwardDeviationMultipliesDrag`, `DeviationDragNeverBreachesMinSpeed` (all green); M1 sign-off gains "flying backward is self-defeating."
+
+## Change record — yaw forward cone (§34.1, 2026-09-28, approved)
+
+- **Current requirement:** free yaw wrapping [-180, 180] softened only by deviation drag (previous entry); backward flight possible at a cost.
+- **Reason for conflict:** feel pass shows the soft penalty still reads as "can go backward" (PRD §§1.1, 1.5 endless-forward-runner fantasy); user requests backward travel unreachable.
+- **Proposed change:** `HeadingMath.Step` clamps yaw to [-60, 60] (const `MaxYaw`, same rule swim + fly); free wrap removed.
+- **Affected systems:** `HeadingMath.Step` only. `TickMove` deviation feed now peaks at 60° (max drag multiplier 2×, was 4× at 180°).
+- **New behavior:** dodging/steering inside a ±60° forward cone; sustained full stick pins at the cone edge, never reverses.
+- **Updated acceptance:** `YawClampsToForwardConeBothDirections`, `SustainedFullStickNeverExceedsCone` (both watched RED→GREEN); `PitchClampsAndYawWraps` rewritten as `PitchClampsAndYawClampsToCone`; prior "backward is self-defeating" sign-off superseded by "backward is unreachable."
