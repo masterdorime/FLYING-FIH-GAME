@@ -16,3 +16,4 @@ MonoBehaviour:
   DragFlying: 0.6
   BreachSpeedThreshold: 30
   DeviationDragGain: 3
+  DeviationSpeedPenalty: 0.5

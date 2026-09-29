@@ -12,5 +12,8 @@ namespace FlyingFishMomentum
         // Haste-like forward pressure: drag scales with angle off forward
         // (0 = due +Z). Gain 3 means full-backward flight drags ~4x normal.
         public float DeviationDragGain = 3f;
+        // Off-forward flight also caps the chased target: holding the cone
+        // edge costs (penalty * |yaw|/180) of top speed. 0.5 = -17% at 60°.
+        public float DeviationSpeedPenalty = 0.5f;
     }
 }

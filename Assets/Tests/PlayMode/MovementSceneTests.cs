@@ -146,6 +146,27 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator HoldingConeEdgeBleedsSpeedInGame()
+        {
+            // In-game pin for forward pressure: full lateral stick pins yaw
+            // at the cone edge, which must cost top speed even at tier max.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            mover.enabled = false; // single-step: manual TickMove only (see Setup note)
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
+            float t = 0f;
+            while (t < 3f)
+            {
+                t += Time.deltaTime;
+                mover.TickMove(new Vector2(1f, 0f), Time.deltaTime);
+                yield return null;
+            }
+            Assert.AreEqual(60f, mover.Yaw, 0.5f, "full stick did not pin at cone edge");
+            Assert.Less(sm.Momentum.CurrentSpeed, 109f, "cone-edge flight did not bleed speed");
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();

@@ -36,13 +36,17 @@ namespace FlyingFishMomentum
         public void Tick(float dt, float dragRate, float deviationDeg = 0f)
         {
             // Forward pressure (§34.1 change): off-forward headings bleed
-            // speed. Deviation 0 behaves exactly as before.
-            float drag = dragRate *
-                (1f + _settings.DeviationDragGain * Mathf.Clamp01(Mathf.Abs(deviationDeg) / 180f));
-            if (CurrentSpeed < TargetSpeed)
-                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, TargetSpeed, _accelRate * dt);
+            // speed. Deviation 0 behaves exactly as before. The drag
+            // multiplier alone never bites at steady state (Current == Target
+            // == max moves zero units), so deviation also caps the chased
+            // target — holding a turn costs top speed, re-aiming recovers it.
+            float devFrac = Mathf.Clamp01(Mathf.Abs(deviationDeg) / 180f);
+            float drag = dragRate * (1f + _settings.DeviationDragGain * devFrac);
+            float effectiveTarget = TargetSpeed * (1f - _settings.DeviationSpeedPenalty * devFrac);
+            if (CurrentSpeed < effectiveTarget)
+                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, effectiveTarget, _accelRate * dt);
             else
-                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, TargetSpeed, drag * dt);
+                CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, effectiveTarget, drag * dt);
             CurrentSpeed = Mathf.Clamp(CurrentSpeed, _settings.MinSpeed, _maxSpeed);
         }
     }

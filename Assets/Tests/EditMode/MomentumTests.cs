@@ -15,6 +15,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             s.DragFlying = 0.6f;
             s.BreachSpeedThreshold = 30f;
             s.DeviationDragGain = 3f;
+            s.DeviationSpeedPenalty = 0.5f;
             m.Configure(s);
             m.SetLimits(max, accel);
             return m;
@@ -83,6 +84,18 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.CurrentSpeed = 9f; m.TargetSpeed = 8f;
             for (int i = 0; i < 200; i++) m.Tick(1f, 1.5f, 180f);
             Assert.AreEqual(8f, m.CurrentSpeed, 0.01f);
+        }
+
+        [Test]
+        public void AtTargetSpeedWithDeviationBleedsBelowMax()
+        {
+            // Review fix: off-forward flight must cost speed even when the
+            // target chase has nothing to do (Current == Target == max).
+            var m = NewMomentum(max: 110f, accel: 120f);
+            m.CurrentSpeed = 110f; m.TargetSpeed = 110f;
+            m.Tick(1f, 0.6f, 60f); // cone edge: effective target ~91.7, drag 1.2
+            Assert.Less(m.CurrentSpeed, 110f);
+            Assert.Greater(m.CurrentSpeed, 90f);
         }
     }
 }
