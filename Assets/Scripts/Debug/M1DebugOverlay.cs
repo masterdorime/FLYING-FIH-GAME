@@ -11,18 +11,21 @@ namespace FlyingFishMomentum
         [SerializeField] FlightStateMachine _sm;
         [SerializeField] MomentumSettings _settings;
         [SerializeField] PlayerMovementController _movement;
+        [SerializeField] TimingPromptSpawner _spawner;
         float _fps;
 
         public void Configure(
             PlayerMomentumController momentum,
             FlightStateMachine sm,
             MomentumSettings settings,
-            PlayerMovementController movement)
+            PlayerMovementController movement,
+            TimingPromptSpawner spawner)
         {
             _momentum = momentum;
             _sm = sm;
             _settings = settings;
             _movement = movement;
+            _spawner = spawner;
         }
 
         void Update()
@@ -34,10 +37,16 @@ namespace FlyingFishMomentum
         {
             if (!Debug.isDebugBuild && !Application.isEditor) return;
             if (_momentum == null || _sm == null || _settings == null || _movement == null) return;
-            GUI.Label(new Rect(10, 10, 420, 130),
+            string timing = "-";
+            if (_spawner != null)
+                timing = _spawner.HasResolved ? _spawner.LastResult.ToString().ToUpper()
+                    : _spawner.Active.Open ? $"OPEN {Mathf.Max(0f, _spawner.Active.TargetTime - Time.time):F2}s"
+                    : "-";
+            GUI.Label(new Rect(10, 10, 420, 150),
                 $"Speed {_momentum.CurrentSpeed:F1} / Target {_momentum.TargetSpeed:F1}\n" +
                 $"State {_sm.Locomotion} Tier {_sm.ActiveTier}\n" +
                 $"Breach >= {_settings.BreachSpeedThreshold:F0} Deviate {Mathf.Abs(_movement.Yaw):F0}°\n" +
+                $"Timing {timing}\n" +
                 $"FPS {_fps:F0}");
         }
     }

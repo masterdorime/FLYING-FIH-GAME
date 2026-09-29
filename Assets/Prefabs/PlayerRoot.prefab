@@ -77,6 +77,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FlyingFishMomentum.Runtime::FlyingFishMomentum.PlayerMomentumController
   _settings: {fileID: 11400000, guid: 6d14ef4116a9c3d49a3204fdf760ee73, type: 2}
+  _timing: {fileID: 11400000, guid: 4174722e339b0144f8b242613db9ed6a, type: 2}
 --- !u!114 &1005764584239493712
 MonoBehaviour:
   m_ObjectHideFlags: 0

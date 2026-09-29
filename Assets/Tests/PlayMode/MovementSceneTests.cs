@@ -114,8 +114,11 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // never enter the volume.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
-            sm.SetTier(FlightTier.Max);
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.SetTier(FlightTier.Max);
+            // Slalom pins movement/collision, not timing: freeze the spawner so
+            // autonomous batchmode Misses cannot disturb the run.
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
             sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
             float t = 0f;
             while (mover.transform.position.z < 24f && t < 5f)
@@ -221,6 +224,18 @@ namespace FlyingFishMomentum.Tests.PlayMode
             while (sm.Locomotion == PlayerLocomotionState.Flying && guard++ < 3600)
                 mover.TickMove(Vector2.zero, step);
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "level flight never glided out");
+        }
+
+        [UnityTest]
+        public IEnumerator PromptOpensInGame()
+        {
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            Assert.IsNotNull(spawner, "spawner not wired in scene");
+            sm.SetTier(FlightTier.Medium); sm.Momentum.TargetSpeed = 50f;
+            float t = 0f;
+            while (!spawner.Active.Open && t < 10f) { t += Time.deltaTime; yield return null; }
+            Assert.IsTrue(spawner.Active.Open, "no prompt after 60m of travel");
         }
 
         [UnityTest]

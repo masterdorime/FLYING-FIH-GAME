@@ -114,8 +114,16 @@ namespace ProjectBootstrap
             var debug = new GameObject("M1Debug");
             var dbgInput = debug.AddComponent<M1DebugInput>();
             dbgInput.Configure(sm, reactor, movement);
+            // Timing scaffold (M2).
+            var timingGo = new GameObject("Timing");
+            var spawner = timingGo.AddComponent<TimingPromptSpawner>();
+            spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor);
+            var ringGo = new GameObject("PromptRing");
+            ringGo.transform.SetParent(timingGo.transform, false);
+            var ring = ringGo.AddComponent<TimingPromptRing>();
+            ring.Configure(spawner, player.transform);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            overlay.Configure(momentum, sm, momSettings, movement);
+            overlay.Configure(momentum, sm, momSettings, movement, spawner);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");
