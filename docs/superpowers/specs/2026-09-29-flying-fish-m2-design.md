@@ -75,6 +75,18 @@ SO-only tuning, dt-scaled determinism, timing evaluation independent
 from visual presentation (evaluator knows nothing of the dial),
 UI independent from gameplay state, events over coupling.
 
+## Change record — ring charge sequences (§34.1, 2026-09-29, approved)
+
+- **Old:** only distance-beat tap prompts.
+- **Why:** feel pass wants a second, different skill expression for gaining speed.
+- **New:** 5 fixed rings in the world (alternating swim/air depth);
+  swimming through one starts a 3-step HOLD/TAP sequence in seeded
+  shuffled order. HOLD 0.8s banks +2 (early release fails, past 1.3s
+  fizzles, both +0); TAP reuses timing windows (Perfect +2, Good +1,
+  Miss +0); all-clean pays +4 jackpot. No penalties in charge mode;
+  gains ratchet cruise to the 70 cap like tap hits. Beats suspend
+  during charge. Fill bar + step text in placeholder style.
+
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 
 - **Old:** tier cruise speeds; needle parked on red at the hit moment.
