@@ -97,5 +97,15 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.Less(m.CurrentSpeed, 110f);
             Assert.Greater(m.CurrentSpeed, 90f);
         }
+
+        [Test]
+        public void FlyBonusRaisesChasedTarget()
+        {
+            // Air must sustain a higher top speed than swimming at the same tier.
+            var m = NewMomentum(max: 100f, accel: 120f);
+            m.CurrentSpeed = 100f; m.TargetSpeed = 100f;
+            m.Tick(1f, 0.6f, 0f, 1.2f); // air bonus: effective target 120
+            Assert.Greater(m.CurrentSpeed, 100f);
+        }
     }
 }

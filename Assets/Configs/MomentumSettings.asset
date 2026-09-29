@@ -17,3 +17,4 @@ MonoBehaviour:
   BreachSpeedThreshold: 30
   DeviationDragGain: 3
   DeviationSpeedPenalty: 0.5
+  FlySpeedBonus: 1.2

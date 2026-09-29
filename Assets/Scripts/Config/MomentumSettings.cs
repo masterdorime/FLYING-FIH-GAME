@@ -15,5 +15,8 @@ namespace FlyingFishMomentum
         // Off-forward flight also caps the chased target: holding the cone
         // edge costs (penalty * |yaw|/180) of top speed. 0.5 = -17% at 60°.
         public float DeviationSpeedPenalty = 0.5f;
+        // Flying sustains a higher top speed than swimming at the same tier
+        // (fast-and-swoopy air, grippy water). 1.2 = +20% chased target in Fly.
+        public float FlySpeedBonus = 1.2f;
     }
 }

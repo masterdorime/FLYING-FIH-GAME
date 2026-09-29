@@ -18,9 +18,11 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // input stalls the player loop in batchmode (see ledger). Steering
             // is driven via TickMove directly; device→value plumbing is engine
             // behavior covered by InputAssetTests plus the human feel pass.
-            // Tests that call TickMove manually MUST set mover.enabled = false
-            // first: otherwise the scene Update calls TickMove again each frame
-            // and every measurement runs on a double-stepped simulation.
+            // Tests that call TickMove manually MUST call SetTier BEFORE
+            // mover.enabled = false: disabling unsubscribes the tier profile
+            // (turn/gravity would freeze at the spawn tier), and the scene
+            // Update would otherwise call TickMove again each frame
+            // (double-stepped simulation).
         }
 
         [UnitySetUp]
@@ -54,9 +56,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // InputAssetTests (bindings) plus the human feel pass (real keys).
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
-            mover.enabled = false; // single-step: manual TickMove only (see Setup note)
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "spawn must be underwater Swimming");
             sm.SetTier(FlightTier.Low);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 35f; sm.Momentum.TargetSpeed = 35f;
             float t = 0f;
             while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
@@ -82,8 +84,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // gain altitude (no speed = glide/sink is by design, untested here).
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
-            mover.enabled = false; // single-step: manual TickMove only (see Setup note)
             sm.SetTier(FlightTier.Max);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
             float t = 0f;
             while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
@@ -112,8 +114,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // never enter the volume.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
-            mover.enabled = false; // single-step: manual TickMove only (see Setup note)
             sm.SetTier(FlightTier.Max);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
             float t = 0f;
             while (mover.transform.position.z < 24f && t < 5f)
@@ -152,8 +154,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // at the cone edge, which must cost top speed even at tier max.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
-            mover.enabled = false; // single-step: manual TickMove only (see Setup note)
             sm.SetTier(FlightTier.Max);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
             float t = 0f;
             while (t < 3f)
@@ -164,6 +166,61 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             Assert.AreEqual(60f, mover.Yaw, 0.5f, "full stick did not pin at cone edge");
             Assert.Less(sm.Momentum.CurrentSpeed, 109f, "cone-edge flight did not bleed speed");
+        }
+
+        [UnityTest]
+        public IEnumerator AirTurnsWiderThanWaterTurns()
+        {
+            // Fixed-step so the comparison is frame-rate independent: 10
+            // sixtieths of full stick. Water at 200 deg/s gains ~33 deg;
+            // air must gain clearly less (wide swoops, not tight arcs).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
+            const float step = 1f / 60f;
+            for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
+            float swimYaw = mover.Yaw;
+            int guard = 0;
+            while (sm.Locomotion != PlayerLocomotionState.Flying && guard++ < 600)
+            {
+                mover.TickMove(new Vector2(0f, 1f), step);
+                yield return null;
+            }
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            float yawBefore = mover.Yaw;
+            for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
+            Assert.Greater(swimYaw, 30f, "water turn weaker than the tier promises");
+            Assert.Less(mover.Yaw - yawBefore, 25f, "air turn as tight as water turn");
+        }
+
+        [UnityTest]
+        public IEnumerator LevelFlightEventuallyGlidesOut()
+        {
+            // Structural pin for rise-then-glide: unpowered level flight must
+            // always end (gravity debt is unbounded), never cruise forever.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.Momentum.CurrentSpeed = 110f; sm.Momentum.TargetSpeed = 110f;
+            float t = 0f;
+            while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
+            {
+                t += Time.deltaTime;
+                mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
+                yield return null;
+            }
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            const float step = 1f / 60f;
+            int guard = 0;
+            while (mover.Pitch > 0f && guard++ < 120)
+                mover.TickMove(new Vector2(0f, -1f), step);
+            guard = 0;
+            while (sm.Locomotion == PlayerLocomotionState.Flying && guard++ < 3600)
+                mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "level flight never glided out");
         }
 
         [UnityTest]
