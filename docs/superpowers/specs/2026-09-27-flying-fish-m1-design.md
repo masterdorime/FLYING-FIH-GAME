@@ -119,6 +119,7 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - **Affected systems:** `PlayerMomentumController.Tick` (new optional `deviationDeg` param), `PlayerMovementController.TickMove` (passes `|Yaw|`), `MomentumSettings` (new field + asset value), `M1DebugOverlay` (shows deviation).
 - **New behavior:** turns/dodges work at any angle, but sustained backward headings bleed to `MinSpeed` in ~1–2s; recovery = re-aim forward.
 - **Updated acceptance:** `ZeroDeviationBehavesExactlyAsBefore`, `FullBackwardDeviationMultipliesDrag`, `DeviationDragNeverBreachesMinSpeed` (all green); M1 sign-off gains "flying backward is self-defeating."
+- **Follow-up fix (2026-09-28, review Important):** the drag multiplier never bit at steady state (`Current == Target == max` moves zero units). `Tick` now also caps the chased target: `effectiveTarget = Target × (1 − DeviationSpeedPenalty × |yaw|/180°)`, new SO tunable default 0.5 (−17% top speed at the 60° cone edge). New acceptance: `AtTargetSpeedWithDeviationBleedsBelowMax`, `HoldingConeEdgeBleedsSpeedInGame` (in-game pin).
 
 ## Change record — yaw forward cone (§34.1, 2026-09-28, approved)
 
