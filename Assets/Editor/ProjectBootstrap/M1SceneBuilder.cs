@@ -23,6 +23,7 @@ namespace ProjectBootstrap
                 Load<FlightTierProfile>("Assets/Configs/TierProfile_Max.asset"),
             };
             var momSettings = Load<MomentumSettings>("Assets/Configs/MomentumSettings.asset");
+            var timingSettings = Load<TimingSettings>("Assets/Configs/TimingSettings.asset");
             var camSettings = Load<CameraSettings>("Assets/Configs/CameraSettings.asset");
 
             var fishMat = new Material(Shader.Find("Standard"));
@@ -89,7 +90,7 @@ namespace ProjectBootstrap
             var momentum = player.AddComponent<PlayerMomentumController>();
             var sm = player.AddComponent<FlightStateMachine>();
             var movement = player.AddComponent<PlayerMovementController>();
-            momentum.Configure(momSettings);
+            momentum.Configure(momSettings, timingSettings);
             sm.Configure(profiles, momentum, momSettings);
             movement.Configure(sm, momentum, momSettings);
             AddFishPart(player.transform, "Body", PrimitiveType.Capsule,

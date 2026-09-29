@@ -16,7 +16,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             s.BreachSpeedThreshold = 30f;
             s.DeviationDragGain = 3f;
             s.DeviationSpeedPenalty = 0.5f;
-            m.Configure(s);
+            var t = ScriptableObject.CreateInstance<TimingSettings>();
+            m.Configure(s, t);
             m.SetLimits(max, accel);
             return m;
         }
@@ -106,6 +107,41 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.CurrentSpeed = 100f; m.TargetSpeed = 100f;
             m.Tick(1f, 0.6f, 0f, 1.2f); // air bonus: effective target 120
             Assert.Greater(m.CurrentSpeed, 100f);
+        }
+
+        [Test]
+        public void ApplyTimingResultFollowsTable()
+        {
+            var m = NewMomentum(max: 100f, accel: 120f);
+            m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
+            m.ApplyTimingResult(TimingResult.Good, FlightTier.Medium);
+            Assert.AreEqual(58f, m.CurrentSpeed, 0.001f);
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Max);
+            Assert.AreEqual(88f, m.CurrentSpeed, 0.001f);
+            m.ApplyTimingResult(TimingResult.Miss, FlightTier.Medium);
+            Assert.AreEqual(60f, m.CurrentSpeed, 0.001f);
+        }
+
+        [Test]
+        public void MissNeverBreaksMinSpeed()
+        {
+            var m = NewMomentum();
+            m.CurrentSpeed = 10f; m.TargetSpeed = 8f;
+            m.ApplyTimingResult(TimingResult.Miss, FlightTier.Max); // -70
+            m.Tick(1f, 1.5f);
+            Assert.AreEqual(8f, m.CurrentSpeed, 0.01f);
+        }
+
+        [Test]
+        public void PerfectOverflowsTierMaxThenDecays()
+        {
+            var m = NewMomentum(max: 50f, accel: 120f);
+            m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +16 → 66, above max
+            Assert.AreEqual(66f, m.CurrentSpeed, 0.001f);
+            m.Tick(1f, 0.6f); // drag chase pulls back toward 50
+            Assert.Less(m.CurrentSpeed, 66f);
+            Assert.Greater(m.CurrentSpeed, 50f);
         }
     }
 }

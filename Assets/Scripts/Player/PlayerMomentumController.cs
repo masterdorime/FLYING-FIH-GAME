@@ -13,12 +13,19 @@ namespace FlyingFishMomentum
 
         // Serialized so scene/prefab wiring (set via Configure at build time) survives save/load.
         [SerializeField] MomentumSettings _settings;
+        [SerializeField] TimingSettings _timing;
         float _maxSpeed;
         float _accelRate;
 
         public void Configure(MomentumSettings settings)
         {
             _settings = settings;
+        }
+
+        public void Configure(MomentumSettings settings, TimingSettings timing)
+        {
+            _settings = settings;
+            _timing = timing;
         }
 
         public void SetLimits(float maxSpeed, float accelRate)
@@ -31,6 +38,15 @@ namespace FlyingFishMomentum
         public void AddSpeed(float amount)
         {
             CurrentSpeed = Mathf.Min(CurrentSpeed + amount, _maxSpeed);
+        }
+
+        // M2 timing consequences (PRD §6.3). Perfect/Good bursts may overflow
+        // the tier max up to max + boost, then decay back through drag.
+        public void ApplyTimingResult(TimingResult result, FlightTier tier)
+        {
+            if (_timing == null) return;
+            float delta = _timing.DeltaFor(result, tier);
+            CurrentSpeed = Mathf.Min(CurrentSpeed + delta, _maxSpeed + Mathf.Max(0f, delta));
         }
 
         public void Tick(float dt, float dragRate, float deviationDeg = 0f, float speedBonus = 1f)
@@ -47,7 +63,11 @@ namespace FlyingFishMomentum
                 CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, effectiveTarget, _accelRate * dt);
             else
                 CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, effectiveTarget, drag * dt);
-            CurrentSpeed = Mathf.Clamp(CurrentSpeed, _settings.MinSpeed, _maxSpeed * speedBonus);
+            // Upper clamp keeps applied bursts (timing overflow above tier max);
+            // the chase above always moves down toward the target, so nothing
+            // can run away upward through Tick. SetLimits still caps on tier change.
+            CurrentSpeed = Mathf.Clamp(CurrentSpeed, _settings.MinSpeed,
+                Mathf.Max(_maxSpeed * speedBonus, CurrentSpeed));
         }
     }
 }
