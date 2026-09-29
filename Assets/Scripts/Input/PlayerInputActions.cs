@@ -107,7 +107,17 @@ namespace FlyingFishMomentum
                 {
                     ""name"": ""Pause"",
                     ""type"": ""Button"",
-                    ""id"": ""6bbd80f4-d863-4050-a167-6654a02378a8"",
+                    ""id"": ""6bbd80f4-d863-4050-a167-6654a0237801"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""TimingAction"",
+                    ""type"": ""Button"",
+                    ""id"": ""7e2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -203,6 +213,28 @@ namespace FlyingFishMomentum
                     ""action"": ""Pause"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8f3c4d5e-6f70-4b9c-0d1e-2f3a4b5c6d7e"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TimingAction"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9a4d5e6f-7081-4c0d-1e2f-3a4b5c6d7e8f"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TimingAction"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -213,6 +245,7 @@ namespace FlyingFishMomentum
             m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
             m_Gameplay_Move = m_Gameplay.FindAction("Move", throwIfNotFound: true);
             m_Gameplay_Pause = m_Gameplay.FindAction("Pause", throwIfNotFound: true);
+            m_Gameplay_TimingAction = m_Gameplay.FindAction("TimingAction", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
@@ -295,6 +328,7 @@ namespace FlyingFishMomentum
         private List<IGameplayActions> m_GameplayActionsCallbackInterfaces = new List<IGameplayActions>();
         private readonly InputAction m_Gameplay_Move;
         private readonly InputAction m_Gameplay_Pause;
+        private readonly InputAction m_Gameplay_TimingAction;
         /// <summary>
         /// Provides access to input actions defined in input action map "Gameplay".
         /// </summary>
@@ -314,6 +348,10 @@ namespace FlyingFishMomentum
             /// Provides access to the underlying input action "Gameplay/Pause".
             /// </summary>
             public InputAction @Pause => m_Wrapper.m_Gameplay_Pause;
+            /// <summary>
+            /// Provides access to the underlying input action "Gameplay/TimingAction".
+            /// </summary>
+            public InputAction @TimingAction => m_Wrapper.m_Gameplay_TimingAction;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -346,6 +384,9 @@ namespace FlyingFishMomentum
                 @Pause.started += instance.OnPause;
                 @Pause.performed += instance.OnPause;
                 @Pause.canceled += instance.OnPause;
+                @TimingAction.started += instance.OnTimingAction;
+                @TimingAction.performed += instance.OnTimingAction;
+                @TimingAction.canceled += instance.OnTimingAction;
             }
 
             /// <summary>
@@ -363,6 +404,9 @@ namespace FlyingFishMomentum
                 @Pause.started -= instance.OnPause;
                 @Pause.performed -= instance.OnPause;
                 @Pause.canceled -= instance.OnPause;
+                @TimingAction.started -= instance.OnTimingAction;
+                @TimingAction.performed -= instance.OnTimingAction;
+                @TimingAction.canceled -= instance.OnTimingAction;
             }
 
             /// <summary>
@@ -417,6 +461,13 @@ namespace FlyingFishMomentum
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnPause(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "TimingAction" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnTimingAction(InputAction.CallbackContext context);
         }
     }
 }

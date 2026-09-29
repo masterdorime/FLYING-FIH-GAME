@@ -69,4 +69,4 @@ Editor with the Pipeline package — M1 uses the Unity CLI only.
 - **Scaffold:** temporary code marked `[M1-SCAFFOLD]`, tracked for removal (M5). No other throwaway code.
 - **Commits:** `feat|test|chore: <what> (M1 task N)`.
 - **Input:** Unity Input System asset at `Assets/Input/PlayerInputActions.inputactions`.
-  M1 actions only: `Gameplay/Move`, `Gameplay/Pause`. `TimingAction` is M2 (YAGNI).
+  Actions: `Gameplay/Move`, `Gameplay/Pause`, `Gameplay/TimingAction` (Space + gamepad south, M2).

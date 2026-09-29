@@ -17,7 +17,16 @@
                 {
                     "name": "Pause",
                     "type": "Button",
-                    "id": "6bbd80f4-d863-4050-a167-6654a02378a8",
+                    "id": "6bbd80f4-d863-4050-a167-6654a0237801",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "TimingAction",
+                    "type": "Button",
+                    "id": "7e2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -110,6 +119,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8f3c4d5e-6f70-4b9c-0d1e-2f3a4b5c6d7e",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TimingAction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9a4d5e6f-7081-4c0d-1e2f-3a4b5c6d7e8f",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TimingAction",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

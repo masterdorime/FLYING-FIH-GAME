@@ -23,11 +23,14 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void NoTimingActionInM1()
+        public void TimingActionExistsWithBindings()
         {
             var asset = AssetDatabase.LoadAssetAtPath<InputActionAsset>(Path);
-            Assert.IsNotNull(asset, "inputactions asset missing");
-            Assert.IsNull(asset.FindAction("Gameplay/TimingAction"), "TimingAction is M2 scope");
+            var timing = asset.FindAction("Gameplay/TimingAction");
+            Assert.IsNotNull(timing, "TimingAction missing");
+            Assert.AreEqual(InputActionType.Button, timing.type);
+            Assert.IsTrue(timing.bindings.Any(b => b.path.Contains("/space")), "space binding missing");
+            Assert.IsTrue(timing.bindings.Any(b => b.path.Contains("buttonSouth")), "gamepad binding missing");
         }
     }
 }
