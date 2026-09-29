@@ -19,8 +19,11 @@ Prior milestone: `docs/superpowers/specs/2026-09-27-flying-fish-m1-design.md`.
 3. **TimingResult** (new enum): `Perfect, Good, Miss` (PRD §7.4).
 4. **Applier**: `PlayerMomentumController.ApplyTimingResult(result, tier)`
    per PRD §6.3, boost/penalty table from a new `TimingSettings`
-   ScriptableObject (PRD §6.4 values). Miss applies via
-   `AddSpeed(−penalty)`; the `MinSpeed` floor is enforced by `Tick`.
+   ScriptableObject (PRD §6.4 values). Perfect/Good bursts may overflow
+   the tier max up to `max + boost`, then decay back through normal drag
+   (without this, a Perfect at cruise speed would do nothing). Miss
+   applies via `AddSpeed(−penalty)`; the `MinSpeed` floor is enforced
+   by `Tick`.
 5. **TimingPromptRing** (world-space placeholder, M1 primitive style): a ring
    around the fish that shrinks and meets its target circle exactly at the
    hit moment (`LeadTime` default 1.0s). Deleted/recycled on resolve.
