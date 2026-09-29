@@ -18,6 +18,7 @@ MonoBehaviour:
   GoodWindow: 0.18
   MinGoodWindow: 0.09
   LateBuffer: 0.06
+  MaxSpeedRef: 110
   PerfectBoost:
   - 0
   - 12
