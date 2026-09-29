@@ -104,9 +104,9 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             // Air must sustain a higher top speed than swimming at the same tier.
             var m = NewMomentum(max: 100f, accel: 120f);
-            m.CurrentSpeed = 100f; m.TargetSpeed = 100f;
-            m.Tick(1f, 0.6f, 0f, 1.2f); // air bonus: effective target 120
-            Assert.Greater(m.CurrentSpeed, 100f);
+            m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
+            m.Tick(1f, 0.6f, 0f, 1.2f); // air bonus: effective target 60
+            Assert.Greater(m.CurrentSpeed, 50f);
         }
 
         [Test]
@@ -139,9 +139,9 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
             m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → 55, above max
             Assert.AreEqual(55f, m.CurrentSpeed, 0.001f);
-            m.Tick(1f, 0.6f); // drag chase pulls back toward 50
-            Assert.Less(m.CurrentSpeed, 55f);
-            Assert.Greater(m.CurrentSpeed, 50f);
+            m.Tick(1f, 0.6f); // gain sticks: target ratcheted to 55, no bleed
+            Assert.AreEqual(55f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(55f, m.TargetSpeed, 0.001f);
         }
 
         [Test]
@@ -151,6 +151,18 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.CurrentSpeed = 69f; m.TargetSpeed = 50f;
             m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → capped 70
             Assert.AreEqual(70f, m.CurrentSpeed, 0.001f);
+        }
+
+        [Test]
+        public void PerfectGainSurvivesSwimDragToNextPrompt()
+        {
+            // Bug repro: a Perfect from cruise must still be there after a
+            // typical beat gap, not bled away by drag toward the old target.
+            var m = NewMomentum(max: 100f, accel: 120f);
+            m.CurrentSpeed = 10f; m.TargetSpeed = 10f;
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → 15
+            for (int i = 0; i < 240; i++) m.Tick(1f / 60f, 1.5f); // 4s of swim
+            Assert.Greater(m.CurrentSpeed, 12f, "Perfect gain bled away before the next prompt");
         }
     }
 }

@@ -40,14 +40,17 @@ namespace FlyingFishMomentum
             CurrentSpeed = Mathf.Min(CurrentSpeed + amount, _maxSpeed);
         }
 
-        // M2 timing consequences (PRD §6.3). Perfect/Good bursts may overflow
-        // the tier max; the ceiling is whichever is higher: tier max + boost
-        // or the gearless-climb SpeedCap (tiers stay authoritative upward,
-        // so M3 gauge tiers keep working above the cap).
+        // M2 timing consequences (PRD §6.3). Hits ratchet the cruise target
+        // itself so gains stick (drag sags toward earned speed, never below
+        // it); Miss drops target to the MinSpeed floor. Perfect/Good bursts
+        // may overflow the tier max; the ceiling is whichever is higher:
+        // tier max + boost or the gearless-climb SpeedCap (tiers stay
+        // authoritative upward, so M3 gauge tiers keep working above the cap).
         public void ApplyTimingResult(TimingResult result, FlightTier tier)
         {
             if (_timing == null) return;
             float delta = _timing.DeltaFor(result, tier);
+            TargetSpeed = Mathf.Clamp(TargetSpeed + delta, _settings.MinSpeed, _timing.SpeedCap);
             float ceiling = _maxSpeed + Mathf.Max(0f, delta);
             ceiling = Mathf.Max(ceiling, _timing.SpeedCap);
             CurrentSpeed = Mathf.Min(CurrentSpeed + delta, ceiling);
@@ -63,6 +66,9 @@ namespace FlyingFishMomentum
             float devFrac = Mathf.Clamp01(Mathf.Abs(deviationDeg) / 180f);
             float drag = dragRate * (1f + _settings.DeviationDragGain * devFrac);
             float effectiveTarget = TargetSpeed * speedBonus * (1f - _settings.DeviationSpeedPenalty * devFrac);
+            // The hard cap holds even with the fly bonus: air is faster
+            // through lower drag, not by breaking the cap.
+            if (_timing != null) effectiveTarget = Mathf.Min(effectiveTarget, _timing.SpeedCap);
             if (CurrentSpeed < effectiveTarget)
                 CurrentSpeed = Mathf.MoveTowards(CurrentSpeed, effectiveTarget, _accelRate * dt);
             else

@@ -82,8 +82,10 @@ UI independent from gameplay state, events over coupling.
 - **New:** runs spawn at `StartSpeed` 10 with target pinned 10 (debug
   scaffold); Perfect/Good stack through burst overflow, hard cap
   `SpeedCap` 70 enforced in `ApplyTimingResult` (tier max still rules
-  upward, so M3 gauge tiers keep working); drag sags back to 10.
-  Needle progress unclamped — it drifts past red until press or expiry.
+  upward, so M3 gauge tiers keep working); hits ratchet the cruise
+  target itself so gains stick — drag sags toward earned speed, Miss
+  drops target to the MinSpeed floor. Needle progress unclamped — it
+  drifts past red until press or expiry.
   Tier bands stay for turning/breach/windows but are dormant for speed
   until M3 replans the gauge around this world.
 
