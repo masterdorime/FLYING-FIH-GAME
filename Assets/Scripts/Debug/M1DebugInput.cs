@@ -27,6 +27,10 @@ namespace FlyingFishMomentum
         {
             // Initial tier bootstraps itself in FlightStateMachine.Awake —
             // nothing here may depend on Start() ordering (see ledger).
+            // M2: timing drives speed now (digits deleted); tier locked to
+            // Medium until the M3 gauge moves it. Subscribers attach in
+            // OnEnable, so this SetTier reaches ApplyProfile.
+            if (_sm != null) _sm.SetTier(FlightTier.Medium);
             if (_movement != null)
                 _movement.Input.Gameplay.Pause.performed += OnPause;
         }
@@ -46,11 +50,6 @@ namespace FlyingFishMomentum
         {
             var kb = Keyboard.current;
             if (kb == null || _sm == null) return;
-            if (kb.digit1Key.wasPressedThisFrame) _sm.SetTier(FlightTier.None);
-            if (kb.digit2Key.wasPressedThisFrame) _sm.SetTier(FlightTier.Low);
-            if (kb.digit3Key.wasPressedThisFrame) _sm.SetTier(FlightTier.Medium);
-            if (kb.digit4Key.wasPressedThisFrame) _sm.SetTier(FlightTier.High);
-            if (kb.digit5Key.wasPressedThisFrame) _sm.SetTier(FlightTier.Max);
             if (kb.tKey.wasPressedThisFrame && _camera != null) _camera.PlayTierUpKick();
             if (kb.gKey.wasPressedThisFrame && _camera != null) _camera.PlayMissShake();
         }
