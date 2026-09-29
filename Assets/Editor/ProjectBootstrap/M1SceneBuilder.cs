@@ -125,6 +125,20 @@ namespace ProjectBootstrap
             ringGo.transform.SetParent(timingGo.transform, false);
             var ring = ringGo.AddComponent<TimingPromptDial>();
             ring.Configure(spawner, player.transform, momentum);
+            // Charge rings (M2): fixed swim/fly alternation, deterministic builds.
+            var rings = new List<ChargeRing>
+            {
+                AddChargeRing("ChargeRing_1", new Vector3(-15f, -3f, 150f)),
+                AddChargeRing("ChargeRing_2", new Vector3(15f, 10f, 400f)),
+                AddChargeRing("ChargeRing_3", new Vector3(0f, -3f, 650f)),
+                AddChargeRing("ChargeRing_4", new Vector3(-15f, 10f, 900f)),
+                AddChargeRing("ChargeRing_5", new Vector3(15f, -3f, 1200f)),
+            };
+            spawner.SetRings(rings);
+            var barGo = new GameObject("ChargeBar");
+            barGo.transform.SetParent(timingGo.transform, false);
+            var bar = barGo.AddComponent<ChargeBar>();
+            bar.Configure(spawner, player.transform);
             var overlay = debug.AddComponent<M1DebugOverlay>();
             overlay.Configure(momentum, sm, momSettings, movement, spawner);
 
@@ -143,6 +157,29 @@ namespace ProjectBootstrap
             island.transform.position = center;
             island.transform.localScale = new Vector3(10f, 25f, 10f);
             island.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        }
+
+        static ChargeRing AddChargeRing(string name, Vector3 center)
+        {
+            var go = new GameObject(name);
+            go.transform.position = center;
+            var line = go.AddComponent<LineRenderer>();
+            const int points = 49;
+            const float radius = 3f;
+            line.positionCount = points;
+            line.useWorldSpace = false;
+            line.startWidth = 0.25f;
+            line.endWidth = 0.25f;
+            var mat = new Material(Shader.Find("Sprites/Default"));
+            mat.color = new Color(1f, 0.85f, 0.2f);
+            mat.renderQueue = 3000;
+            line.material = mat;
+            for (int i = 0; i < points; i++)
+            {
+                float d = Mathf.Deg2Rad * 360f * i / (points - 1);
+                line.SetPosition(i, new Vector3(radius * Mathf.Sin(d), radius * Mathf.Cos(d), 0f));
+            }
+            return go.AddComponent<ChargeRing>();
         }
 
         static void AddFishPart(Transform parent, string name, PrimitiveType type,

@@ -12,6 +12,7 @@ namespace FlyingFishMomentum
         public int StepCount { get; private set; }
         public ChargeStepKind CurrentKind { get; private set; }
         public bool AllSucceeded { get; private set; } = true;
+        public float StepStartTime => _stepStart;
 
         ChargeStepKind[] _order;
         float _stepStart;

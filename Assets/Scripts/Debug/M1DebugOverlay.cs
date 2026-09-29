@@ -43,11 +43,13 @@ namespace FlyingFishMomentum
                     : _spawner.Active.Open ? $"OPEN {Mathf.Max(0f, _spawner.Active.TargetTime - Time.time):F2}s"
                     : "-";
             timing += $" x{_spawner?.StreakCount}";
-            GUI.Label(new Rect(10, 10, 420, 150),
+            string charge = _spawner != null ? _spawner.ChargeText : string.Empty;
+            GUI.Label(new Rect(10, 10, 420, 170),
                 $"Speed {_momentum.CurrentSpeed:F1} / Target {_momentum.TargetSpeed:F1}\n" +
                 $"State {_sm.Locomotion} Tier {_sm.ActiveTier}\n" +
                 $"Breach >= {_settings.BreachSpeedThreshold:F0} Deviate {Mathf.Abs(_movement.Yaw):F0}°\n" +
                 $"Timing {timing}\n" +
+                (string.IsNullOrEmpty(charge) ? string.Empty : charge + "\n") +
                 $"FPS {_fps:F0}");
         }
     }

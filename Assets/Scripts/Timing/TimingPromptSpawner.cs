@@ -40,6 +40,7 @@ namespace FlyingFishMomentum
         public string ChargeText => Charge.IsActive && ChargeOrder.Length > 0
             ? $"CHARGE {Charge.StepIndex + 1}/{Charge.StepCount} {Charge.CurrentKind}"
             : string.Empty;
+        public IReadOnlyList<ChargeRing> Rings => _rings;
 
         public void SetSeed(int seed)
         {
