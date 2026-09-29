@@ -14,6 +14,12 @@ namespace FlyingFishMomentum
 
         public bool Visible { get; private set; }
         public float NeedleAngleZ { get; private set; }
+        public float PerfectHalfWidthDeg { get; private set; }
+        public float GoodHalfWidthDeg { get; private set; }
+        public Color PerfectArcColor => _perfect != null && _perfect.material != null
+            ? _perfect.material.color : Color.clear;
+        public int PerfectRenderQueue => _perfect != null && _perfect.material != null
+            ? _perfect.material.renderQueue : -1;
 
         [SerializeField] TimingPromptSpawner _spawner;
         [SerializeField] Transform _target;
@@ -36,11 +42,11 @@ namespace FlyingFishMomentum
         {
             _visuals = new GameObject("Visuals");
             _visuals.transform.SetParent(transform, false);
-            _base = AddArc(new Color(0.4f, 0.4f, 0.4f), 0.12f);
-            _good = AddArc(new Color(1f, 0.85f, 0.2f), 0.3f);
+            _base = AddArc(new Color(0.4f, 0.4f, 0.4f), 0.12f, 3000);
+            _good = AddArc(new Color(1f, 0.85f, 0.2f), 0.3f, 3001);
             // Perfect paints red and floats closest: coplanar arcs z-fight and
             // yellow swallows green (feel-pass finding).
-            _perfect = AddArc(new Color(1f, 0.25f, 0.25f), 0.3f);
+            _perfect = AddArc(new Color(1f, 0.25f, 0.25f), 0.3f, 3002);
             _pivot = new GameObject("NeedlePivot");
             _pivot.transform.SetParent(_visuals.transform, false);
             var needle = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -55,7 +61,7 @@ namespace FlyingFishMomentum
             _visuals.SetActive(false);
         }
 
-        LineRenderer AddArc(Color color, float width)
+        LineRenderer AddArc(Color color, float width, int renderQueue)
         {
             var go = new GameObject("Arc");
             go.transform.SetParent(_visuals.transform, false);
@@ -66,6 +72,9 @@ namespace FlyingFishMomentum
             line.endWidth = width;
             var mat = new Material(Shader.Find("Sprites/Default"));
             mat.color = color;
+            // Transparent lines sort by object distance (tied here) — queue
+            // order is what actually stacks base < good < perfect.
+            mat.renderQueue = renderQueue;
             line.material = mat;
             return line;
         }
@@ -95,6 +104,8 @@ namespace FlyingFishMomentum
             float goodHalf = TimingDialMath.HalfWidthDeg(
                 TimingEvaluator.GoodWindowAt(speed, _spawner.Settings,
                     _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef), lead);
+            PerfectHalfWidthDeg = perfectHalf;
+            GoodHalfWidthDeg = goodHalf;
             DrawArc(_base, -180f, 180f, 0f);
             DrawArc(_good, hit - goodHalf, hit + goodHalf, 0.01f);
             DrawArc(_perfect, hit - perfectHalf, hit + perfectHalf, 0.02f);

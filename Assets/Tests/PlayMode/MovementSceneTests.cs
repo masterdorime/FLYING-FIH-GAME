@@ -407,6 +407,39 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator DialArcsSaneWhileOpen()
+        {
+            // Probe for the missing-red-slice report: while open, the perfect
+            // arc must have real width, sit inside the good arc, and be red.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var dial = Object.FindFirstObjectByType<TimingPromptDial>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 33f, FlightTier.Medium, false);
+            }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            yield return null;
+            yield return null;
+            Assert.IsTrue(dial.Visible);
+            Assert.Greater(dial.PerfectHalfWidthDeg, 1f, "perfect slice has no width");
+            Assert.Greater(dial.GoodHalfWidthDeg, dial.PerfectHalfWidthDeg, "good not wider than perfect");
+            var red = dial.PerfectArcColor;
+            Assert.Less(Mathf.Abs(red.r - 1f) + Mathf.Abs(red.g - 0.25f) + Mathf.Abs(red.b - 0.25f),
+                0.05f, "perfect slice is not red");
+            Assert.AreEqual(3002, dial.PerfectRenderQueue, "perfect must paint last");
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
