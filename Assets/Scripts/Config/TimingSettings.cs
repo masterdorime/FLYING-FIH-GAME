@@ -28,6 +28,13 @@ namespace FlyingFishMomentum
         // Gearless climb: runs start slow, hits stack toward this cap.
         public float StartSpeed = 10f;
         public float SpeedCap = 70f;
+        // Charge sequences (rings): hold/tap rules and gains, no penalties.
+        public float HoldRequired = 0.8f;
+        public float HoldLimit = 1.3f;
+        public float TapLead = 0.6f;
+        public float ChargeStepGain = 2f;
+        public float ChargeTapGoodGain = 1f;
+        public float ChargeJackpot = 4f;
 
         public float DeltaFor(TimingResult r, FlightTier t)
         {
