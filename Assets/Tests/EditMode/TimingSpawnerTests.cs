@@ -151,5 +151,75 @@ namespace FlyingFishMomentum.Tests.EditMode
             for (int i = 0; i < 16; i++) { now += 0.1f; b.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
             Assert.AreEqual(firstHit, b.HitAngleDeg, 0.001f);
         }
+
+        TimingPromptSpawner NewSpawnerWithRing(out PlayerMomentumController momentum, out ChargeRing ring)
+        {
+            var spawner = NewSpawner(out momentum);
+            var rgo = new GameObject("ring");
+            rgo.transform.position = Vector3.zero;
+            ring = rgo.AddComponent<ChargeRing>();
+            spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { ring });
+            return spawner;
+        }
+
+        [Test]
+        public void RingTriggerStartsCharge()
+        {
+            var spawner = NewSpawnerWithRing(out _, out var ring);
+            Assert.IsFalse(spawner.ChargeActive);
+            spawner.CheckRingTrigger(0f, new Vector3(0f, 0f, 1f));
+            Assert.IsTrue(spawner.ChargeActive);
+            Assert.IsTrue(ring.Consumed);
+            spawner.CheckRingTrigger(1f, new Vector3(100f, 0f, 100f));
+            Assert.IsTrue(spawner.ChargeActive); // far ring check changes nothing
+        }
+
+        [Test]
+        public void ChargeOrderSeededReplay()
+        {
+            var a = NewSpawnerWithRing(out _, out _);
+            a.CheckRingTrigger(0f, Vector3.zero);
+            string orderA = string.Join(",", System.Array.ConvertAll(a.ChargeOrder, k => k.ToString()));
+            Cleanup();
+            var b = NewSpawnerWithRing(out _, out _);
+            b.CheckRingTrigger(0f, Vector3.zero);
+            string orderB = string.Join(",", System.Array.ConvertAll(b.ChargeOrder, k => k.ToString()));
+            Assert.AreEqual(orderA, orderB);
+            Assert.AreEqual(3, a.ChargeOrder.Length);
+        }
+
+        [Test]
+        public void ChargeHoldBanksViaMomentum()
+        {
+            // Adaptive driver: hold each HOLD step to just past required,
+            // tap each TAP step at its target. Every step succeeds:
+            // 3x+2 plus +4 jackpot: 10 → 20.
+            var spawner = NewSpawnerWithRing(out var momentum, out _);
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            int guard = 0;
+            while (spawner.ChargeActive && guard++ < 300)
+            {
+                now += 0.1f;
+                var ch = spawner.Charge;
+                bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
+                bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
+                bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+            }
+            Assert.IsFalse(spawner.ChargeActive, "charge never finished");
+            Assert.AreEqual(20f, momentum.CurrentSpeed, 0.5f);
+        }
+
+        [Test]
+        public void BeatSuspendedDuringCharge()
+        {
+            var spawner = NewSpawnerWithRing(out _, out _);
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            for (int i = 0; i < 20; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false, true); }
+            Assert.IsFalse(spawner.Active.Open, "beat prompt opened during charge");
+        }
     }
 }

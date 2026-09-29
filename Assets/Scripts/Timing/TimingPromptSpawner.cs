@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FlyingFishMomentum
@@ -26,18 +27,51 @@ namespace FlyingFishMomentum
         [SerializeField] TimingSettings _timing;
         [SerializeField] MomentumSettings _momSettings;
         [SerializeField] CameraSpeedReactor _camera;
+        [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
         float _meters;
         float _nextBeat = -1f;
         System.Random _rng;
         bool _seeded;
         public int StreakCount { get; private set; }
         public float HitAngleDeg { get; private set; }
+        public readonly ChargeSequencer Charge = new ChargeSequencer();
+        public bool ChargeActive => Charge.IsActive;
+        public ChargeStepKind[] ChargeOrder { get; private set; } = new ChargeStepKind[0];
+        public string ChargeText => Charge.IsActive && ChargeOrder.Length > 0
+            ? $"CHARGE {Charge.StepIndex + 1}/{Charge.StepCount} {Charge.CurrentKind}"
+            : string.Empty;
 
         public void SetSeed(int seed)
         {
             _rng = new System.Random(seed);
             _seeded = true;
             DrawBeat();
+        }
+
+        public void SetRings(List<ChargeRing> rings)
+        {
+            _rings = rings ?? new List<ChargeRing>();
+        }
+
+        public void CheckRingTrigger(float now, Vector3 playerPos)
+        {
+            if (Charge.IsActive || _rings == null) return;
+            if (_rng == null) _rng = new System.Random(0);
+            foreach (var ring in _rings)
+            {
+                if (ring == null || ring.Consumed) continue;
+                Vector3 d = ring.transform.position - playerPos;
+                if (Mathf.Abs(d.z) < 2f && new Vector2(d.x, d.y).magnitude < 3f)
+                {
+                    ring.Consume();
+                    var order = new ChargeStepKind[3];
+                    for (int i = 0; i < order.Length; i++)
+                        order[i] = _rng.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
+                    ChargeOrder = order;
+                    Charge.Begin(order, now);
+                    return;
+                }
+            }
         }
 
         void Start()
@@ -73,17 +107,31 @@ namespace FlyingFishMomentum
         void Update()
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
-            bool pressed = _movement != null && _movement.Input != null &&
-                _movement.Input.Gameplay.TimingAction.WasPressedThisFrame();
+            bool pressed = false;
+            bool held = false;
+            if (_movement != null && _movement.Input != null)
+            {
+                pressed = _movement.Input.Gameplay.TimingAction.WasPressedThisFrame();
+                held = _movement.Input.Gameplay.TimingAction.IsPressed();
+                CheckRingTrigger(Time.time, _movement.transform.position);
+            }
             Tick(Time.time, Time.deltaTime,
                 _momentum.CurrentSpeed,
                 _sm != null ? _sm.ActiveTier : FlightTier.None,
-                pressed);
+                pressed, held);
         }
 
-        public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed)
+        public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false)
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
+            // Charge mode owns the button: beats suspend, presses route here.
+            if (Charge.IsActive)
+            {
+                float gain = Charge.Tick(now, dt, held, pressed, speed,
+                    _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
+                if (gain > 0f) _momentum.AddChargeGain(gain);
+                return;
+            }
             if (_nextBeat <= 0f) DrawBeat();
             if (Active.Open)
             {
