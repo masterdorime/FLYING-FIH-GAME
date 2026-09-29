@@ -17,23 +17,23 @@ MonoBehaviour:
   PerfectWindow: 0.07
   MinPerfectWindow: 0.015
   GoodWindow: 0.18
-  MinGoodWindow: 0.09
+  MinGoodWindow: 0
   LateBuffer: 0.06
-  MaxSpeedRef: 110
+  MaxSpeedRef: 73
   StreakShrink: 0.97
   StreakFloor: 0.5
   PerfectBoost:
   - 0
-  - 12
-  - 16
-  - 22
-  - 30
+  - 4
+  - 5
+  - 7
+  - 10
   GoodBoost:
   - 0
-  - 6
-  - 8
-  - 11
-  - 15
+  - 2
+  - 3
+  - 4
+  - 5
   MissPenalty:
   - 0
   - 18

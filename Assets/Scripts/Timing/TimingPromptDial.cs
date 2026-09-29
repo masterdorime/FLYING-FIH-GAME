@@ -38,7 +38,9 @@ namespace FlyingFishMomentum
             _visuals.transform.SetParent(transform, false);
             _base = AddArc(new Color(0.4f, 0.4f, 0.4f), 0.12f);
             _good = AddArc(new Color(1f, 0.85f, 0.2f), 0.3f);
-            _perfect = AddArc(new Color(0.3f, 1f, 0.4f), 0.3f);
+            // Perfect paints red and floats closest: coplanar arcs z-fight and
+            // yellow swallows green (feel-pass finding).
+            _perfect = AddArc(new Color(1f, 0.25f, 0.25f), 0.3f);
             _pivot = new GameObject("NeedlePivot");
             _pivot.transform.SetParent(_visuals.transform, false);
             var needle = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -83,7 +85,8 @@ namespace FlyingFishMomentum
             transform.LookAt(Camera.main.transform);
             float lead = _spawner.Settings.LeadTime;
             float progress = _spawner.Progress01;
-            NeedleAngleZ = TimingDialMath.NeedleAngle(progress);
+            float hit = _spawner.HitAngleDeg;
+            NeedleAngleZ = TimingDialMath.NeedleAngle(progress, hit);
             _pivot.transform.rotation = Quaternion.Euler(0f, 0f, NeedleAngleZ);
             float speed = _momentum.CurrentSpeed;
             float perfectHalf = TimingDialMath.HalfWidthDeg(
@@ -92,9 +95,9 @@ namespace FlyingFishMomentum
             float goodHalf = TimingDialMath.HalfWidthDeg(
                 TimingEvaluator.GoodWindowAt(speed, _spawner.Settings,
                     _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef), lead);
-            DrawArc(_base, -180f, 180f);
-            DrawArc(_good, -goodHalf, goodHalf);
-            DrawArc(_perfect, -perfectHalf, perfectHalf);
+            DrawArc(_base, -180f, 180f, 0f);
+            DrawArc(_good, hit - goodHalf, hit + goodHalf, 0.01f);
+            DrawArc(_perfect, hit - perfectHalf, hit + perfectHalf, 0.02f);
         }
 
         void SetVisible(bool visible)
@@ -103,13 +106,13 @@ namespace FlyingFishMomentum
             if (_visuals != null) _visuals.SetActive(visible);
         }
 
-        static void DrawArc(LineRenderer line, float fromDeg, float toDeg)
+        static void DrawArc(LineRenderer line, float fromDeg, float toDeg, float z)
         {
             if (line == null) return;
             for (int i = 0; i < ArcPoints; i++)
             {
                 float d = Mathf.Deg2Rad * Mathf.Lerp(fromDeg, toDeg, i / (float)(ArcPoints - 1));
-                line.SetPosition(i, new Vector3(Radius * Mathf.Sin(d), Radius * Mathf.Cos(d), 0f));
+                line.SetPosition(i, new Vector3(Radius * Mathf.Sin(d), Radius * Mathf.Cos(d), z));
             }
         }
     }

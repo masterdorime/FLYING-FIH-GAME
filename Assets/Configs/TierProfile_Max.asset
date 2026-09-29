@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e49f68ba8c1063141a2e88f262a673fa, type: 3}
   m_Name: TierProfile_Max
   Tier: 4
-  MaxSpeed: 110
+  MaxSpeed: 73
   Acceleration: 120
   TurnRate: 200
   GravityScale: 0.8

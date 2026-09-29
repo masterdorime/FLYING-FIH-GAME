@@ -8,8 +8,9 @@ namespace FlyingFishMomentum
     {
         public const float SweepDegrees = 360f;
 
-        public static float NeedleAngle(float progress01) =>
-            -SweepDegrees * Mathf.Clamp01(progress01);
+        // Full clockwise sweep ending exactly on the hit angle.
+        public static float NeedleAngle(float progress01, float hitDeg = 0f) =>
+            hitDeg - SweepDegrees + SweepDegrees * Mathf.Clamp01(progress01);
 
         public static float HalfWidthDeg(float windowSeconds, float leadSeconds) =>
             SweepDegrees * windowSeconds / Mathf.Max(leadSeconds, 0.001f);

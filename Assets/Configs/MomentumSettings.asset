@@ -11,10 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e71606de74f3c04a8abe07c1099874d, type: 3}
   m_Name: MomentumSettings
-  MinSpeed: 8
+  MinSpeed: 5
   DragSwimming: 1.5
   DragFlying: 0.6
-  BreachSpeedThreshold: 30
+  BreachSpeedThreshold: 20
   DeviationDragGain: 3
   DeviationSpeedPenalty: 0.5
   FlySpeedBonus: 1.2

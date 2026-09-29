@@ -31,6 +31,7 @@ namespace FlyingFishMomentum
         System.Random _rng;
         bool _seeded;
         public int StreakCount { get; private set; }
+        public float HitAngleDeg { get; private set; }
 
         public void SetSeed(int seed)
         {
@@ -93,7 +94,7 @@ namespace FlyingFishMomentum
                 if (pressed)
                     Resolve(TimingEvaluator.Evaluate(now - Active.TargetTime,
                         speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount), tier);
-                else if (now > Active.TargetTime + good + _timing.LateBuffer)
+                else if (now > Active.TargetTime + good + Mathf.Min(_timing.LateBuffer, good))
                     Resolve(TimingResult.Miss, tier);
                 return;
             }
@@ -101,6 +102,8 @@ namespace FlyingFishMomentum
             if (_meters >= _nextBeat)
             {
                 _meters = 0f;
+                if (_rng == null) _rng = new System.Random(0);
+                HitAngleDeg = (float)(_rng.NextDouble() * 360.0);
                 Active = new ActivePrompt { Open = true, TargetTime = now + _timing.LeadTime };
             }
         }

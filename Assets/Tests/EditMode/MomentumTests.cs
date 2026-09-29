@@ -10,10 +10,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             var go = new GameObject("m");
             var m = go.AddComponent<PlayerMomentumController>();
             var s = ScriptableObject.CreateInstance<MomentumSettings>();
-            s.MinSpeed = 8f;
+            s.MinSpeed = 5f;
             s.DragSwimming = 1.5f;
             s.DragFlying = 0.6f;
-            s.BreachSpeedThreshold = 30f;
+            s.BreachSpeedThreshold = 20f;
             s.DeviationDragGain = 3f;
             s.DeviationSpeedPenalty = 0.5f;
             var t = ScriptableObject.CreateInstance<TimingSettings>();
@@ -84,7 +84,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             var m = NewMomentum();
             m.CurrentSpeed = 9f; m.TargetSpeed = 8f;
             for (int i = 0; i < 200; i++) m.Tick(1f, 1.5f, 180f);
-            Assert.AreEqual(8f, m.CurrentSpeed, 0.01f);
+            Assert.AreEqual(5f, m.CurrentSpeed, 0.01f);
         }
 
         [Test]
@@ -115,11 +115,11 @@ namespace FlyingFishMomentum.Tests.EditMode
             var m = NewMomentum(max: 100f, accel: 120f);
             m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
             m.ApplyTimingResult(TimingResult.Good, FlightTier.Medium);
-            Assert.AreEqual(58f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(53f, m.CurrentSpeed, 0.001f);
             m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Max);
-            Assert.AreEqual(88f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(63f, m.CurrentSpeed, 0.001f);
             m.ApplyTimingResult(TimingResult.Miss, FlightTier.Medium);
-            Assert.AreEqual(60f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(35f, m.CurrentSpeed, 0.001f);
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             m.CurrentSpeed = 10f; m.TargetSpeed = 8f;
             m.ApplyTimingResult(TimingResult.Miss, FlightTier.Max); // -70
             m.Tick(1f, 1.5f);
-            Assert.AreEqual(8f, m.CurrentSpeed, 0.01f);
+            Assert.AreEqual(5f, m.CurrentSpeed, 0.01f);
         }
 
         [Test]
@@ -137,10 +137,10 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var m = NewMomentum(max: 50f, accel: 120f);
             m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
-            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +16 → 66, above max
-            Assert.AreEqual(66f, m.CurrentSpeed, 0.001f);
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → 55, above max
+            Assert.AreEqual(55f, m.CurrentSpeed, 0.001f);
             m.Tick(1f, 0.6f); // drag chase pulls back toward 50
-            Assert.Less(m.CurrentSpeed, 66f);
+            Assert.Less(m.CurrentSpeed, 55f);
             Assert.Greater(m.CurrentSpeed, 50f);
         }
     }

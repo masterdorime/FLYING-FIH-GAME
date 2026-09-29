@@ -25,14 +25,14 @@ namespace FlyingFishMomentum.Tests.EditMode
             settings.MinSpeed = 8f;
             settings.DragSwimming = 1.5f;
             settings.DragFlying = 0.6f;
-            settings.BreachSpeedThreshold = 30f;
+            settings.BreachSpeedThreshold = 20f;
             momentum.Configure(settings);
             var sm = go.AddComponent<FlightStateMachine>();
             sm.Configure(
                 new List<FlightTierProfile>
                 {
-                    Profile(FlightTier.Low, 35f, 45f),
-                    Profile(FlightTier.High, 70f, 80f),
+                    Profile(FlightTier.Low, 23f, 45f),
+                    Profile(FlightTier.High, 47f, 80f),
                 },
                 momentum, settings);
             return sm;
@@ -85,7 +85,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             sm.OnTierChanged += (_, _) => fires++;
             sm.SetTier(FlightTier.High);
             Assert.AreEqual(1, fires);
-            Assert.AreEqual(70f, momentum.CurrentMaxSpeed);
+            Assert.AreEqual(47f, momentum.CurrentMaxSpeed);
             Assert.AreEqual(FlightTier.High, sm.ActiveTier);
             sm.SetTier(FlightTier.High);
             Assert.AreEqual(1, fires, "same-tier set must not re-fire");
@@ -105,7 +105,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void EvaluateSurfaceDrivesLocomotion()
         {
             var sm = NewStateMachineWithLowAndHigh(out var momentum);
-            momentum.CurrentSpeed = 35f;
+            momentum.CurrentSpeed = 23f;
             sm.EvaluateSurface(-1f, 1f);
             Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion);
             sm.EvaluateSurface(1f, -1f);

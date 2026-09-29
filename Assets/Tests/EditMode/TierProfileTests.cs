@@ -12,11 +12,11 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var guids = AssetDatabase.FindAssets("t:FlightTierProfile");
             Assert.AreEqual(5, guids.Length, "expected 5 tier profiles");
-            Assert.AreEqual(25f, SpeedOf(guids, FlightTier.None));
-            Assert.AreEqual(35f, SpeedOf(guids, FlightTier.Low));
-            Assert.AreEqual(50f, SpeedOf(guids, FlightTier.Medium));
-            Assert.AreEqual(70f, SpeedOf(guids, FlightTier.High));
-            Assert.AreEqual(110f, SpeedOf(guids, FlightTier.Max));
+            Assert.AreEqual(17f, SpeedOf(guids, FlightTier.None));
+            Assert.AreEqual(23f, SpeedOf(guids, FlightTier.Low));
+            Assert.AreEqual(33f, SpeedOf(guids, FlightTier.Medium));
+            Assert.AreEqual(47f, SpeedOf(guids, FlightTier.High));
+            Assert.AreEqual(73f, SpeedOf(guids, FlightTier.Max));
         }
 
         [Test]
@@ -26,10 +26,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(1, guids.Length, "expected 1 momentum settings asset");
             var s = AssetDatabase.LoadAssetAtPath<MomentumSettings>(
                 AssetDatabase.GUIDToAssetPath(guids[0]));
-            Assert.AreEqual(8f, s.MinSpeed);
+            Assert.AreEqual(5f, s.MinSpeed);
             Assert.AreEqual(1.5f, s.DragSwimming);
             Assert.AreEqual(0.6f, s.DragFlying);
-            Assert.AreEqual(30f, s.BreachSpeedThreshold);
+            Assert.AreEqual(20f, s.BreachSpeedThreshold);
         }
 
         static float SpeedOf(string[] guids, FlightTier tier)

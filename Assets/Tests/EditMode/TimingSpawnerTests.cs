@@ -101,7 +101,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
-            Assert.AreEqual(66f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(55f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -133,6 +133,23 @@ namespace FlyingFishMomentum.Tests.EditMode
             spawner.Tick(spawner.Active.TargetTime + 0.3f, 0f, 50f, FlightTier.Medium, false);
             Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
             Assert.AreEqual(0, spawner.StreakCount);
+        }
+
+        [Test]
+        public void HitAngleInRangeAndSeeded()
+        {
+            var a = NewSpawner(out _);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; a.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(a.Active.Open);
+            Assert.GreaterOrEqual(a.HitAngleDeg, 0f);
+            Assert.Less(a.HitAngleDeg, 360f);
+            float firstHit = a.HitAngleDeg;
+            Cleanup();
+            var b = NewSpawner(out _);
+            now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; b.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.AreEqual(firstHit, b.HitAngleDeg, 0.001f);
         }
     }
 }

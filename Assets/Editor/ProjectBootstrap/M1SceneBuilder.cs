@@ -74,8 +74,8 @@ namespace ProjectBootstrap
             seabed.transform.localScale = new Vector3(400f, 1f, 1600f);
             seabed.GetComponent<MeshRenderer>().sharedMaterial = sandMat;
 
-            // Slalom corridor z=30..90, inner gap 20 (turn radius at Low ≈ 14.3).
-            // Open water beyond z=120 for high-speed runs (radius at Max ≈ 31.5).
+            // Slalom corridor z=30..90, inner gap 20 (turn radius at Low ≈ 9.4).
+            // Open water beyond z=120 for high-speed runs (radius at Max ≈ 20.9).
             AddIsland("Island_West_1", new Vector3(-15f, 5f, 30f), rockMat);
             AddIsland("Island_East_1", new Vector3(15f, 5f, 50f), rockMat);
             AddIsland("Island_West_2", new Vector3(-15f, 5f, 70f), rockMat);

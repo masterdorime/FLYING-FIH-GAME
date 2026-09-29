@@ -75,6 +75,22 @@ SO-only tuning, dt-scaled determinism, timing evaluation independent
 from visual presentation (evaluator knows nothing of the dial),
 UI independent from gameplay state, events over coupling.
 
+## Change record — red sliver, moving hit, slow world (§34.1, 2026-09-29, approved)
+
+- **Old:** green perfect slice coplanar with yellow (invisible); hit always
+  at top; Good floor 0.09s; boosts +12/+16/+22/+30 & +6/+8/+11/+15;
+  tiers 25/35/50/70/110, Min 8, breach 30.
+- **Why:** feel pass could not tell Perfect from Good; world too fast.
+- **New:** perfect slice is red, depth-stacked above yellow (base 0,
+  good 0.01, perfect 0.02 toward camera); hit angle drawn per prompt
+  from the run seed (`Spawner.HitAngleDeg`, needle sweeps a full turn
+  onto it); `MinGoodWindow` 0 with grace capped at the window (top
+  speed is Perfect-or-Miss); boosts cut to +4/+5/+7/+10 and
+  +2/+3/+4/+5 (Miss untouched); tiers 17/23/33/47/73, Min 5,
+  breach 20, `MaxSpeedRef` 73. Accel/turn/gravity untouched.
+- **Tests:** sliver at top, Good-gone, seeded hit range + replay,
+  needle-on-red, rescaled tables/assets/pins.
+
 ## Change record — difficulty: seeded beats + curve + streak (§34.1, 2026-09-29, approved)
 
 - **Old:** fixed 60m beat; linear window shrink (perfect floor 0.035s); no streak effect.

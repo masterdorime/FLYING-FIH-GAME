@@ -36,7 +36,10 @@ namespace FlyingFishMomentum
             float abs = Mathf.Abs(offsetSeconds);
             if (abs <= perfect) return TimingResult.Perfect;
             if (abs <= good) return TimingResult.Good;
-            if (offsetSeconds > 0f && offsetSeconds <= good + s.LateBuffer) return TimingResult.Good;
+            // Grace never exceeds the window it extends: at top speed (good 0)
+            // only Perfect-or-Miss exists.
+            float grace = Mathf.Min(s.LateBuffer, good);
+            if (offsetSeconds > 0f && offsetSeconds <= good + grace) return TimingResult.Good;
             return TimingResult.Miss;
         }
     }
