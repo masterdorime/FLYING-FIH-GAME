@@ -75,6 +75,18 @@ SO-only tuning, dt-scaled determinism, timing evaluation independent
 from visual presentation (evaluator knows nothing of the dial),
 UI independent from gameplay state, events over coupling.
 
+## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
+
+- **Old:** tier cruise speeds; needle parked on red at the hit moment.
+- **Why:** feel pass wants a climb-from-slow progression and a live needle.
+- **New:** runs spawn at `StartSpeed` 10 with target pinned 10 (debug
+  scaffold); Perfect/Good stack through burst overflow, hard cap
+  `SpeedCap` 70 enforced in `ApplyTimingResult` (tier max still rules
+  upward, so M3 gauge tiers keep working); drag sags back to 10.
+  Needle progress unclamped — it drifts past red until press or expiry.
+  Tier bands stay for turning/breach/windows but are dormant for speed
+  until M3 replans the gauge around this world.
+
 ## Change record — red sliver, moving hit, slow world (§34.1, 2026-09-29, approved)
 
 - **Old:** green perfect slice coplanar with yellow (invisible); hit always

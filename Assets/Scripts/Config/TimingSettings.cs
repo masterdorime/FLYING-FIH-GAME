@@ -25,6 +25,9 @@ namespace FlyingFishMomentum
         public float[] PerfectBoost = { 0f, 4f, 5f, 7f, 10f };
         public float[] GoodBoost = { 0f, 2f, 3f, 4f, 5f };
         public float[] MissPenalty = { 0f, 18f, 28f, 45f, 70f }; // positive magnitudes
+        // Gearless climb: runs start slow, hits stack toward this cap.
+        public float StartSpeed = 10f;
+        public float SpeedCap = 70f;
 
         public float DeltaFor(TimingResult r, FlightTier t)
         {

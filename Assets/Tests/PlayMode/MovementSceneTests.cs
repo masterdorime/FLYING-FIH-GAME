@@ -238,10 +238,20 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             Assert.IsNotNull(spawner, "spawner not wired in scene");
-            sm.SetTier(FlightTier.Medium); sm.Momentum.TargetSpeed = 33f;
+            sm.SetTier(FlightTier.Medium); sm.Momentum.TargetSpeed = 20f;
             float t = 0f;
             while (!spawner.Active.Open && t < 10f) { t += Time.deltaTime; yield return null; }
             Assert.IsTrue(spawner.Active.Open, "no prompt after 60m of travel");
+        }
+
+        [UnityTest]
+        public IEnumerator SpawnStartsAtTen()
+        {
+            // Gearless climb: every run starts at speed 10, target pinned 10.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            yield return null;
+            Assert.AreEqual(10f, sm.Momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(10f, sm.Momentum.TargetSpeed, 0.5f);
         }
 
         [UnityTest]
@@ -254,7 +264,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             sm.SetTier(FlightTier.Medium);
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
-            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
             const float step = 1f / 60f;
             float now = 0f;
             int guard = 0;
@@ -265,10 +275,10 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             Assert.IsTrue(spawner.Active.Open, "prompt never opened");
             yield return null;
-            spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.Medium, true);
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
-            Assert.AreEqual(38f, sm.Momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(15f, sm.Momentum.CurrentSpeed, 0.5f);
             yield break;
         }
 
@@ -281,7 +291,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             sm.SetTier(FlightTier.Medium);
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
-            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
             const float step = 1f / 60f;
             float now = 0f;
             int guard = 0;
@@ -292,11 +302,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             Assert.IsTrue(spawner.Active.Open, "prompt never opened");
             yield return null;
-            spawner.Tick(spawner.Active.TargetTime + 0.3f, 0f, 50f, FlightTier.Medium, false);
+            spawner.Tick(spawner.Active.TargetTime + 0.3f, 0f, 10f, FlightTier.Medium, false);
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
             Assert.IsFalse(spawner.Active.Open);
-            Assert.AreEqual(5f, sm.Momentum.CurrentSpeed, 0.5f);
+            // Raw apply has no floor (MinSpeed floor lives in Tick, covered
+            // in EditMode): 10 - 28 = -18.
+            Assert.AreEqual(-18f, sm.Momentum.CurrentSpeed, 0.5f);
             yield break;
         }
 
@@ -310,7 +322,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             sm.SetTier(FlightTier.Medium);
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
-            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            sm.Momentum.CurrentSpeed = 25f; sm.Momentum.TargetSpeed = 25f;
             const float step = 1f / 60f;
             float now = 0f;
             int guard = 0;
@@ -387,7 +399,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 spawner.Tick(now, step, 50f, FlightTier.Medium, false);
                 yield return null;
             }
-            Assert.AreEqual(1f, spawner.Progress01, 0.01f);
+            Assert.AreEqual(1f, spawner.Progress01, 0.02f); // fixed-step overshoot ≤ 1 step
             Assert.AreEqual(spawner.HitAngleDeg, dial.NeedleAngleZ, 10f, "needle missed red at target");
         }
 

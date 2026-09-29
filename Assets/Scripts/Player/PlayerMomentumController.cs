@@ -41,12 +41,16 @@ namespace FlyingFishMomentum
         }
 
         // M2 timing consequences (PRD §6.3). Perfect/Good bursts may overflow
-        // the tier max up to max + boost, then decay back through drag.
+        // the tier max; the ceiling is whichever is higher: tier max + boost
+        // or the gearless-climb SpeedCap (tiers stay authoritative upward,
+        // so M3 gauge tiers keep working above the cap).
         public void ApplyTimingResult(TimingResult result, FlightTier tier)
         {
             if (_timing == null) return;
             float delta = _timing.DeltaFor(result, tier);
-            CurrentSpeed = Mathf.Min(CurrentSpeed + delta, _maxSpeed + Mathf.Max(0f, delta));
+            float ceiling = _maxSpeed + Mathf.Max(0f, delta);
+            ceiling = Mathf.Max(ceiling, _timing.SpeedCap);
+            CurrentSpeed = Mathf.Min(CurrentSpeed + delta, ceiling);
         }
 
         public void Tick(float dt, float dragRate, float deviationDeg = 0f, float speedBonus = 1f)

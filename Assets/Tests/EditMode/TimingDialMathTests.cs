@@ -19,6 +19,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(90f, TimingDialMath.NeedleAngle(1f, 90f), 0.001f);
             Assert.AreEqual(-270f, TimingDialMath.NeedleAngle(0f, 90f), 0.001f);
             Assert.AreEqual(200f, TimingDialMath.NeedleAngle(1f, 200f), 0.001f);
+            Assert.AreEqual(270f, TimingDialMath.NeedleAngle(1.5f, 90f), 0.001f);
         }
 
         [Test]
@@ -30,11 +31,12 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void ProgressClampsBothEnds()
+        public void ProgressRunsPastTarget()
         {
-            Assert.AreEqual(0f, TimingDialMath.Progress01(targetTime: 10f, now: 5f, lead: 1f), 0.001f);
-            Assert.AreEqual(0.5f, TimingDialMath.Progress01(targetTime: 10f, now: 9.5f, lead: 1f), 0.001f);
-            Assert.AreEqual(1f, TimingDialMath.Progress01(targetTime: 10f, now: 10.5f, lead: 1f), 0.001f);
+            // No parking: past the hit moment progress exceeds 1 (drift).
+            Assert.AreEqual(0f, TimingDialMath.Progress01(targetTime: 10f, now: 9f, lead: 1f), 0.001f);
+            Assert.AreEqual(1f, TimingDialMath.Progress01(targetTime: 10f, now: 10f, lead: 1f), 0.001f);
+            Assert.AreEqual(1.5f, TimingDialMath.Progress01(targetTime: 10f, now: 10.5f, lead: 1f), 0.001f);
         }
     }
 }

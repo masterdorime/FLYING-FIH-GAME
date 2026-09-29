@@ -12,15 +12,18 @@ namespace FlyingFishMomentum
         [SerializeField] FlightStateMachine _sm;
         [SerializeField] CameraSpeedReactor _camera;
         [SerializeField] PlayerMovementController _movement;
+        [SerializeField] TimingSettings _timing;
 
         public void Configure(
             FlightStateMachine sm,
             CameraSpeedReactor camera,
-            PlayerMovementController movement)
+            PlayerMovementController movement,
+            TimingSettings timing)
         {
             _sm = sm;
             _camera = camera;
             _movement = movement;
+            _timing = timing;
         }
 
         void Start()
@@ -30,7 +33,14 @@ namespace FlyingFishMomentum
             // M2: timing drives speed now (digits deleted); tier locked to
             // Medium until the M3 gauge moves it. Subscribers attach in
             // OnEnable, so this SetTier reaches ApplyProfile.
+            // Gearless climb: spawn slow with the target pinned slow — speed
+            // comes only from hits (capped), never from the chase.
             if (_sm != null) _sm.SetTier(FlightTier.Medium);
+            if (_sm != null && _sm.Momentum != null && _timing != null)
+            {
+                _sm.Momentum.CurrentSpeed = _timing.StartSpeed;
+                _sm.Momentum.TargetSpeed = _timing.StartSpeed;
+            }
             if (_movement != null)
                 _movement.Input.Gameplay.Pause.performed += OnPause;
         }

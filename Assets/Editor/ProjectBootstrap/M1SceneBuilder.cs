@@ -116,7 +116,7 @@ namespace ProjectBootstrap
             // Debug scaffold.
             var debug = new GameObject("M1Debug");
             var dbgInput = debug.AddComponent<M1DebugInput>();
-            dbgInput.Configure(sm, reactor, movement);
+            dbgInput.Configure(sm, reactor, movement, timingSettings);
             // Timing scaffold (M2).
             var timingGo = new GameObject("Timing");
             var spawner = timingGo.AddComponent<TimingPromptSpawner>();

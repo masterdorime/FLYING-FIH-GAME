@@ -143,5 +143,14 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.Less(m.CurrentSpeed, 55f);
             Assert.Greater(m.CurrentSpeed, 50f);
         }
+
+        [Test]
+        public void PerfectRespectsSpeedCap()
+        {
+            var m = NewMomentum(max: 50f, accel: 120f);
+            m.CurrentSpeed = 69f; m.TargetSpeed = 50f;
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → capped 70
+            Assert.AreEqual(70f, m.CurrentSpeed, 0.001f);
+        }
     }
 }

@@ -40,3 +40,5 @@ MonoBehaviour:
   - 28
   - 45
   - 70
+  StartSpeed: 10
+  SpeedCap: 70
