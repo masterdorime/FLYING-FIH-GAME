@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondentSource: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e1c88477a1b5f6429b02cedf8abe3be, type: 3}
+  m_Name: TimingSettings
+  PromptEveryMeters: 60
+  LeadTime: 1
+  PerfectWindow: 0.07
+  MinPerfectWindow: 0.035
+  GoodWindow: 0.18
+  MinGoodWindow: 0.09
+  LateBuffer: 0.06
+  PerfectBoost:
+  - 0
+  - 12
+  - 16
+  - 22
+  - 30
+  GoodBoost:
+  - 0
+  - 6
+  - 8
+  - 11
+  - 15
+  MissPenalty:
+  - 0
+  - 18
+  - 28
+  - 45
+  - 70
