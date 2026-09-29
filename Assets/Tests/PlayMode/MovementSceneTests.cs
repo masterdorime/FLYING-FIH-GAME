@@ -452,6 +452,57 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ChargeBarVisibleDuringCharge()
+        {
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var bar = Object.FindFirstObjectByType<ChargeBar>();
+            Assert.IsNotNull(bar, "charge bar not wired in scene");
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            Assert.IsFalse(bar.Visible, "bar visible with no charge");
+            mover.transform.position = spawner.Rings[0].transform.position;
+            spawner.CheckRingTrigger(0f, mover.transform.position);
+            Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+            yield return null;
+            yield return null;
+            Assert.IsTrue(bar.Visible, "bar hidden during charge");
+            float now = 0f;
+            int guard = 0;
+            while (spawner.ChargeActive && guard++ < 200)
+            {
+                now += 0.5f;
+                spawner.Tick(now, 0.5f, 10f, FlightTier.Medium, false, false);
+            }
+            yield return null;
+            yield return null;
+            Assert.IsFalse(bar.Visible, "bar stuck visible after charge");
+        }
+
+        [UnityTest]
+        public IEnumerator RingSwimThroughTriggersLive()
+        {
+            // Live Update path: park the fish inside ring 1, charge must start.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Medium);
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.transform.position = spawner.Rings[0].transform.position;
+            // Freeze the fish on the ring: first-frame hitches in batchmode
+            // can fling it past the 2m trigger window before spawner.Update
+            // runs. Spawner keeps updating while mover is off.
+            mover.enabled = false;
+            float t = 0f;
+            while (!spawner.ChargeActive && t < 3f) { t += Time.deltaTime; yield return null; }
+            Assert.IsTrue(spawner.ChargeActive, "swimming through a ring did not start charge");
+            Assert.AreEqual(3, spawner.ChargeOrder.Length);
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
