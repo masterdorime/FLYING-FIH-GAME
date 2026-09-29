@@ -40,6 +40,15 @@ namespace FlyingFishMomentum
             CurrentSpeed = Mathf.Min(CurrentSpeed + amount, _maxSpeed);
         }
 
+        // Charge-sequence gains (rings): ratchet the cruise target itself so
+        // gains stick, capped at SpeedCap. No penalties here by design.
+        public void AddChargeGain(float amount)
+        {
+            if (_timing == null || amount <= 0f) return;
+            TargetSpeed = Mathf.Clamp(TargetSpeed + amount, _settings.MinSpeed, _timing.SpeedCap);
+            CurrentSpeed = Mathf.Min(CurrentSpeed + amount, _timing.SpeedCap);
+        }
+
         // M2 timing consequences (PRD §6.3). Hits ratchet the cruise target
         // itself so gains stick (drag sags toward earned speed, never below
         // it); Miss drops target to the MinSpeed floor. Perfect/Good bursts

@@ -164,5 +164,19 @@ namespace FlyingFishMomentum.Tests.EditMode
             for (int i = 0; i < 240; i++) m.Tick(1f / 60f, 1.5f); // 4s of swim
             Assert.Greater(m.CurrentSpeed, 12f, "Perfect gain bled away before the next prompt");
         }
+
+        [Test]
+        public void ChargeGainRatchetsAndCaps()
+        {
+            // Charge gains stick (target ratchets too) and obey the cap.
+            var m = NewMomentum(max: 100f, accel: 120f);
+            m.CurrentSpeed = 10f; m.TargetSpeed = 10f;
+            m.AddChargeGain(2f);
+            Assert.AreEqual(12f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(12f, m.TargetSpeed, 0.001f);
+            m.AddChargeGain(100f);
+            Assert.AreEqual(70f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(70f, m.TargetSpeed, 0.001f);
+        }
     }
 }
