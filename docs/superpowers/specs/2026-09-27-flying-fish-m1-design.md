@@ -129,3 +129,12 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - **Affected systems:** `HeadingMath.Step` only. `TickMove` deviation feed now peaks at 60° (max drag multiplier 2×, was 4× at 180°).
 - **New behavior:** dodging/steering inside a ±60° forward cone; sustained full stick pins at the cone edge, never reverses.
 - **Updated acceptance:** `YawClampsToForwardConeBothDirections`, `SustainedFullStickNeverExceedsCone` (both watched RED→GREEN); `PitchClampsAndYawWraps` rewritten as `PitchClampsAndYawClampsToCone`; prior "backward is self-defeating" sign-off superseded by "backward is unreachable."
+
+## Change record — swim/fly handling split (§34.1, 2026-09-28, approved)
+
+- **Current requirement:** swim and fly share top speed and near-equal turn rates; only drag/gravity differ.
+- **Reason for conflict:** feel pass reports swim and fly feel identical; M1 needs distinguishable states even before M5 visuals.
+- **Proposed change:** fast-and-swoopy air, grippy water (swim untouched): new SO tunable `FlySpeedBonus` 1.2 (+20% chased target AND cap in Fly); all-tier `AirControl` 0.65 (wide arcs); stronger per-tier `GravityScale` (None 1.2 → Max 0.8) so climbs run out into glide.
+- **Affected systems:** `PlayerMomentumController.Tick` (new `speedBonus` param, cap scales too), `PlayerMovementController.TickMove` (passes bonus when flying), `MomentumSettings` + asset, all five tier profiles.
+- **New behavior:** breaching feels like a boost; sustained air turns are wide; unpowered level flight always glides out back to swim.
+- **Updated acceptance:** `FlyBonusRaisesChasedTarget`, `AirTurnsWiderThanWaterTurns`, `LevelFlightEventuallyGlidesOut` (turn test watched RED on old tuning); human feel pass re-confirms.
