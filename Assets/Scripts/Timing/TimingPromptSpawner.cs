@@ -17,6 +17,8 @@ namespace FlyingFishMomentum
         public TimingResult LastResult { get; private set; }
         public bool HasResolved { get; private set; }
         public TimingSettings Settings => _timing;
+        public MomentumSettings MomSettings => _momSettings;
+        public float Progress01 { get; private set; }
 
         [SerializeField] PlayerMovementController _movement;
         [SerializeField] PlayerMomentumController _momentum;
@@ -58,6 +60,8 @@ namespace FlyingFishMomentum
             if (_momentum == null || _timing == null || _momSettings == null) return;
             if (Active.Open)
             {
+                Progress01 = TimingDialMath.Progress01(
+                    Active.TargetTime, now, _timing.LeadTime);
                 float good = TimingEvaluator.GoodWindowAt(
                     speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef);
                 if (pressed)
@@ -83,6 +87,7 @@ namespace FlyingFishMomentum
             LastResult = result;
             HasResolved = true;
             Active = new ActivePrompt();
+            Progress01 = 0f;
             _meters = 0f;
         }
     }

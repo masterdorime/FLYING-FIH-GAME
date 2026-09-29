@@ -326,6 +326,82 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator DialVisibleOnlyWhileOpen()
+        {
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var dial = Object.FindFirstObjectByType<TimingPromptDial>();
+            Assert.IsNotNull(dial, "dial not wired in scene");
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 50f; sm.Momentum.TargetSpeed = 50f;
+            Assert.IsFalse(dial.Visible, "dial visible with no prompt");
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+            }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            yield return null;
+            yield return null; // let dial.Update observe the open prompt
+            Assert.IsTrue(dial.Visible, "dial hidden while prompt open");
+            spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            yield return null;
+            Assert.IsFalse(dial.Visible, "dial stuck visible after resolve");
+        }
+
+        [UnityTest]
+        public IEnumerator NeedleLandsOnGreenAtTarget()
+        {
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var dial = Object.FindFirstObjectByType<TimingPromptDial>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 50f; sm.Momentum.TargetSpeed = 50f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+            }
+            float target = spawner.Active.TargetTime;
+            while (now < target && guard++ < 400)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+                yield return null;
+            }
+            Assert.AreEqual(1f, spawner.Progress01, 0.01f);
+            float landed = Mathf.Abs(dial.NeedleAngleZ % 360f);
+            Assert.Less(Mathf.Min(landed, 360f - landed), 10f, "needle missed green at target");
+        }
+
+        [UnityTest]
+        public IEnumerator LongRunStaysOverWater()
+        {
+            // Runway proof: 8s at Max must stay over the seabed (old water ended at z=700).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.TargetSpeed = 110f;
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            yield return new WaitForSeconds(8f);
+            var p = sm.transform.position;
+            Assert.Greater(p.z, 750f, "did not reach the new water zone");
+            Assert.Less(Mathf.Abs(p.y + 3f), 1f, "left level swim on the long run");
+            Assert.IsTrue(Physics.Raycast(p, Vector3.down, 50f), "no seabed under the fish");
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();

@@ -72,8 +72,22 @@ Flight gauge (§8), tier changes (locked Medium), combo/streak (§15),
 scoring, menus, tutorial, audio, VFX/juice (§18 stays camera + text
 only), obstacles, RunManager, saves. PRD §34 agent rules still bind:
 SO-only tuning, dt-scaled determinism, timing evaluation independent
-from visual presentation (evaluator knows nothing of the ring),
+from visual presentation (evaluator knows nothing of the dial),
 UI independent from gameplay state, events over coupling.
+
+## Change record — dial meter + longer runway (§34.1, 2026-09-29, approved)
+
+- **Old:** shrinking world-space ring around the fish; water/seabed span
+  z −100..700.
+- **Why:** feel pass found the ring unreadable and the runway too short
+  for timing play at speed.
+- **New:** Outlast-style world-space dial above the fish (billboarded):
+  green/yellow/red rim zones sized from live windows, needle lands on
+  green at the hit moment (`TimingDialMath` pure static + `TimingPromptDial`;
+  `TimingPromptSpawner.Progress01` exposes progress clock-independently).
+  Camera tagged `MainCamera` (billboarding depends on it). Water/seabed
+  span z −100..1500, camera far plane 2000. `TimingPromptRing` deleted.
+- **M5 note updated:** M5 reskins the dial (not the ring) + overlay text.
 
 ## Handoff notes for M3
 
@@ -81,5 +95,5 @@ UI independent from gameplay state, events over coupling.
   `FlightStateMachine.SetTier`; digits stay deleted.
 - M3 may re-tune `PromptEveryMeters`/`LeadTime` per-tier; spawner reads
   settings live so no code change needed.
-- M5 replaces the ring + overlay text with real UI/VFX and deletes
+- M5 replaces the dial + overlay text with real UI/VFX and deletes
   `[M1-SCAFFOLD]` leftovers.

@@ -58,10 +58,11 @@ namespace ProjectBootstrap
             lightGo.transform.rotation = Quaternion.Euler(-50f, -30f, 0f);
 
             // Water: visual only — MeshCollider removed so breaches pass through.
+            // Long runway (span z -100..1500) for M2 timing play at speed.
             var water = GameObject.CreatePrimitive(PrimitiveType.Plane);
             water.name = "Water";
-            water.transform.position = new Vector3(0f, 0f, 300f);
-            water.transform.localScale = new Vector3(40f, 1f, 80f);
+            water.transform.position = new Vector3(0f, 0f, 700f);
+            water.transform.localScale = new Vector3(40f, 1f, 160f);
             Object.DestroyImmediate(water.GetComponent<MeshCollider>());
             water.GetComponent<MeshRenderer>().sharedMaterial = waterMat;
 
@@ -69,8 +70,8 @@ namespace ProjectBootstrap
             // scaled MeshColliders misbehave).
             var seabed = GameObject.CreatePrimitive(PrimitiveType.Cube);
             seabed.name = "Seabed";
-            seabed.transform.position = new Vector3(0f, -12.5f, 300f);
-            seabed.transform.localScale = new Vector3(400f, 1f, 800f);
+            seabed.transform.position = new Vector3(0f, -12.5f, 700f);
+            seabed.transform.localScale = new Vector3(400f, 1f, 1600f);
             seabed.GetComponent<MeshRenderer>().sharedMaterial = sandMat;
 
             // Slalom corridor z=30..90, inner gap 20 (turn radius at Low ≈ 14.3).
@@ -104,8 +105,10 @@ namespace ProjectBootstrap
 
             // CameraRig.
             var rig = new GameObject("CameraRig");
+            rig.tag = "MainCamera"; // Camera.main billboarding (dial) depends on this
             rig.transform.position = new Vector3(0f, 2f, -12f);
-            rig.AddComponent<Camera>();
+            var rigCam = rig.AddComponent<Camera>();
+            rigCam.farClipPlane = 2000f; // long M2 runway stays visible
             var reactor = rig.AddComponent<CameraSpeedReactor>();
             reactor.Configure(camSettings, momSettings, momentum, sm, movement, player.transform);
             rig.transform.LookAt(player.transform.position);
@@ -118,10 +121,10 @@ namespace ProjectBootstrap
             var timingGo = new GameObject("Timing");
             var spawner = timingGo.AddComponent<TimingPromptSpawner>();
             spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor);
-            var ringGo = new GameObject("PromptRing");
+            var ringGo = new GameObject("PromptDial");
             ringGo.transform.SetParent(timingGo.transform, false);
-            var ring = ringGo.AddComponent<TimingPromptRing>();
-            ring.Configure(spawner, player.transform);
+            var ring = ringGo.AddComponent<TimingPromptDial>();
+            ring.Configure(spawner, player.transform, momentum);
             var overlay = debug.AddComponent<M1DebugOverlay>();
             overlay.Configure(momentum, sm, momSettings, movement, spawner);
 
