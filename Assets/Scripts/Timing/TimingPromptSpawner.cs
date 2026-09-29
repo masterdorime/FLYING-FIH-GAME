@@ -27,6 +27,31 @@ namespace FlyingFishMomentum
         [SerializeField] MomentumSettings _momSettings;
         [SerializeField] CameraSpeedReactor _camera;
         float _meters;
+        float _nextBeat = -1f;
+        System.Random _rng;
+        bool _seeded;
+        public int StreakCount { get; private set; }
+
+        public void SetSeed(int seed)
+        {
+            _rng = new System.Random(seed);
+            _seeded = true;
+            DrawBeat();
+        }
+
+        void Start()
+        {
+            // Fresh shuffle every run (unpredictable beats); tests lock a seed.
+            if (!_seeded) SetSeed(System.Environment.TickCount);
+        }
+
+        void DrawBeat()
+        {
+            if (_rng == null) _rng = new System.Random(0);
+            if (_timing == null) { _nextBeat = 60f; return; }
+            _nextBeat = Mathf.Lerp(_timing.BeatMinMeters, _timing.BeatMaxMeters,
+                (float)_rng.NextDouble());
+        }
 
         public void Configure(
             PlayerMovementController movement,
@@ -58,21 +83,22 @@ namespace FlyingFishMomentum
         public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed)
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
+            if (_nextBeat <= 0f) DrawBeat();
             if (Active.Open)
             {
                 Progress01 = TimingDialMath.Progress01(
                     Active.TargetTime, now, _timing.LeadTime);
                 float good = TimingEvaluator.GoodWindowAt(
-                    speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef);
+                    speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
                 if (pressed)
                     Resolve(TimingEvaluator.Evaluate(now - Active.TargetTime,
-                        speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef), tier);
+                        speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount), tier);
                 else if (now > Active.TargetTime + good + _timing.LateBuffer)
                     Resolve(TimingResult.Miss, tier);
                 return;
             }
             _meters += speed * dt;
-            if (_meters >= _timing.PromptEveryMeters)
+            if (_meters >= _nextBeat)
             {
                 _meters = 0f;
                 Active = new ActivePrompt { Open = true, TargetTime = now + _timing.LeadTime };
@@ -82,6 +108,8 @@ namespace FlyingFishMomentum
         void Resolve(TimingResult result, FlightTier tier)
         {
             _momentum.ApplyTimingResult(result, tier);
+            if (result == TimingResult.Miss) StreakCount = 0;
+            else StreakCount++;
             if (result == TimingResult.Perfect && _camera != null) _camera.PlayTierUpKick();
             if (result == TimingResult.Miss && _camera != null) _camera.PlayMissShake();
             LastResult = result;
@@ -89,6 +117,7 @@ namespace FlyingFishMomentum
             Active = new ActivePrompt();
             Progress01 = 0f;
             _meters = 0f;
+            DrawBeat();
         }
     }
 }

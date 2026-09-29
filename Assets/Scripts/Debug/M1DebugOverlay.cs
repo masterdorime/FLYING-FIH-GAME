@@ -42,6 +42,7 @@ namespace FlyingFishMomentum
                 timing = _spawner.HasResolved ? _spawner.LastResult.ToString().ToUpper()
                     : _spawner.Active.Open ? $"OPEN {Mathf.Max(0f, _spawner.Active.TargetTime - Time.time):F2}s"
                     : "-";
+            timing += $" x{_spawner?.StreakCount}";
             GUI.Label(new Rect(10, 10, 420, 150),
                 $"Speed {_momentum.CurrentSpeed:F1} / Target {_momentum.TargetSpeed:F1}\n" +
                 $"State {_sm.Locomotion} Tier {_sm.ActiveTier}\n" +

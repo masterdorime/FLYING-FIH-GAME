@@ -75,6 +75,19 @@ SO-only tuning, dt-scaled determinism, timing evaluation independent
 from visual presentation (evaluator knows nothing of the dial),
 UI independent from gameplay state, events over coupling.
 
+## Change record — difficulty: seeded beats + curve + streak (§34.1, 2026-09-29, approved)
+
+- **Old:** fixed 60m beat; linear window shrink (perfect floor 0.035s); no streak effect.
+- **Why:** feel pass found timing too easy and fully predictable.
+- **New:** beat drawn 40–80m from a `System.Random` seeded fresh every
+  run (`SetSeed` locks it for tests — deterministic rule honored);
+  squared speed curve (gentle cruise, brutal top); perfect floor 0.015s
+  (sliver); every straight hit multiplies windows ×0.97 down to half,
+  any Miss resets the streak (internal counter only, mirrored as `xN`
+  in the debug overlay — no combo system).
+- **Tests:** same-seed replay equality, beat bounds, curve values, streak
+  narrow + floor + reset, sliver at top speed.
+
 ## Change record — dial meter + longer runway (§34.1, 2026-09-29, approved)
 
 - **Old:** shrinking world-space ring around the fish; water/seabed span

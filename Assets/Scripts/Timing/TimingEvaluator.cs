@@ -3,22 +3,36 @@ using UnityEngine;
 namespace FlyingFishMomentum
 {
     // Pure timing judgment (spec S2). Offset 0 = exact hit moment,
-    // negative = early. No Unity state: fully unit-testable.
+    // negative = early. Speed factor is squared (gentle cruise, brutal top);
+    // streakCount multiplies windows down to the streak floor. No Unity
+    // state: fully unit-testable.
     public static class TimingEvaluator
     {
-        public static float PerfectWindowAt(float speed, TimingSettings s, float minSpeed, float maxSpeed) =>
-            Mathf.Lerp(s.PerfectWindow, s.MinPerfectWindow,
-                Mathf.InverseLerp(minSpeed, maxSpeed, speed));
+        public static float PerfectWindowAt(
+            float speed, TimingSettings s, float minSpeed, float maxSpeed, int streakCount = 0) =>
+            Mathf.Lerp(s.PerfectWindow, s.MinPerfectWindow, SpeedFactor(speed, minSpeed, maxSpeed))
+            * StreakMultiplier(streakCount, s);
 
-        public static float GoodWindowAt(float speed, TimingSettings s, float minSpeed, float maxSpeed) =>
-            Mathf.Lerp(s.GoodWindow, s.MinGoodWindow,
-                Mathf.InverseLerp(minSpeed, maxSpeed, speed));
+        public static float GoodWindowAt(
+            float speed, TimingSettings s, float minSpeed, float maxSpeed, int streakCount = 0) =>
+            Mathf.Lerp(s.GoodWindow, s.MinGoodWindow, SpeedFactor(speed, minSpeed, maxSpeed))
+            * StreakMultiplier(streakCount, s);
+
+        static float SpeedFactor(float speed, float minSpeed, float maxSpeed)
+        {
+            float t = Mathf.InverseLerp(minSpeed, maxSpeed, speed);
+            return t * t;
+        }
+
+        static float StreakMultiplier(int streakCount, TimingSettings s) =>
+            Mathf.Max(s.StreakFloor, Mathf.Pow(s.StreakShrink, Mathf.Max(0, streakCount)));
 
         public static TimingResult Evaluate(
-            float offsetSeconds, float speed, TimingSettings s, float minSpeed, float maxSpeed)
+            float offsetSeconds, float speed, TimingSettings s,
+            float minSpeed, float maxSpeed, int streakCount = 0)
         {
-            float perfect = PerfectWindowAt(speed, s, minSpeed, maxSpeed);
-            float good = GoodWindowAt(speed, s, minSpeed, maxSpeed);
+            float perfect = PerfectWindowAt(speed, s, minSpeed, maxSpeed, streakCount);
+            float good = GoodWindowAt(speed, s, minSpeed, maxSpeed, streakCount);
             float abs = Mathf.Abs(offsetSeconds);
             if (abs <= perfect) return TimingResult.Perfect;
             if (abs <= good) return TimingResult.Good;
