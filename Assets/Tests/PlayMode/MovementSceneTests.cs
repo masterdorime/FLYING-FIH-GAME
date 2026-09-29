@@ -239,6 +239,93 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator PerfectPressGainsSpeedInGame()
+        {
+            // Manual drive, honest stepping: spawner.Tick with an explicit clock.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 50f; sm.Momentum.TargetSpeed = 50f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+            }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            yield return null;
+            spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            Assert.IsTrue(spawner.HasResolved);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            Assert.AreEqual(66f, sm.Momentum.CurrentSpeed, 0.5f);
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator ExpiredPromptLosesSpeedInGame()
+        {
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 50f; sm.Momentum.TargetSpeed = 50f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+            }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            yield return null;
+            spawner.Tick(spawner.Active.TargetTime + 0.3f, 0f, 50f, FlightTier.Medium, false);
+            Assert.IsTrue(spawner.HasResolved);
+            Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
+            Assert.IsFalse(spawner.Active.Open);
+            Assert.AreEqual(22f, sm.Momentum.CurrentSpeed, 0.5f);
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator PromptSurvivesBreachMidOpen()
+        {
+            // Spawner ignores locomotion: breach while open, then resolve Perfect.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 50f; sm.Momentum.TargetSpeed = 50f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 200)
+            {
+                now += step;
+                spawner.Tick(now, step, 50f, FlightTier.Medium, false);
+            }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            yield return null;
+            guard = 0;
+            while (sm.Locomotion != PlayerLocomotionState.Flying && guard++ < 600)
+                mover.TickMove(new Vector2(0f, 1f), step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "breach failed mid-prompt");
+            Assert.IsTrue(spawner.Active.Open, "prompt died on breach");
+            spawner.Tick(spawner.Active.TargetTime, 0f, sm.Momentum.CurrentSpeed, FlightTier.Medium, true);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
