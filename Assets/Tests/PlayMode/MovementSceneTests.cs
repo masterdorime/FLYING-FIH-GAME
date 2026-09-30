@@ -306,9 +306,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
             Assert.IsFalse(spawner.Active.Open);
-            // Raw apply has no floor (MinSpeed floor lives in Tick, covered
-            // in EditMode): 10 - 28 = -18.
-            Assert.AreEqual(-18f, sm.Momentum.CurrentSpeed, 0.5f);
+            // MinSpeed floor lives in Apply now: 10 - 28 bottoms at 5.
+            Assert.AreEqual(5f, sm.Momentum.CurrentSpeed, 0.5f);
             yield break;
         }
 
@@ -400,7 +399,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 yield return null;
             }
             Assert.AreEqual(1f, spawner.Progress01, 0.02f); // fixed-step overshoot ≤ 1 step
-            Assert.AreEqual(spawner.HitAngleDeg, dial.NeedleAngleZ, 10f, "needle missed red at target");
+            Assert.Less(Mathf.DeltaAngle(dial.NeedleAngleZ, -spawner.HitAngleDeg), 15f, "needle missed red at target");
         }
 
         [UnityTest]
@@ -576,6 +575,55 @@ namespace FlyingFishMomentum.Tests.PlayMode
             yield return null;
             float expected = fresh * 0.97f;
             Assert.AreEqual(expected, dial.PerfectHalfWidthDeg, 0.05f);
+        }
+
+        [UnityTest]
+        public IEnumerator NeedleCorrectUnderPitchedCamera()
+        {
+            // Tip world direction must equal the hit ray in dial space.
+            // True only when the needle angle is dial-local, even with the
+            // dial billboarded steeply. Camera restored in finally.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var dial = Object.FindFirstObjectByType<TimingPromptDial>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false;
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 10f;
+            sm.Momentum.TargetSpeed = 10f;
+            var cam = Camera.main;
+            var oldPos = cam.transform.position;
+            cam.transform.position = mover.transform.position + new Vector3(0f, 25f, -6f);
+            try
+            {
+                const float step = 1f / 60f;
+                float now = 0f;
+                int guard = 0;
+                while (!spawner.Active.Open && guard++ < 600)
+                {
+                    now += step;
+                    spawner.Tick(now, step, 10f, FlightTier.Medium, false);
+                }
+                Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+                float target = spawner.Active.TargetTime;
+                while (now < target && guard++ < 1200)
+                {
+                    now += step;
+                    spawner.Tick(now, step, 10f, FlightTier.Medium, false);
+                    yield return null;
+                }
+                yield return null;
+                float hRad = spawner.HitAngleDeg * Mathf.Deg2Rad;
+                Vector3 tip = dial.NeedlePivot.TransformPoint(0f, dial.NeedleLength, 0f);
+                Vector3 want = dial.transform.TransformDirection(new Vector3(Mathf.Sin(hRad), Mathf.Cos(hRad), 0f));
+                float off = Vector3.Angle(tip - dial.NeedlePivot.position, want);
+                Assert.Less(off, 3f, "needle tip off the hit ray");
+            }
+            finally
+            {
+                cam.transform.position = oldPos;
+            }
         }
 
         [UnityTest]

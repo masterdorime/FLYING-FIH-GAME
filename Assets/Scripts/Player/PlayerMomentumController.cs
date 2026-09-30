@@ -62,7 +62,8 @@ namespace FlyingFishMomentum
             TargetSpeed = Mathf.Clamp(TargetSpeed + delta, _settings.MinSpeed, _timing.SpeedCap);
             float ceiling = _maxSpeed + Mathf.Max(0f, delta);
             ceiling = Mathf.Max(ceiling, _timing.SpeedCap);
-            CurrentSpeed = Mathf.Min(CurrentSpeed + delta, ceiling);
+            // Miss bottoms at MinSpeed here (no one-frame negative speed).
+            CurrentSpeed = Mathf.Clamp(CurrentSpeed + delta, _settings.MinSpeed, ceiling);
         }
 
         public void Tick(float dt, float dragRate, float deviationDeg = 0f, float speedBonus = 1f)
