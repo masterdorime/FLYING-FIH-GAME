@@ -235,5 +235,17 @@ namespace FlyingFishMomentum.Tests.EditMode
             for (int i = 0; i < 20; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false, true); }
             Assert.IsFalse(spawner.Active.Open, "beat prompt opened during charge");
         }
+
+        [Test]
+        public void FastJumpOverRingStillTriggers()
+        {
+            // A 0.1s hitch at 70u/s moves 7m through the 4m window: the
+            // segment check must catch the crossing, not just endpoints.
+            var spawner = NewSpawnerWithRing(out _, out _);
+            spawner.CheckRingTrigger(0f, new Vector3(0f, 0f, -10f));
+            Assert.IsFalse(spawner.ChargeActive);
+            spawner.CheckRingTrigger(0.1f, new Vector3(0f, 0f, 10f));
+            Assert.IsTrue(spawner.ChargeActive, "tunneled the ring");
+        }
     }
 }

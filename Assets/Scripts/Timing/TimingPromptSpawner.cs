@@ -28,6 +28,8 @@ namespace FlyingFishMomentum
         [SerializeField] MomentumSettings _momSettings;
         [SerializeField] CameraSpeedReactor _camera;
         [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
+        Vector3 _lastPlayerPos;
+        bool _hasLastPos;
         float _meters;
         float _nextBeat = -1f;
         float _lastTickNow = float.MinValue;
@@ -59,11 +61,15 @@ namespace FlyingFishMomentum
         {
             if (Charge.IsActive || _rings == null) return;
             if (_rng == null) _rng = new System.Random(0);
+            // Swept check: a hitch can move the fish clean through the 4m
+            // window between calls, so test the segment, not just endpoints.
+            Vector3 prev = _hasLastPos ? _lastPlayerPos : playerPos;
+            _lastPlayerPos = playerPos;
+            _hasLastPos = true;
             foreach (var ring in _rings)
             {
                 if (ring == null || ring.Consumed) continue;
-                Vector3 d = ring.transform.position - playerPos;
-                if (Mathf.Abs(d.z) < 2f && new Vector2(d.x, d.y).magnitude < 3f)
+                if (SegmentPassesDisc(prev, playerPos, ring.transform.position, 3f))
                 {
                     ring.Consume();
                     var order = new ChargeStepKind[3];
@@ -74,6 +80,17 @@ namespace FlyingFishMomentum
                     return;
                 }
             }
+        }
+
+        static bool SegmentPassesDisc(Vector3 a, Vector3 b, Vector3 center, float radius)
+        {
+            Vector3 ab = b - a;
+            float t = Mathf.Clamp01(Vector3.Dot(center - a, ab) / Mathf.Max(ab.sqrMagnitude, 0.0001f));
+            if ((a + ab * t - center).magnitude > radius) return false;
+            float za = a.z - center.z;
+            float zb = b.z - center.z;
+            if (Mathf.Abs(za) < 2f || Mathf.Abs(zb) < 2f) return true;
+            return za * zb < 0f;
         }
 
         void Start()
