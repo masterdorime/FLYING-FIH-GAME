@@ -48,3 +48,5 @@ MonoBehaviour:
   ChargeStepGain: 2
   ChargeTapGoodGain: 1
   ChargeJackpot: 4
+  ChargeSlowScale: 0.4
+  ChargeSlowDuration: 1.2

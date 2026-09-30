@@ -24,6 +24,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         [TearDown]
         public void Cleanup()
         {
+            Time.timeScale = 1f; // ring triggers touch global slow-mo
             foreach (var go in GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
                 if (go.name == "spawner" || go.name == "m") Object.DestroyImmediate(go);
         }
@@ -279,6 +280,47 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.IsTrue(spawner.ChargeActive, "charge did not start");
             Assert.IsFalse(spawner.Active.Open, "beat stayed open under charge");
             Assert.IsFalse(spawner.HasResolved, "cancelled beat judged anything");
+        }
+
+        [Test]
+        public void RingTriggerStartsSlowMo()
+        {
+            var spawner = NewSpawnerWithRing(out _, out _);
+            try
+            {
+                spawner.CheckRingTrigger(0f, Vector3.zero);
+                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
+            }
+            finally { Time.timeScale = 1f; }
+        }
+
+        [Test]
+        public void SlowMoExpiresBackToFullSpeed()
+        {
+            var spawner = NewSpawnerWithRing(out _, out _);
+            try
+            {
+                spawner.CheckRingTrigger(0f, Vector3.zero);
+                spawner.UpdateSlowMo(0.5f);
+                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
+                spawner.UpdateSlowMo(0.8f);
+                Assert.AreEqual(1f, Time.timeScale, 0.001f);
+            }
+            finally { Time.timeScale = 1f; }
+        }
+
+        [Test]
+        public void SlowMoYieldsToPause()
+        {
+            var spawner = NewSpawnerWithRing(out _, out _);
+            try
+            {
+                spawner.CheckRingTrigger(0f, Vector3.zero);
+                Time.timeScale = 0f; // player pauses mid-slow-mo
+                spawner.UpdateSlowMo(5f);
+                Assert.AreEqual(0f, Time.timeScale, 0.001f);
+            }
+            finally { Time.timeScale = 1f; }
         }
 
         [Test]

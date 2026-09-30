@@ -45,6 +45,7 @@ namespace FlyingFishMomentum
             ? $"CHARGE {Charge.StepIndex + 1}/{Charge.StepCount} {Charge.CurrentKind}"
             : string.Empty;
         public IReadOnlyList<ChargeRing> Rings => _rings;
+        public float SlowTimer { get; private set; }
 
         public void SetSeed(int seed)
         {
@@ -80,6 +81,12 @@ namespace FlyingFishMomentum
                     Active = new ActivePrompt();
                     Progress01 = 0f;
                     _meters = 0f;
+                    // Slow-mo beat to answer the charge: pause always wins.
+                    if (_timing != null && Time.timeScale != 0f)
+                    {
+                        Time.timeScale = _timing.ChargeSlowScale;
+                        SlowTimer = _timing.ChargeSlowDuration;
+                    }
                     var order = new ChargeStepKind[3];
                     for (int i = 0; i < order.Length; i++)
                         order[i] = _rngCharge.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
@@ -134,6 +141,7 @@ namespace FlyingFishMomentum
         void Update()
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
+            UpdateSlowMo(Time.unscaledDeltaTime);
             bool pressed = false;
             bool held = false;
             if (_movement != null && _movement.Input != null)
@@ -146,6 +154,17 @@ namespace FlyingFishMomentum
                 _momentum.CurrentSpeed,
                 _sm != null ? _sm.ActiveTier : FlightTier.None,
                 pressed, held);
+        }
+
+        // Slow-mo runs on the unpausable clock; an expired timer restores
+        // full speed, but never overrides an active pause (scale 0).
+        public void UpdateSlowMo(float unscaledDt)
+        {
+            if (SlowTimer <= 0f || _timing == null) return;
+            SlowTimer -= unscaledDt;
+            if (Time.timeScale != 0f) Time.timeScale = _timing.ChargeSlowScale;
+            if (SlowTimer <= 0f && Time.timeScale == _timing.ChargeSlowScale)
+                Time.timeScale = 1f;
         }
 
         public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false)

@@ -35,6 +35,10 @@ namespace FlyingFishMomentum
         public float ChargeStepGain = 2f;
         public float ChargeTapGoodGain = 1f;
         public float ChargeJackpot = 4f;
+        // Ring entry slow-motion: world dips to this scale for this long
+        // (wall clock), giving hands time to answer the charge steps.
+        public float ChargeSlowScale = 0.4f;
+        public float ChargeSlowDuration = 1.2f;
 
         public float DeltaFor(TimingResult r, FlightTier t)
         {
