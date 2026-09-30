@@ -29,6 +29,14 @@ namespace FlyingFishMomentum
             _target = target;
         }
 
+        // Fill spans the full bar exactly at the hold limit; the marker sits
+        // where the required duration lands (release zone begins there).
+        public static float FillFraction(float progress01, float required, float limit) =>
+            UnityEngine.Mathf.Clamp01(progress01 * required / UnityEngine.Mathf.Max(limit, 0.001f));
+
+        public static float MarkerFraction(float required, float limit) =>
+            UnityEngine.Mathf.Clamp01(required / UnityEngine.Mathf.Max(limit, 0.001f));
+
         void Awake()
         {
             _visuals = new GameObject("Visuals");
@@ -94,9 +102,11 @@ namespace FlyingFishMomentum
             if (hold)
             {
                 float progress = charge.StepProgress01(Time.time, s);
-                _fill.localScale = new Vector3(Mathf.Max(BarLength * Mathf.Clamp01(progress), 0.001f), 0.15f, 0.15f);
+                float frac = FillFraction(progress, s.HoldRequired, s.HoldLimit);
+                _fill.localScale = new Vector3(Mathf.Max(BarLength * frac, 0.001f), 0.15f, 0.15f);
                 _fill.localPosition = new Vector3(-BarLength / 2f + _fill.localScale.x / 2f, 0f, 0.01f);
-                _marker.localPosition = new Vector3(-BarLength / 2f + BarLength / (s.HoldLimit / Mathf.Max(s.HoldRequired, 0.001f)), 0f, 0.02f);
+                _marker.localPosition = new Vector3(
+                    -BarLength / 2f + BarLength * MarkerFraction(s.HoldRequired, s.HoldLimit), 0f, 0.02f);
                 _fillMat.color = progress >= 1f ? Color.green : Color.yellow;
             }
             else
