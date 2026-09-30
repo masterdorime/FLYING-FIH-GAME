@@ -63,6 +63,7 @@ namespace FlyingFishMomentum
             ActiveTier = tier;
             ActiveProfile = profile;
             if (_momentum != null) _momentum.SetLimits(profile.MaxSpeed, profile.Acceleration);
+            if (_momentum != null && _momentum.TargetSpeed > profile.MaxSpeed) _momentum.TargetSpeed = profile.MaxSpeed;
             OnTierChanged?.Invoke(old, tier);
         }
 

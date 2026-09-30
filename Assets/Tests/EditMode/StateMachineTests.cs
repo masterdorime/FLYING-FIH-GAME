@@ -102,6 +102,26 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void TierDownClampsTarget()
+        {
+            var sm = NewStateMachineWithLowAndHigh(out var momentum);
+            sm.SetTier(FlightTier.High);
+            momentum.TargetSpeed = 47f;
+            sm.SetTier(FlightTier.Low);
+            Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
+            Assert.AreEqual(23f, momentum.TargetSpeed, 0.001f);
+        }
+        [Test]
+        public void TierUpNeverGiftsSpeed()
+        {
+            var sm = NewStateMachineWithLowAndHigh(out var momentum);
+            sm.SetTier(FlightTier.Low);
+            momentum.TargetSpeed = 10f;
+            sm.SetTier(FlightTier.High);
+            Assert.AreEqual(FlightTier.High, sm.ActiveTier);
+            Assert.AreEqual(10f, momentum.TargetSpeed, 0.001f);
+        }
+        [Test]
         public void EvaluateSurfaceDrivesLocomotion()
         {
             var sm = NewStateMachineWithLowAndHigh(out var momentum);

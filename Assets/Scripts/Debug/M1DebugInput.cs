@@ -30,12 +30,8 @@ namespace FlyingFishMomentum
         {
             // Initial tier bootstraps itself in FlightStateMachine.Awake —
             // nothing here may depend on Start() ordering (see ledger).
-            // M2: timing drives speed now (digits deleted); tier locked to
-            // Medium until the M3 gauge moves it. Subscribers attach in
-            // OnEnable, so this SetTier reaches ApplyProfile.
             // Gearless climb: spawn slow with the target pinned slow — speed
             // comes only from hits (capped), never from the chase.
-            if (_sm != null) _sm.SetTier(FlightTier.Medium);
             if (_sm != null && _sm.Momentum != null && _timing != null)
             {
                 _sm.Momentum.CurrentSpeed = _timing.StartSpeed;
