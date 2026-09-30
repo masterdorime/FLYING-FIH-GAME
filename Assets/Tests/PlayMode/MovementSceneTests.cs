@@ -539,6 +539,46 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator DialZonesFollowStreak()
+        {
+            // The drawn red slice must match the judged windows: after one
+            // Perfect (streak 1), the perfect half-width shrinks ×0.97.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var dial = Object.FindFirstObjectByType<TimingPromptDial>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            const float step = 1f / 60f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 600)
+            {
+                now += step;
+                spawner.Tick(now, step, 10f, FlightTier.Medium, false);
+            }
+            yield return null;
+            yield return null;
+            float fresh = dial.PerfectHalfWidthDeg;
+            Assert.Greater(fresh, 1f, "no red slice on fresh prompt");
+            spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.Medium, true);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            sm.Momentum.CurrentSpeed = 10f; // hold speed fixed: isolate the streak effect
+            guard = 0;
+            while (!spawner.Active.Open && guard++ < 600)
+            {
+                now += step;
+                spawner.Tick(now, step, 10f, FlightTier.Medium, false);
+            }
+            yield return null;
+            yield return null;
+            float expected = fresh * 0.97f;
+            Assert.AreEqual(expected, dial.PerfectHalfWidthDeg, 0.05f);
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();

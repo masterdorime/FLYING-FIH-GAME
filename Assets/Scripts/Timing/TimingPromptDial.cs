@@ -98,12 +98,13 @@ namespace FlyingFishMomentum
             NeedleAngleZ = TimingDialMath.NeedleAngle(progress, hit);
             _pivot.transform.rotation = Quaternion.Euler(0f, 0f, NeedleAngleZ);
             float speed = _momentum.CurrentSpeed;
+            int streak = _spawner.StreakCount;
             float perfectHalf = TimingDialMath.HalfWidthDeg(
                 TimingEvaluator.PerfectWindowAt(speed, _spawner.Settings,
-                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef), lead);
+                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef, streak), lead);
             float goodHalf = TimingDialMath.HalfWidthDeg(
                 TimingEvaluator.GoodWindowAt(speed, _spawner.Settings,
-                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef), lead);
+                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef, streak), lead);
             PerfectHalfWidthDeg = perfectHalf;
             GoodHalfWidthDeg = goodHalf;
             DrawArc(_base, -180f, 180f, 0f);
