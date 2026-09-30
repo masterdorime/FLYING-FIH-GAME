@@ -16,8 +16,79 @@ namespace FlyingFishMomentum.Tests.EditMode
             var timing = ScriptableObject.CreateInstance<TimingSettings>();
             momentum.Configure(mom, timing);
             momentum.SetLimits(100f, 120f);
-            spawner.Configure(null, momentum, null, timing, mom, null);
+            spawner.Configure(null, momentum, null, timing, mom, null, null);
             spawner.SetSeed(42);
+            return spawner;
+        }
+
+        // M3 gauge wiring: spawner with a REAL gauge + state machine
+        // (Task 2 helper pattern) so charge fills and beat-Miss drains end
+        // to end, including tier reconcile.
+        TimingPromptSpawner NewSpawnerWithGauge(
+            out PlayerMomentumController momentum,
+            out FlightGaugeSystem gauge,
+            out FlightStateMachine sm)
+        {
+            var go = new GameObject("spawner");
+            var spawner = go.AddComponent<TimingPromptSpawner>();
+            var mgo = new GameObject("m");
+            momentum = mgo.AddComponent<PlayerMomentumController>();
+            var mom = ScriptableObject.CreateInstance<MomentumSettings>();
+            mom.MinSpeed = 8f;
+            var timing = ScriptableObject.CreateInstance<TimingSettings>();
+            momentum.Configure(mom, timing);
+            momentum.SetLimits(100f, 120f);
+            var ggo = new GameObject("gauge");
+            var gmom = ggo.AddComponent<PlayerMomentumController>();
+            var gmomSettings = ScriptableObject.CreateInstance<MomentumSettings>();
+            gmomSettings.MinSpeed = 5f;
+            gmomSettings.DragSwimming = 1.5f;
+            gmomSettings.DragFlying = 0.6f;
+            gmomSettings.BreachSpeedThreshold = 20f;
+            var gtiming = ScriptableObject.CreateInstance<TimingSettings>();
+            gmom.Configure(gmomSettings, gtiming);
+            sm = ggo.AddComponent<FlightStateMachine>();
+            FlightTierProfile Profile(FlightTier tier)
+            {
+                var p = ScriptableObject.CreateInstance<FlightTierProfile>();
+                p.Tier = tier;
+                p.MaxSpeed = 10f + (float)tier * 10f;
+                p.Acceleration = 45f;
+                return p;
+            }
+            sm.Configure(
+                new System.Collections.Generic.List<FlightTierProfile>
+                {
+                    Profile(FlightTier.None),
+                    Profile(FlightTier.Low),
+                    Profile(FlightTier.Medium),
+                    Profile(FlightTier.High),
+                    Profile(FlightTier.Max),
+                },
+                gmom, gmomSettings);
+            var gsettings = ScriptableObject.CreateInstance<FlightGaugeSettings>();
+            gsettings.MaxGauge = 120f;
+            gsettings.StartGauge = 0f;
+            gsettings.FlyDrainPerSecond = 3.5f;
+            gsettings.MissDrain = 10f;
+            gsettings.TierThresholds = new float[] { 20f, 40f, 70f, 100f };
+            gauge = ggo.AddComponent<FlightGaugeSystem>();
+            gauge.Configure(sm, gsettings, null);
+            spawner.Configure(null, momentum, sm, timing, mom, null, gauge);
+            spawner.SetSeed(42);
+            return spawner;
+        }
+
+        TimingPromptSpawner NewSpawnerWithRingAndGauge(
+            out PlayerMomentumController momentum,
+            out FlightGaugeSystem gauge,
+            out ChargeRing ring)
+        {
+            var spawner = NewSpawnerWithGauge(out momentum, out gauge, out _);
+            var rgo = new GameObject("ring");
+            rgo.transform.position = Vector3.zero;
+            ring = rgo.AddComponent<ChargeRing>();
+            spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { ring });
             return spawner;
         }
 
@@ -26,7 +97,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             Time.timeScale = 1f; // ring triggers touch global slow-mo
             foreach (var go in GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
-                if (go.name == "spawner" || go.name == "m") Object.DestroyImmediate(go);
+                if (go.name == "spawner" || go.name == "m" || go.name == "gauge" || go.name == "ring") Object.DestroyImmediate(go);
         }
 
         [Test]
@@ -333,6 +404,92 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.IsFalse(spawner.ChargeActive);
             spawner.CheckRingTrigger(0.1f, new Vector3(0f, 0f, 10f));
             Assert.IsTrue(spawner.ChargeActive, "tunneled the ring");
+        }
+
+        [Test]
+        public void ChargeGainFillsGauge()
+        {
+            // Charge gains fill the gauge by the banked amount: a full
+            // hold run banks 10 speed, so the gauge rises by 10.
+            var spawner = NewSpawnerWithRingAndGauge(out var momentum, out var gauge, out _);
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            int guard = 0;
+            while (spawner.ChargeActive && guard++ < 300)
+            {
+                now += 0.1f;
+                var ch = spawner.Charge;
+                bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
+                bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
+                bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+            }
+            Assert.IsFalse(spawner.ChargeActive, "charge never finished");
+            float banked = momentum.CurrentSpeed - 10f;
+            Assert.Greater(banked, 0f, "nothing banked");
+            Assert.AreEqual(banked, gauge.CurrentGauge, 0.5f);
+        }
+
+        [Test]
+        public void BeatMissDrainsGauge()
+        {
+            // Pre-filled gauge loses MissDrain on beat expiry; tier follows.
+            var spawner = NewSpawnerWithGauge(out var momentum, out var gauge, out var sm);
+            momentum.CurrentSpeed = 50f; momentum.TargetSpeed = 50f;
+            gauge.AddFill(25f);
+            Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open);
+            spawner.Tick(spawner.Active.TargetTime + 0.3f, 0f, 50f, FlightTier.Medium, false);
+            Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
+            Assert.AreEqual(15f, gauge.CurrentGauge, 0.001f);
+            Assert.AreEqual(FlightTier.None, sm.ActiveTier);
+        }
+
+        [Test]
+        public void TapsDoNotFillGauge()
+        {
+            // Perfect beat taps never touch the gauge.
+            var spawner = NewSpawnerWithGauge(out var momentum, out var gauge, out _);
+            momentum.CurrentSpeed = 50f; momentum.TargetSpeed = 50f;
+            gauge.AddFill(25f);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            Assert.AreEqual(25f, gauge.CurrentGauge, 0.001f);
+        }
+
+        [Test]
+        public void NullGaugeNeverThrows()
+        {
+            // Null gauge (tests/scenes without one) skips gauge calls:
+            // a full hold still banks speed, no exception.
+            var spawner = NewSpawnerWithRing(out var momentum, out _);
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            int guard = 0;
+            Assert.DoesNotThrow(() =>
+            {
+                float t = now;
+                int g = guard;
+                while (spawner.ChargeActive && g++ < 300)
+                {
+                    t += 0.1f;
+                    var ch = spawner.Charge;
+                    bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
+                    bool held = isHold && t < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
+                    bool press = !isHold && t >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
+                    spawner.Tick(t, 0.1f, 10f, FlightTier.Medium, press, held);
+                }
+                now = t; guard = g;
+            });
+            Assert.IsFalse(spawner.ChargeActive, "charge never finished");
+            Assert.AreEqual(20f, momentum.CurrentSpeed, 0.5f);
         }
     }
 }

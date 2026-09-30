@@ -27,6 +27,7 @@ namespace FlyingFishMomentum
         [SerializeField] TimingSettings _timing;
         [SerializeField] MomentumSettings _momSettings;
         [SerializeField] CameraSpeedReactor _camera;
+        [SerializeField] FlightGaugeSystem _gauge;
         [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
         Vector3 _lastPlayerPos;
         bool _hasLastPos;
@@ -128,7 +129,8 @@ namespace FlyingFishMomentum
             FlightStateMachine sm,
             TimingSettings timing,
             MomentumSettings momSettings,
-            CameraSpeedReactor camera)
+            CameraSpeedReactor camera,
+            FlightGaugeSystem gauge)
         {
             _movement = movement;
             _momentum = momentum;
@@ -136,6 +138,7 @@ namespace FlyingFishMomentum
             _timing = timing;
             _momSettings = momSettings;
             _camera = camera;
+            _gauge = gauge;
         }
 
         void Update()
@@ -180,6 +183,7 @@ namespace FlyingFishMomentum
                 float gain = Charge.Tick(now, dt, held, pressed, speed,
                     _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
                 if (gain > 0f) _momentum.AddChargeGain(gain);
+                if (gain > 0f && _gauge != null) _gauge.AddFill(gain);
                 if (!Charge.IsActive) _meters = 0f; // fresh beat gap after charge
                 return;
             }
@@ -210,6 +214,9 @@ namespace FlyingFishMomentum
         void Resolve(TimingResult result, FlightTier tier)
         {
             _momentum.ApplyTimingResult(result, tier);
+            // Beat-Miss drains the gauge; charge-internal misses never reach
+            // Resolve, and taps never touch the gauge.
+            if (result == TimingResult.Miss && _gauge != null) _gauge.DrainMiss();
             if (result == TimingResult.Miss) StreakCount = 0;
             else StreakCount++;
             if (result == TimingResult.Perfect && _camera != null) _camera.PlayTierUpKick();

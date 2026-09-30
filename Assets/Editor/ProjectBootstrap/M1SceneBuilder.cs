@@ -120,7 +120,7 @@ namespace ProjectBootstrap
             // Timing scaffold (M2).
             var timingGo = new GameObject("Timing");
             var spawner = timingGo.AddComponent<TimingPromptSpawner>();
-            spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor);
+            spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor, null); // M3 task 5 wires the gauge
             var ringGo = new GameObject("PromptDial");
             ringGo.transform.SetParent(timingGo.transform, false);
             var ring = ringGo.AddComponent<TimingPromptDial>();
