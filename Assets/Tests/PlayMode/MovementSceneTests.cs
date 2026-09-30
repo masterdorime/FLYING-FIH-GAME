@@ -503,6 +503,40 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ChargeStepsLookDifferent()
+        {
+            // Hold shows the fill bar, Tap shows the shrinking pulse — never
+            // the same visual. Adapts to whatever order the seed drew.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var bar = Object.FindFirstObjectByType<ChargeBar>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.transform.position = spawner.Rings[0].transform.position;
+            spawner.CheckRingTrigger(0f, mover.transform.position);
+            Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+            yield return null;
+            Assert.AreEqual(spawner.ChargeOrder[0].ToString(), bar.ShownKind,
+                "bar visual does not match step 0 kind");
+            // Finish step 0 blindly (hold past limit AND tap target both pass
+            // harmlessly for the other kind), then check step 1 matches.
+            float now = 0f;
+            int guard = 0;
+            while (spawner.Charge.StepIndex < 1 && guard++ < 100)
+            {
+                now += 0.1f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, true, true);
+            }
+            yield return null;
+            Assert.IsTrue(spawner.ChargeActive, "charge ended after one step");
+            Assert.AreEqual(spawner.ChargeOrder[1].ToString(), bar.ShownKind,
+                "bar visual does not match step 1 kind");
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
