@@ -33,12 +33,12 @@ namespace ProjectBootstrap
             var waterMat = new Material(Shader.Find("Standard"));
             waterMat.color = new Color(0.1f, 0.4f, 0.8f, 0.6f);
             waterMat.SetFloat("_Mode", 3f);
-            waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             waterMat.SetInt("_ZWrite", 0);
             waterMat.DisableKeyword("_ALPHATEST_ON");
-            waterMat.EnableKeyword("_ALPHABLEND_ON");
-            waterMat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            waterMat.SetOverrideTag("RenderType", "Transparent");
             waterMat.renderQueue = 3000;
             AssetDatabase.CreateAsset(waterMat, "Assets/Materials/M1Water.mat");
 
