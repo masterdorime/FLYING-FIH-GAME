@@ -40,7 +40,7 @@
 
 **Interfaces:**
 - Consumes: nothing (leaf data).
-- Produces: `FlightGaugeSettings` with `MaxGauge = 120f`, `StartGauge = 0f`, `ChargeStepFill = 2f`, `ChargeJackpotFill = 4f`, `FlyDrainPerSecond = 3.5f`, `MissDrain = 10f`, `float[] TierThresholds = { 20f, 40f, 70f, 100f }` (Low..Max floors; below 20 is None) + `public FlightTier TierFor(float gauge)` (clamped loop, returns highest tier whose floor is met).
+- Produces: `FlightGaugeSettings` with `MaxGauge = 120f`, `StartGauge = 0f`, `ChargeStepFill = 2f`, `ChargeJackpotFill = 4f`, `FlyDrainPerSecond = 3.5f`, `MissDrain = 10f`, `float[] TierThresholds = { 20f, 40f, 70f, 100f }` (Low..Max floors; below 20 is None) + `public FlightTier TierFor(float gauge)` (half-open bands: boundary belongs UP — 20→Low, 70→High, 100→Max).
 
 - [ ] **Step 1: Write the failing test**
 ```csharp
@@ -52,7 +52,7 @@ public void TableMatchesSpec()
     Assert.AreEqual(0f, s.StartGauge, 0.001f);
     Assert.AreEqual(FlightTier.None, s.TierFor(0f));
     Assert.AreEqual(FlightTier.Low, s.TierFor(20f));
-    Assert.AreEqual(FlightTier.Medium, s.TierFor(70f));
+    Assert.AreEqual(FlightTier.High, s.TierFor(70f));
     Assert.AreEqual(FlightTier.Max, s.TierFor(120f));
 }
 [Test]
@@ -89,7 +89,7 @@ Run: `git add Assets/Scripts/Gauge/FlightGaugeSettings.cs Assets/Configs/FlightG
 - [ ] **Step 1: Write the failing tests** — build gauge on a bare GameObject with a REAL state machine + momentum (helper pattern from `MomentumTests`/`StateMachineTests`: `AddComponent`, `Configure` with tier profiles for None..Max, momentum with both settings):
 ```csharp
 [Test] FillCrossingUpShiftsTier — AddFill(20) from 0 → tier Low, kick fired (camera stub? use real CameraSpeedReactor? needs camera component — instead assert sm.ActiveTier only; kick covered in PlayMode). Keep EditMode to tier math: assert ActiveTier transitions None→Low→Medium→High→Max at 20/40/70/100 exactly.
-[Test] ExactThresholdReadsUpper — TierFor covered in Task 1; here: AddFill to exactly 70.0 → Medium (boundary ownership end-to-end).
+[Test] ExactThresholdReadsUpper — TierFor covered in Task 1; here: AddFill to exactly 70.0 → High (boundary belongs up).
 [Test] FlyingDrainDropsTier — fill 25 (Low), Tick(2f, flying: true) ×2 (7.0 drain each... 3.5×2=7 per call, two calls = 14 → 11 <20) → tier None.
 [Test] MissAtZeroStaysPut — DrainMiss at 0 → gauge 0, no tier call (fires counter stays 0 — subscribe OnTierChanged).
 [Test] JackpotOverfillCaps — AddFill(200) → 120, tier Max.

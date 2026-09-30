@@ -17,7 +17,7 @@ feeds live clocks). New `FlightGaugeSettings` ScriptableObject:
 - `MaxGauge` 120 (overfill allowed as buffer), `StartGauge` 0.
 - Fill (charge only — taps feed speed, never gauge): step +2, jackpot +4.
 - `FlyDrainPerSecond` 3.5 while flying; `MissDrain` 10 on any Miss.
-- Thresholds: None <20, Low 20–40, Medium 40–70, High 70–100, Max ≥100.
+- Thresholds (half-open bands, boundary belongs UP): None [0,20), Low [20,40), Medium [40,70), High [70,100), Max [100,120].
 - Crossing a threshold calls existing `FlightStateMachine.SetTier`
   (the M1 comment "M3 calls SetTier from gauge events" lands here).
 - No swimming drain. Gauge floor 0 (never negative).
