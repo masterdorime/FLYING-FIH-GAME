@@ -87,7 +87,8 @@ UI independent from gameplay state, events over coupling.
   gains ratchet cruise to the 70 cap like tap hits. Beats suspend
   during charge. Fill bar (HOLD: yellow filling, green release zone, red
   limit marker) vs shrinking cyan pulse ball (TAP) + step text in
-  placeholder style.
+  placeholder style. Charge taps judge with the live streak windows but
+  never move the streak counter (no combo system in M2).
 
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 
@@ -99,7 +100,10 @@ UI independent from gameplay state, events over coupling.
   upward, so M3 gauge tiers keep working); hits ratchet the cruise
   target itself so gains stick — drag sags toward earned speed, Miss
   drops target to the MinSpeed floor. Needle progress unclamped — it
-  drifts past red until press or expiry.
+  drifts past red until press or expiry. Note: the burst ceiling is
+  `max(tier max + boost, SpeedCap)`, so a Max-tier Perfect can legally
+  reach 83; unreachable in M2 (tier locked Medium) — M3 must pick one
+  rule when tiers move again.
   Tier bands stay for turning/breach/windows but are dormant for speed
   until M3 replans the gauge around this world.
 

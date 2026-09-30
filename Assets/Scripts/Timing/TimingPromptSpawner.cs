@@ -33,7 +33,8 @@ namespace FlyingFishMomentum
         float _meters;
         float _nextBeat = -1f;
         float _lastTickNow = float.MinValue;
-        System.Random _rng;
+        System.Random _rngBeat;
+        System.Random _rngCharge;
         bool _seeded;
         public int StreakCount { get; private set; }
         public float HitAngleDeg { get; private set; }
@@ -47,7 +48,9 @@ namespace FlyingFishMomentum
 
         public void SetSeed(int seed)
         {
-            _rng = new System.Random(seed);
+            // Separate streams so charge draws never perturb the beat schedule.
+            _rngBeat = new System.Random(seed);
+            _rngCharge = new System.Random(seed);
             _seeded = true;
             DrawBeat();
         }
@@ -60,7 +63,7 @@ namespace FlyingFishMomentum
         public void CheckRingTrigger(float now, Vector3 playerPos)
         {
             if (Charge.IsActive || _rings == null) return;
-            if (_rng == null) _rng = new System.Random(0);
+            if (_rngCharge == null) _rngCharge = new System.Random(0);
             // Swept check: a hitch can move the fish clean through the 4m
             // window between calls, so test the segment, not just endpoints.
             Vector3 prev = _hasLastPos ? _lastPlayerPos : playerPos;
@@ -74,7 +77,7 @@ namespace FlyingFishMomentum
                     ring.Consume();
                     var order = new ChargeStepKind[3];
                     for (int i = 0; i < order.Length; i++)
-                        order[i] = _rng.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
+                        order[i] = _rngCharge.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
                     ChargeOrder = order;
                     Charge.Begin(order, now);
                     return;
@@ -101,10 +104,10 @@ namespace FlyingFishMomentum
 
         void DrawBeat()
         {
-            if (_rng == null) _rng = new System.Random(0);
+            if (_rngBeat == null) _rngBeat = new System.Random(0);
             if (_timing == null) { _nextBeat = 60f; return; }
             _nextBeat = Mathf.Lerp(_timing.BeatMinMeters, _timing.BeatMaxMeters,
-                (float)_rng.NextDouble());
+                (float)_rngBeat.NextDouble());
         }
 
         public void Configure(
@@ -173,8 +176,8 @@ namespace FlyingFishMomentum
             if (_meters >= _nextBeat)
             {
                 _meters = 0f;
-                if (_rng == null) _rng = new System.Random(0);
-                HitAngleDeg = (float)(_rng.NextDouble() * 360.0);
+                if (_rngBeat == null) _rngBeat = new System.Random(0);
+                HitAngleDeg = (float)(_rngBeat.NextDouble() * 360.0);
                 Active = new ActivePrompt { Open = true, TargetTime = now + _timing.LeadTime };
             }
         }

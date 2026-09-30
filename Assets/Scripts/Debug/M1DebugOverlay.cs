@@ -39,9 +39,9 @@ namespace FlyingFishMomentum
             if (_momentum == null || _sm == null || _settings == null || _movement == null) return;
             string timing = "-";
             if (_spawner != null)
-                timing = _spawner.HasResolved ? _spawner.LastResult.ToString().ToUpper()
-                    : _spawner.Active.Open ? $"OPEN {Mathf.Max(0f, _spawner.Active.TargetTime - Time.time):F2}s"
-                    : "-";
+                timing = _spawner.Active.Open
+                    ? $"OPEN {Mathf.Max(0f, _spawner.Active.TargetTime - Time.time):F2}s"
+                    : _spawner.HasResolved ? _spawner.LastResult.ToString().ToUpper() : "-";
             timing += $" x{_spawner?.StreakCount}";
             string charge = _spawner != null ? _spawner.ChargeText : string.Empty;
             GUI.Label(new Rect(10, 10, 420, 170),

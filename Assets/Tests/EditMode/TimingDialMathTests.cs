@@ -8,18 +8,18 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void NeedleSweepsFullCircleClockwise()
         {
             // Hit at top: one full turn behind at open, on top at target.
-            Assert.AreEqual(-360f, TimingDialMath.NeedleAngle(0f), 0.001f);
-            Assert.AreEqual(-180f, TimingDialMath.NeedleAngle(0.5f), 0.001f);
+            Assert.AreEqual(360f, TimingDialMath.NeedleAngle(0f), 0.001f);
+            Assert.AreEqual(180f, TimingDialMath.NeedleAngle(0.5f), 0.001f);
             Assert.AreEqual(0f, TimingDialMath.NeedleAngle(1f), 0.001f);
         }
 
         [Test]
         public void NeedleEndsOnHitAngle()
         {
-            Assert.AreEqual(90f, TimingDialMath.NeedleAngle(1f, 90f), 0.001f);
-            Assert.AreEqual(-270f, TimingDialMath.NeedleAngle(0f, 90f), 0.001f);
-            Assert.AreEqual(200f, TimingDialMath.NeedleAngle(1f, 200f), 0.001f);
-            Assert.AreEqual(270f, TimingDialMath.NeedleAngle(1.5f, 90f), 0.001f);
+            Assert.AreEqual(-90f, TimingDialMath.NeedleAngle(1f, 90f), 0.001f);
+            Assert.AreEqual(270f, TimingDialMath.NeedleAngle(0f, 90f), 0.001f);
+            Assert.AreEqual(-200f, TimingDialMath.NeedleAngle(1f, 200f), 0.001f);
+            Assert.AreEqual(-270f, TimingDialMath.NeedleAngle(1.5f, 90f), 0.001f);
         }
 
         [Test]

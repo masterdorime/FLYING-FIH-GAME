@@ -14,6 +14,8 @@ namespace FlyingFishMomentum
 
         public bool Visible { get; private set; }
         public float NeedleAngleZ { get; private set; }
+        public Transform NeedlePivot => _pivot != null ? _pivot.transform : null;
+        public float NeedleLength => Radius;
         public float PerfectHalfWidthDeg { get; private set; }
         public float GoodHalfWidthDeg { get; private set; }
         public Color PerfectArcColor => _perfect != null && _perfect.material != null
@@ -96,7 +98,8 @@ namespace FlyingFishMomentum
             float progress = _spawner.Progress01;
             float hit = _spawner.HitAngleDeg;
             NeedleAngleZ = TimingDialMath.NeedleAngle(progress, hit);
-            _pivot.transform.rotation = Quaternion.Euler(0f, 0f, NeedleAngleZ);
+            // Dial-local: arcs live in dial space, so must the needle.
+            _pivot.transform.localRotation = Quaternion.Euler(0f, 0f, NeedleAngleZ);
             float speed = _momentum.CurrentSpeed;
             int streak = _spawner.StreakCount;
             float perfectHalf = TimingDialMath.HalfWidthDeg(

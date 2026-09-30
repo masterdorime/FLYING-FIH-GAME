@@ -237,6 +237,35 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void EarlyPressWhileOpenIsMiss()
+        {
+            // Anti-mash rule at spawner level, not just the evaluator unit.
+            var spawner = NewSpawner(out _);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open);
+            spawner.Tick(now + 0.05f, 0.05f, 50f, FlightTier.Medium, true);
+            Assert.IsTrue(spawner.HasResolved);
+            Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
+            Assert.IsFalse(spawner.Active.Open);
+        }
+
+        [Test]
+        public void HugeDtResolvesAtMostOnePrompt()
+        {
+            // A 10s hitch resolves the open prompt as Miss and banks meters
+            // without opening (and instantly missing) a second prompt.
+            var spawner = NewSpawner(out _);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open);
+            spawner.Tick(now + 10f, 10f, 50f, FlightTier.Medium, false);
+            Assert.IsTrue(spawner.HasResolved);
+            Assert.AreEqual(TimingResult.Miss, spawner.LastResult);
+            Assert.IsFalse(spawner.Active.Open, "huge dt opened a second prompt in the same tick");
+        }
+
+        [Test]
         public void FastJumpOverRingStillTriggers()
         {
             // A 0.1s hitch at 70u/s moves 7m through the 4m window: the

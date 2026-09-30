@@ -8,10 +8,11 @@ namespace FlyingFishMomentum
     {
         public const float SweepDegrees = 360f;
 
-        // Full clockwise sweep ending exactly on the hit angle. Unclamped:
-        // past the hit moment the needle keeps drifting (sweep then drift).
+        // Full clockwise sweep ending exactly on the hit angle. Negated so
+        // the tip lands on the zone layout (rotation.z=+a points the tip at
+        // -a in arc convention). Unclamped: drift continues past the hit.
         public static float NeedleAngle(float progress01, float hitDeg = 0f) =>
-            hitDeg - SweepDegrees + SweepDegrees * progress01;
+            SweepDegrees - hitDeg - SweepDegrees * progress01;
 
         public static float HalfWidthDeg(float windowSeconds, float leadSeconds) =>
             SweepDegrees * windowSeconds / Mathf.Max(leadSeconds, 0.001f);
