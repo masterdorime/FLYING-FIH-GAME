@@ -136,6 +136,20 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void FrozenClockIgnoresPress()
+        {
+            // Pause freezes Time.time: a press on a frozen clock must not
+            // resolve anything (no risk-free banked Perfects, no unfair Miss).
+            var spawner = NewSpawner(out _);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open);
+            for (int i = 0; i < 10; i++) spawner.Tick(now, 0f, 50f, FlightTier.Medium, true);
+            Assert.IsTrue(spawner.Active.Open, "frozen press resolved the prompt");
+            Assert.IsFalse(spawner.HasResolved);
+        }
+
+        [Test]
         public void HitAngleInRangeAndSeeded()
         {
             var a = NewSpawner(out _);

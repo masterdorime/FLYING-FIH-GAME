@@ -30,6 +30,7 @@ namespace FlyingFishMomentum
         [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
         float _meters;
         float _nextBeat = -1f;
+        float _lastTickNow = float.MinValue;
         System.Random _rng;
         bool _seeded;
         public int StreakCount { get; private set; }
@@ -125,6 +126,10 @@ namespace FlyingFishMomentum
         public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false)
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
+            // Frozen or rewound clock (pause) carries no input: a press must
+            // advance time to count. Recorded before any early return below.
+            if (now <= _lastTickNow) { pressed = false; held = false; }
+            _lastTickNow = now;
             // Charge mode owns the button: beats suspend, presses route here.
             if (Charge.IsActive)
             {
