@@ -25,6 +25,7 @@ namespace ProjectBootstrap
             var momSettings = Load<MomentumSettings>("Assets/Configs/MomentumSettings.asset");
             var timingSettings = Load<TimingSettings>("Assets/Configs/TimingSettings.asset");
             var camSettings = Load<CameraSettings>("Assets/Configs/CameraSettings.asset");
+            var gaugeSettings = Load<FlightGaugeSettings>("Assets/Configs/FlightGaugeSettings.asset");
 
             var fishMat = new Material(Shader.Find("Standard"));
             fishMat.color = new Color(1f, 0.45f, 0.1f);
@@ -120,7 +121,11 @@ namespace ProjectBootstrap
             // Timing scaffold (M2).
             var timingGo = new GameObject("Timing");
             var spawner = timingGo.AddComponent<TimingPromptSpawner>();
-            spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor, null); // M3 task 5 wires the gauge
+            var gaugeGo = new GameObject("Gauge");
+            gaugeGo.transform.SetParent(timingGo.transform, false);
+            var gauge = gaugeGo.AddComponent<FlightGaugeSystem>();
+            gauge.Configure(sm, gaugeSettings, reactor);
+            spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor, gauge);
             var ringGo = new GameObject("PromptDial");
             ringGo.transform.SetParent(timingGo.transform, false);
             var ring = ringGo.AddComponent<TimingPromptDial>();
@@ -140,7 +145,7 @@ namespace ProjectBootstrap
             var bar = barGo.AddComponent<ChargeBar>();
             bar.Configure(spawner, player.transform);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            overlay.Configure(momentum, sm, momSettings, movement, spawner);
+            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");

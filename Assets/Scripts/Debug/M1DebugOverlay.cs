@@ -12,6 +12,7 @@ namespace FlyingFishMomentum
         [SerializeField] MomentumSettings _settings;
         [SerializeField] PlayerMovementController _movement;
         [SerializeField] TimingPromptSpawner _spawner;
+        [SerializeField] FlightGaugeSystem _gauge;
         float _fps;
 
         public void Configure(
@@ -19,13 +20,15 @@ namespace FlyingFishMomentum
             FlightStateMachine sm,
             MomentumSettings settings,
             PlayerMovementController movement,
-            TimingPromptSpawner spawner)
+            TimingPromptSpawner spawner,
+            FlightGaugeSystem gauge)
         {
             _momentum = momentum;
             _sm = sm;
             _settings = settings;
             _movement = movement;
             _spawner = spawner;
+            _gauge = gauge;
         }
 
         void Update()
@@ -50,7 +53,8 @@ namespace FlyingFishMomentum
                 $"Breach >= {_settings.BreachSpeedThreshold:F0} Deviate {Mathf.Abs(_movement.Yaw):F0}°\n" +
                 $"Timing {timing}\n" +
                 (string.IsNullOrEmpty(charge) ? string.Empty : charge + "\n") +
-                $"FPS {_fps:F0}");
+                $"FPS {_fps:F0}\n" +
+                $"Gauge {_gauge.CurrentGauge:F0} Tier {_sm.ActiveTier}");
         }
     }
 }

@@ -9,10 +9,11 @@ namespace FlyingFishMomentum
     public class FlightGaugeSystem : MonoBehaviour
     {
         public float CurrentGauge { get; private set; }
+        public FlightStateMachine StateMachine => _sm;
 
-        FlightStateMachine _sm;
-        FlightGaugeSettings _settings;
-        CameraSpeedReactor _camera;
+        [SerializeField] FlightStateMachine _sm;
+        [SerializeField] FlightGaugeSettings _settings;
+        [SerializeField] CameraSpeedReactor _camera;
 
         public void Configure(FlightStateMachine sm, FlightGaugeSettings settings, CameraSpeedReactor camera)
         {

@@ -627,6 +627,16 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator GaugeWiredInScene()
+        {
+            var gauge = Object.FindFirstObjectByType<FlightGaugeSystem>();
+            Assert.IsNotNull(gauge, "gauge not wired in scene");
+            Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
+            Assert.AreEqual(FlightTier.None, gauge.StateMachine.ActiveTier);
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
