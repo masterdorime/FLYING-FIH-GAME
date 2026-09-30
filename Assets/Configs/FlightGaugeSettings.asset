@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondentSource: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93cdf0661619fa44cbcc86c3a8eec542, type: 3}
+  m_Name: FlightGaugeSettings
+  MaxGauge: 120
+  StartGauge: 0
+  ChargeStepFill: 2
+  ChargeJackpotFill: 4
+  FlyDrainPerSecond: 3.5
+  MissDrain: 10
+  TierThresholds:
+  - 20
+  - 40
+  - 70
+  - 100
