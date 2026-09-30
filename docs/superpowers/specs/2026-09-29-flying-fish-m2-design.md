@@ -85,7 +85,9 @@ UI independent from gameplay state, events over coupling.
   fizzles, both +0); TAP reuses timing windows (Perfect +2, Good +1,
   Miss +0); all-clean pays +4 jackpot. No penalties in charge mode;
   gains ratchet cruise to the 70 cap like tap hits. Beats suspend
-  during charge. Fill bar + step text in placeholder style.
+  during charge. Fill bar (HOLD: yellow filling, green release zone, red
+  limit marker) vs shrinking cyan pulse ball (TAP) + step text in
+  placeholder style.
 
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 
