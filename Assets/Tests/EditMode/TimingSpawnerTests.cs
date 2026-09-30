@@ -266,6 +266,22 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void RingTriggerCancelsOpenBeat()
+        {
+            // The two QTEs never overlap: touching a ring with a beat prompt
+            // open closes the beat silently (no judgment, no penalty) and
+            // starts charge. A fresh beat waits a full gap after charge ends.
+            var spawner = NewSpawnerWithRing(out _, out _);
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; spawner.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open, "beat never opened");
+            spawner.CheckRingTrigger(now, Vector3.zero);
+            Assert.IsTrue(spawner.ChargeActive, "charge did not start");
+            Assert.IsFalse(spawner.Active.Open, "beat stayed open under charge");
+            Assert.IsFalse(spawner.HasResolved, "cancelled beat judged anything");
+        }
+
+        [Test]
         public void FastJumpOverRingStillTriggers()
         {
             // A 0.1s hitch at 70u/s moves 7m through the 4m window: the

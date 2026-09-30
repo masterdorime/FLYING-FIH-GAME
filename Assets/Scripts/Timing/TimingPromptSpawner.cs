@@ -75,6 +75,11 @@ namespace FlyingFishMomentum
                 if (SegmentPassesDisc(prev, playerPos, ring.transform.position, 3f))
                 {
                     ring.Consume();
+                    // Never overlap: an open beat prompt closes silently
+                    // (no judgment, no penalty) — the ring takes over.
+                    Active = new ActivePrompt();
+                    Progress01 = 0f;
+                    _meters = 0f;
                     var order = new ChargeStepKind[3];
                     for (int i = 0; i < order.Length; i++)
                         order[i] = _rngCharge.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
@@ -156,6 +161,7 @@ namespace FlyingFishMomentum
                 float gain = Charge.Tick(now, dt, held, pressed, speed,
                     _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
                 if (gain > 0f) _momentum.AddChargeGain(gain);
+                if (!Charge.IsActive) _meters = 0f; // fresh beat gap after charge
                 return;
             }
             if (_nextBeat <= 0f) DrawBeat();
