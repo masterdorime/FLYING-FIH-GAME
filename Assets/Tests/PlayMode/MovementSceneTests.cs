@@ -532,6 +532,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             yield return null;
             Assert.IsTrue(spawner.ChargeActive, "charge ended after one step");
+            yield return null;
+            yield return null; // let bar.Update observe the new step
             Assert.AreEqual(spawner.ChargeOrder[1].ToString(), bar.ShownKind,
                 "bar visual does not match step 1 kind");
         }

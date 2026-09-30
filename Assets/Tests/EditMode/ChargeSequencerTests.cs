@@ -74,10 +74,11 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var s = NewSettings();
             var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Tap, ChargeStepKind.Tap }, 0f);
+            q.Begin(new[] { ChargeStepKind.Tap, ChargeStepKind.Hold }, 0f);
             float first = q.Tick(0.6f, 0.1f, false, true, 33f, s, 5f, 73f, 0);
             Assert.AreEqual(2f, first, 0.001f); // step gain only: sequence continues
             Assert.IsTrue(q.IsActive);
+            Assert.AreEqual(ChargeStepKind.Hold, q.CurrentKind, "kind did not advance");
             float second = q.Tick(2.0f, 0.1f, false, false, 33f, s, 5f, 73f, 0);
             Assert.AreEqual(0f, second, 0.001f); // expiry, no jackpot
             Assert.IsFalse(q.IsActive);

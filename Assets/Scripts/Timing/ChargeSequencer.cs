@@ -82,6 +82,10 @@ namespace FlyingFishMomentum
                 IsActive = false;
                 if (AllSucceeded) gain += s.ChargeJackpot;
             }
+            else
+            {
+                CurrentKind = _order[StepIndex];
+            }
             return gain;
         }
     }
