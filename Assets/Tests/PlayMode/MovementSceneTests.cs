@@ -38,6 +38,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // No steering input: heading holds at spawn yaw/pitch (0, 0), fish porpoises level toward +Z.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             sm.Momentum.TargetSpeed = 73f;
             // Travel/bounds pin, not timing: freeze the spawner (see Setup note).
             Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
@@ -60,6 +61,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "spawn must be underwater Swimming");
             sm.SetTier(FlightTier.Low);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 23f; sm.Momentum.TargetSpeed = 23f;
             float t = 0f;
@@ -87,6 +89,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             // Climb pin, not timing: freeze the spawner (see Setup note).
             Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
@@ -120,6 +123,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             // Slalom pins movement/collision, not timing: freeze the spawner so
             // autonomous batchmode Misses cannot disturb the run.
             Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
@@ -162,6 +166,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
             // Turn-bleed pin, not timing: freeze the spawner (see Setup note).
@@ -186,6 +191,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
             const float step = 1f / 60f;
@@ -212,6 +218,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
             float t = 0f;
@@ -238,7 +245,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             Assert.IsNotNull(spawner, "spawner not wired in scene");
-            sm.SetTier(FlightTier.Medium); sm.Momentum.TargetSpeed = 20f;
+            sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            sm.Momentum.TargetSpeed = 20f;
             float t = 0f;
             while (!spawner.Active.Open && t < 10f) { t += Time.deltaTime; yield return null; }
             Assert.IsTrue(spawner.Active.Open, "no prompt after 60m of travel");
@@ -262,6 +271,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
@@ -289,6 +299,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
@@ -319,6 +330,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 25f; sm.Momentum.TargetSpeed = 25f;
@@ -351,6 +363,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var dial = Object.FindFirstObjectByType<TimingPromptDial>();
             Assert.IsNotNull(dial, "dial not wired in scene");
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
@@ -380,6 +393,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var dial = Object.FindFirstObjectByType<TimingPromptDial>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
@@ -408,6 +422,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // Runway proof: 12s at Max must stay over the seabed (old water ended at z=700).
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             sm.Momentum.TargetSpeed = 73f;
             Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
             yield return new WaitForSeconds(12f);
@@ -427,6 +442,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var dial = Object.FindFirstObjectByType<TimingPromptDial>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
@@ -459,26 +475,33 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var bar = Object.FindFirstObjectByType<ChargeBar>();
             Assert.IsNotNull(bar, "charge bar not wired in scene");
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
-            Assert.IsFalse(bar.Visible, "bar visible with no charge");
-            mover.transform.position = spawner.Rings[0].transform.position;
-            spawner.CheckRingTrigger(0f, mover.transform.position);
-            Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
-            yield return null;
-            yield return null;
-            Assert.IsTrue(bar.Visible, "bar hidden during charge");
-            float now = 0f;
-            int guard = 0;
-            while (spawner.ChargeActive && guard++ < 200)
+            // Manual CheckRingTrigger engages ring slow-mo (0.4); the
+            // spawner stays disabled so UpdateSlowMo never restores it.
+            try
             {
-                now += 0.5f;
-                spawner.Tick(now, 0.5f, 10f, FlightTier.Medium, false, false);
+                Assert.IsFalse(bar.Visible, "bar visible with no charge");
+                mover.transform.position = spawner.Rings[0].transform.position;
+                spawner.CheckRingTrigger(0f, mover.transform.position);
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                yield return null;
+                yield return null;
+                Assert.IsTrue(bar.Visible, "bar hidden during charge");
+                float now = 0f;
+                int guard = 0;
+                while (spawner.ChargeActive && guard++ < 200)
+                {
+                    now += 0.5f;
+                    spawner.Tick(now, 0.5f, 10f, FlightTier.Medium, false, false);
+                }
+                yield return null;
+                yield return null;
+                Assert.IsFalse(bar.Visible, "bar stuck visible after charge");
             }
-            yield return null;
-            yield return null;
-            Assert.IsFalse(bar.Visible, "bar stuck visible after charge");
+            finally { Time.timeScale = 1f; }
         }
 
         [UnityTest]
@@ -489,6 +512,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
             mover.transform.position = spawner.Rings[0].transform.position;
             // Freeze the fish on the ring: first-frame hitches in batchmode
@@ -511,6 +535,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var bar = Object.FindFirstObjectByType<ChargeBar>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
@@ -547,6 +572,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var dial = Object.FindFirstObjectByType<TimingPromptDial>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
@@ -588,6 +614,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var dial = Object.FindFirstObjectByType<TimingPromptDial>();
             sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false;
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f;
@@ -637,10 +664,65 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TwoCleanRingsReachLowGear()
+        {
+            // Fully manual: no live frames anywhere. Mover, spawner and
+            // gauge all freeze upfront; rings trigger via direct
+            // CheckRingTrigger on an explicit manual clock. Two clean
+            // sequences (3x+2 plus +4 jackpot each = 10 gauge each)
+            // reach the Low floor at 20 with a tier-up kick.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var gauge = Object.FindFirstObjectByType<FlightGaugeSystem>();
+            var cam = Object.FindFirstObjectByType<CameraSpeedReactor>();
+            sm.SetTier(FlightTier.Medium);
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            gauge.enabled = false;
+            // Manual triggers engage ring slow-mo; the spawner stays
+            // disabled so UpdateSlowMo never restores it.
+            try
+            {
+                Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
+                // Seed the manual clock at live Time.time (read once, no
+                // live frames consumed): Tick drops inputs on rewound
+                // clocks (pause guard) and Update already ticked it with
+                // live time during setup frames, so a 0-start would eat
+                // the first manual inputs and fail a Hold-first step 0.
+                float now = Time.time;
+                for (int ring = 0; ring < 2; ring++)
+                {
+                    mover.transform.position = spawner.Rings[ring].transform.position;
+                    spawner.CheckRingTrigger(now, mover.transform.position);
+                    Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                    int guard = 0;
+                    while (spawner.ChargeActive && guard++ < 300)
+                    {
+                        now += 0.1f;
+                        var ch = spawner.Charge;
+                        bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
+                        bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
+                        bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
+                        spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+                    }
+                    Assert.IsFalse(spawner.ChargeActive, "charge never finished");
+                }
+                Assert.GreaterOrEqual(gauge.CurrentGauge, 20f, "two clean rings did not reach Low");
+                Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
+                Assert.AreEqual(1f, cam.KickEnvelope, 0.001f);
+            }
+            finally { Time.timeScale = 1f; }
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator PauseFreezesSimulation()
         {
             var mover = Object.FindFirstObjectByType<PlayerMovementController>();
             mover.StateMachine.SetTier(FlightTier.Low);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.StateMachine.Momentum.TargetSpeed = 23f;
             yield return new WaitForSeconds(0.5f);
             var before = mover.transform.position;
