@@ -233,6 +233,13 @@ No code. Human (user) plays 60–90s from spawn (gauge 0 / None / speed 10):
 - [ ] Leak pressure fair, gauge line readable, camera never lost, FPS noted
 Report back in plain words; tunables adjusted in a follow-up if needed (no new mechanics).
 
+### M2 follow-up batch (ship + launch + arrow glyphs, approved 2026-09-30)
+
+Implements the M2-spec ship/launch/arrow records above the M3 line:
+ship swim (depth lock, pitch lock), gauge-full launch (rising edge),
+arrow-glyph charge markers, 4-step sequences. TDD red→green→commit per
+item, full suites green, spec records updated here as written.
+
 ### Task 8: Review + final suites
 
 - [ ] Dispatch code reviewer subagent per `requesting-code-review` (range: first M3 commit..HEAD, requirements = this plan + spec + the plan's Review Focus verbatim + ledger `Ruling:` lines).

@@ -152,6 +152,17 @@ UI independent from gameplay state, events over coupling.
   span z −100..1500, camera far plane 2000. `TimingPromptRing` deleted.
 - **M5 note updated:** M5 reskins the dial (not the ring) + overlay text.
 
+## Change record — ship swim + arrow glyphs (§34.1, 2026-09-30, approved)
+
+- **Old:** swim pitched freely (W/S) and could breach upward; charge
+  markers were plain cubes; sequences were 3 steps.
+- **Why:** feel pass wants ship-like water (steer-only) and readable arrows.
+- **New:** swim locks `SwimDepthY` (−1.5) and level pitch — W/S ignored
+  underwater, yaw steers in the cone; air keeps full heading control.
+  Swim-up breach retired (depth lock makes it unreachable). Charge steps
+  are line-drawn arrow glyphs (grey/green/red) + overlay arrow text;
+  sequences are 4 arrows (`+2` each, `+4` jackpot = 12 max per ring).
+
 ## Handoff notes for M3
 
 - M3 adds `FlightGaugeSystem`; gauge events call existing

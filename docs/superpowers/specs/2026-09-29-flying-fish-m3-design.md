@@ -53,6 +53,17 @@ agent rules still bind: SO-only tuning, dt-scaled determinism (seeded
 RNG only), gauge evaluation independent from presentation, UI
 independent from gameplay state, events/direct-wiring per M1 precedent.
 
+## Change record — gauge-full launch (§34.1, 2026-09-30, approved)
+
+- **Old:** swim-up-fast breach; gauge max was a held state.
+- **Why:** ship swim cannot pitch upward, so breaching needs a new verb;
+  feel pass wants a sky-high launch moment.
+- **New:** the rising edge to a full tank while swimming launches the
+  fish (`LaunchVelocity` 40 u/s up) and empties the tank to 0. Fires
+  once per fill — sitting full or re-landing full does nothing until
+  the gauge dips and refills. Tier reconcile still runs (down-clamp
+  applies); dive re-entry unchanged.
+
 ## Handoff notes for M4
 
 - M4 adds `RunManager`/chunks; gauge thresholds may re-tune per
