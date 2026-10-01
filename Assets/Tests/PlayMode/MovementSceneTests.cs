@@ -649,6 +649,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     spawner.Tick(now, step, 10f, FlightTier.Medium, false);
                     yield return null;
                 }
+                spawner.Tick(target, 0f, 10f, FlightTier.Medium, false); // exact: no step overshoot
                 yield return null;
                 float hRad = spawner.HitAngleDeg * Mathf.Deg2Rad;
                 Vector3 tip = dial.NeedlePivot.TransformPoint(0f, dial.NeedleLength, 0f);
