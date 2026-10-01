@@ -553,7 +553,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     "bar visual does not match step 0 kind");
             // Finish step 0 blindly (hold past limit AND tap target both pass
             // harmlessly for the other kind), then check step 1 matches.
-            float now = 0f;
+            // Manual clock seeded at live time (never rewind the frozen-clock gate).
+            float now = Time.time;
             int guard = 0;
             while (spawner.Charge.StepIndex < 1 && guard++ < 100)
             {
