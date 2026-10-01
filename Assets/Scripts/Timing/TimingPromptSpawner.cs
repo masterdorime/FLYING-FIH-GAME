@@ -29,6 +29,7 @@ namespace FlyingFishMomentum
         [SerializeField] CameraSpeedReactor _camera;
         [SerializeField] FlightGaugeSystem _gauge;
         [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
+        Vector2 _lastMoveVec;
         Vector3 _lastPlayerPos;
         bool _hasLastPos;
         float _meters;
@@ -41,10 +42,23 @@ namespace FlyingFishMomentum
         public float HitAngleDeg { get; private set; }
         public readonly ChargeSequencer Charge = new ChargeSequencer();
         public bool ChargeActive => Charge.IsActive;
-        public ChargeStepKind[] ChargeOrder { get; private set; } = new ChargeStepKind[0];
-        public string ChargeText => Charge.IsActive && ChargeOrder.Length > 0
-            ? $"CHARGE {Charge.StepIndex + 1}/{Charge.StepCount} {Charge.CurrentKind}"
-            : string.Empty;
+        public ChargeArrow[] ChargeOrder { get; private set; } = new ChargeArrow[0];
+        public string ChargeText
+        {
+            get
+            {
+                if (!Charge.IsActive || ChargeOrder.Length == 0) return string.Empty;
+                var parts = new System.Text.StringBuilder("CHARGE ");
+                parts.Append(Charge.StepIndex + 1).Append('/').Append(Charge.StepCount).Append(' ');
+                for (int i = 0; i < ChargeOrder.Length; i++)
+                {
+                    string g = ChargeSequencer.Glyph(ChargeOrder[i]);
+                    if (i == Charge.StepIndex) parts.Append('[').Append(g).Append(']');
+                    else parts.Append(g);
+                }
+                return parts.ToString();
+            }
+        }
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public float SlowTimer { get; private set; }
 
@@ -94,9 +108,9 @@ namespace FlyingFishMomentum
                         Time.timeScale = _timing.ChargeSlowScale;
                         SlowTimer = _timing.ChargeSlowDuration;
                     }
-                    var order = new ChargeStepKind[3];
+                    var order = new ChargeArrow[3];
                     for (int i = 0; i < order.Length; i++)
-                        order[i] = _rngCharge.Next(0, 2) == 0 ? ChargeStepKind.Hold : ChargeStepKind.Tap;
+                        order[i] = (ChargeArrow)_rngCharge.Next(0, 4);
                     ChargeOrder = order;
                     Charge.Begin(order, now);
                     return;
@@ -153,16 +167,20 @@ namespace FlyingFishMomentum
             UpdateSlowMo(Time.unscaledDeltaTime);
             bool pressed = false;
             bool held = false;
+            ChargeArrow? arrow = null;
             if (_movement != null && _movement.Input != null)
             {
                 pressed = _movement.Input.Gameplay.TimingAction.WasPressedThisFrame();
                 held = _movement.Input.Gameplay.TimingAction.IsPressed();
+                Vector2 moveVec = _movement.Input.Gameplay.Move.ReadValue<Vector2>();
+                arrow = ChargeSequencer.ArrowFromStick(_lastMoveVec, moveVec);
+                _lastMoveVec = moveVec;
                 CheckRingTrigger(Time.time, _movement.transform.position);
             }
             Tick(Time.time, Time.deltaTime,
                 _momentum.CurrentSpeed,
                 _sm != null ? _sm.ActiveTier : FlightTier.None,
-                pressed, held);
+                pressed, held, arrow);
         }
 
         // Slow-mo runs on the unpausable clock; an expired timer restores
@@ -176,18 +194,17 @@ namespace FlyingFishMomentum
                 Time.timeScale = 1f;
         }
 
-        public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false)
+        public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false, ChargeArrow? arrow = null)
         {
             if (_momentum == null || _timing == null || _momSettings == null) return;
             // Frozen or rewound clock (pause) carries no input: a press must
             // advance time to count. Recorded before any early return below.
-            if (now <= _lastTickNow) { pressed = false; held = false; }
+            if (now <= _lastTickNow) { pressed = false; held = false; arrow = null; }
             _lastTickNow = now;
-            // Charge mode owns the button: beats suspend, presses route here.
+            // Charge mode owns the button: beats suspend, arrows route here.
             if (Charge.IsActive)
             {
-                float gain = Charge.Tick(now, dt, held, pressed, speed,
-                    _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
+                float gain = Charge.Tick(now, arrow, _timing);
                 if (gain > 0f) _momentum.AddChargeGain(gain);
                 if (gain > 0f && _gauge != null) _gauge.AddFill(gain);
                 if (!Charge.IsActive) _meters = 0f; // fresh beat gap after charge

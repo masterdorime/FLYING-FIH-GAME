@@ -275,24 +275,18 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void ChargeHoldBanksViaMomentum()
+        public void ChargeCleanRunBanksJackpot()
         {
-            // Adaptive driver: hold each HOLD step to just past required,
-            // tap each TAP step at its target. Every step succeeds:
-            // 3x+2 plus +4 jackpot: 10 → 20.
+            // Match every arrow: 3x+2 plus +4 jackpot: 10 → 20.
             var spawner = NewSpawnerWithRing(out var momentum, out _);
             momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
             spawner.CheckRingTrigger(0f, Vector3.zero);
             float now = 0f;
             int guard = 0;
-            while (spawner.ChargeActive && guard++ < 300)
+            while (spawner.ChargeActive && guard++ < 100)
             {
-                now += 0.1f;
-                var ch = spawner.Charge;
-                bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
-                bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
-                bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
-                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+                now += 0.5f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
             }
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
             Assert.AreEqual(20f, momentum.CurrentSpeed, 0.5f);
@@ -433,21 +427,17 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void ChargeGainFillsGauge()
         {
             // Charge gains fill the gauge by the banked amount: a full
-            // hold run banks 10 speed, so the gauge rises by 10.
+            // arrow run banks 10 speed, so the gauge rises by 10.
             var spawner = NewSpawnerWithRingAndGauge(out var momentum, out var gauge, out _);
             momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
             Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
             spawner.CheckRingTrigger(0f, Vector3.zero);
             float now = 0f;
             int guard = 0;
-            while (spawner.ChargeActive && guard++ < 300)
+            while (spawner.ChargeActive && guard++ < 100)
             {
-                now += 0.1f;
-                var ch = spawner.Charge;
-                bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
-                bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
-                bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
-                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+                now += 0.5f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
             }
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
             float banked = momentum.CurrentSpeed - 10f;
@@ -500,14 +490,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             {
                 float t = now;
                 int g = guard;
-                while (spawner.ChargeActive && g++ < 300)
+                while (spawner.ChargeActive && g++ < 100)
                 {
-                    t += 0.1f;
-                    var ch = spawner.Charge;
-                    bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
-                    bool held = isHold && t < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
-                    bool press = !isHold && t >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
-                    spawner.Tick(t, 0.1f, 10f, FlightTier.Medium, press, held);
+                    t += 0.5f;
+                    spawner.Tick(t, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
                 }
                 now = t; guard = g;
             });

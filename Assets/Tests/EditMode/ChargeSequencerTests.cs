@@ -8,80 +8,73 @@ namespace FlyingFishMomentum.Tests.EditMode
         TimingSettings NewSettings() => ScriptableObject.CreateInstance<TimingSettings>();
 
         [Test]
-        public void HoldFullDurationThenReleaseBanks()
+        public void ArrowEdgesFromStick()
+        {
+            Assert.AreEqual(ChargeArrow.Right, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(1f, 0f)));
+            Assert.AreEqual(ChargeArrow.Left, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(-1f, 0f)));
+            Assert.AreEqual(ChargeArrow.Up, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0f, 1f)));
+            Assert.AreEqual(ChargeArrow.Down, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0f, -1f)));
+            Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(1f, 0f), new Vector2(1f, 0f)));
+            Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.2f, 0f)));
+            Assert.AreEqual(ChargeArrow.Up, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.7f, 0.7f)));
+        }
+
+        [Test]
+        public void CorrectKeyBanksPlusJackpot()
         {
             var s = NewSettings();
             var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Hold }, 0f);
-            float gain = 0f;
-            for (int i = 0; i < 8; i++) gain = q.Tick(0.1f * (i + 1), 0.1f, true, false, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(0f, gain, 0.001f); // still holding: nothing banked yet
-            Assert.IsTrue(q.IsActive);
-            gain = q.Tick(0.9f, 0.1f, false, false, 33f, s, 5f, 73f, 0);
+            q.Begin(new[] { ChargeArrow.Up }, 0f);
+            float gain = q.Tick(0.5f, ChargeArrow.Up, s);
             Assert.AreEqual(6f, gain, 0.001f); // +2 step +4 single-step jackpot
             Assert.IsFalse(q.IsActive);
         }
 
         [Test]
-        public void EarlyReleaseFailsStep()
+        public void WrongKeyFailsStepAndContinues()
         {
             var s = NewSettings();
             var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Hold }, 0f);
-            q.Tick(0.1f, 0.1f, true, false, 33f, s, 5f, 73f, 0);
-            q.Tick(0.2f, 0.1f, true, false, 33f, s, 5f, 73f, 0);
-            float gain = q.Tick(0.3f, 0.1f, false, false, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(0f, gain, 0.001f);
-            Assert.IsFalse(q.IsActive);
-        }
-
-        [Test]
-        public void OverholdFizzles()
-        {
-            var s = NewSettings();
-            var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Hold }, 0f);
-            float gain = 0f;
-            for (int i = 0; i < 14; i++) gain = q.Tick(0.1f * (i + 1), 0.1f, true, false, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(0f, gain, 0.001f); // held past the 1.3s limit: greed gets nothing
-            Assert.IsFalse(q.IsActive);
-        }
-
-        [Test]
-        public void TapPerfectBanks()
-        {
-            var s = NewSettings();
-            var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Tap }, 0f);
-            float gain = q.Tick(0.6f, 0.1f, false, true, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(6f, gain, 0.001f); // +2 step +4 jackpot
-            Assert.IsFalse(q.IsActive);
-        }
-
-        [Test]
-        public void TapExpiryFailsQuietly()
-        {
-            var s = NewSettings();
-            var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Tap }, 0f);
-            float gain = q.Tick(1.0f, 0.1f, false, false, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(0f, gain, 0.001f);
-            Assert.IsFalse(q.IsActive);
-        }
-
-        [Test]
-        public void JackpotNeedsEveryStep()
-        {
-            var s = NewSettings();
-            var q = new ChargeSequencer();
-            q.Begin(new[] { ChargeStepKind.Tap, ChargeStepKind.Hold }, 0f);
-            float first = q.Tick(0.6f, 0.1f, false, true, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(2f, first, 0.001f); // step gain only: sequence continues
+            q.Begin(new[] { ChargeArrow.Up, ChargeArrow.Down }, 0f);
+            float first = q.Tick(0.5f, ChargeArrow.Left, s);
+            Assert.AreEqual(0f, first, 0.001f);
             Assert.IsTrue(q.IsActive);
-            Assert.AreEqual(ChargeStepKind.Hold, q.CurrentKind, "kind did not advance");
-            float second = q.Tick(2.0f, 0.1f, false, false, 33f, s, 5f, 73f, 0);
-            Assert.AreEqual(0f, second, 0.001f); // expiry, no jackpot
+            Assert.AreEqual(ChargeArrow.Down, q.CurrentArrow);
+            float second = q.Tick(1f, ChargeArrow.Down, s);
+            Assert.AreEqual(2f, second, 0.001f); // step gain only, no jackpot
             Assert.IsFalse(q.IsActive);
+        }
+
+        [Test]
+        public void TimeoutAbortsSequence()
+        {
+            var s = NewSettings();
+            var q = new ChargeSequencer();
+            q.Begin(new[] { ChargeArrow.Up }, 0f);
+            float gain = q.Tick(7f, null, s);
+            Assert.AreEqual(0f, gain, 0.001f);
+            Assert.IsFalse(q.IsActive);
+        }
+
+        [Test]
+        public void NoInputStallsNothing()
+        {
+            var s = NewSettings();
+            var q = new ChargeSequencer();
+            q.Begin(new[] { ChargeArrow.Up }, 0f);
+            Assert.AreEqual(0f, q.Tick(0.5f, null, s), 0.001f);
+            Assert.IsTrue(q.IsActive);
+        }
+
+        [Test]
+        public void StepResultsTrackPerStep()
+        {
+            var s = NewSettings();
+            var q = new ChargeSequencer();
+            q.Begin(new[] { ChargeArrow.Up, ChargeArrow.Down }, 0f);
+            q.Tick(0.5f, ChargeArrow.Up, s);
+            q.Tick(1f, ChargeArrow.Left, s);
+            Assert.AreEqual(new bool?[] { true, false }, q.StepResults);
         }
     }
 }

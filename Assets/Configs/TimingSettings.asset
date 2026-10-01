@@ -42,11 +42,8 @@ MonoBehaviour:
   - 70
   StartSpeed: 10
   SpeedCap: 70
-  HoldRequired: 0.8
-  HoldLimit: 1.3
-  TapLead: 0.6
+  ChargeTimeout: 6
   ChargeStepGain: 2
-  ChargeTapGoodGain: 1
   ChargeJackpot: 4
   ChargeSlowScale: 0.4
   ChargeSlowDuration: 1.2

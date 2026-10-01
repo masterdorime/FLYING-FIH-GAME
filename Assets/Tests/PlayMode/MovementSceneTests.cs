@@ -532,8 +532,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
         [UnityTest]
         public IEnumerator ChargeStepsLookDifferent()
         {
-            // Hold shows the fill bar, Tap shows the shrinking pulse — never
-            // the same visual. Adapts to whatever order the seed drew.
+            // Marker cubes track step outcomes: a clean first step lights one
+            // green, a deliberately wrong second step lights one red.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
@@ -546,27 +546,19 @@ namespace FlyingFishMomentum.Tests.PlayMode
             mover.transform.position = spawner.Rings[0].transform.position;
             try
             {
-                spawner.CheckRingTrigger(0f, mover.transform.position);
+                // Fully manual clock (single timeline for trigger + drive;
+                // wall Time.time would instantly trip the charge timeout).
+                float now = 100f;
+                spawner.CheckRingTrigger(now, mover.transform.position);
                 Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                spawner.Tick(now + 0.1f, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
                 yield return null;
-                Assert.AreEqual(spawner.ChargeOrder[0].ToString(), bar.ShownKind,
-                    "bar visual does not match step 0 kind");
-            // Finish step 0 blindly (hold past limit AND tap target both pass
-            // harmlessly for the other kind), then check step 1 matches.
-            // Manual clock seeded at live time (never rewind the frozen-clock gate).
-            float now = Time.time;
-            int guard = 0;
-            while (spawner.Charge.StepIndex < 1 && guard++ < 100)
-            {
-                now += 0.1f;
-                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, true, true);
-            }
-            yield return null;
-            Assert.IsTrue(spawner.ChargeActive, "charge ended after one step");
-            yield return null;
-            yield return null; // let bar.Update observe the new step
-                Assert.AreEqual(spawner.ChargeOrder[1].ToString(), bar.ShownKind,
-                    "bar visual does not match step 1 kind");
+                Assert.AreEqual(1, bar.GreenCount, "clean step did not light green");
+                now += 0.2f;
+                ChargeArrow wrong = spawner.Charge.CurrentArrow == ChargeArrow.Up ? ChargeArrow.Down : ChargeArrow.Up;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, wrong);
+                yield return null;
+                Assert.AreEqual(1, bar.RedCount, "wrong key did not light red");
             }
             finally { Time.timeScale = 1f; }
         }
@@ -708,14 +700,10 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     spawner.CheckRingTrigger(now, mover.transform.position);
                     Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
                     int guard = 0;
-                    while (spawner.ChargeActive && guard++ < 300)
+                    while (spawner.ChargeActive && guard++ < 100)
                     {
-                        now += 0.1f;
-                        var ch = spawner.Charge;
-                        bool isHold = ch.CurrentKind == ChargeStepKind.Hold;
-                        bool held = isHold && now < ch.StepStartTime + spawner.Settings.HoldRequired + 0.05f;
-                        bool press = !isHold && now >= ch.StepStartTime + spawner.Settings.TapLead - 0.05f;
-                        spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, press, held);
+                        now += 0.5f;
+                        spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
                     }
                     Assert.IsFalse(spawner.ChargeActive, "charge never finished");
                 }

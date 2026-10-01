@@ -79,17 +79,16 @@ UI independent from gameplay state, events over coupling.
 
 - **Old:** only distance-beat tap prompts.
 - **Why:** feel pass wants a second, different skill expression for gaining speed.
-- **New:** 5 fixed rings in the world (alternating swim/air depth);
-  swimming through one starts a 3-step HOLD/TAP sequence in seeded
-  shuffled order. HOLD 0.8s banks +2 (early release fails, past 1.3s
-  fizzles, both +0); TAP reuses timing windows (Perfect +2, Good +1,
-  Miss +0); all-clean pays +4 jackpot. No penalties in charge mode;
-  gains ratchet cruise to the 70 cap like tap hits. Beats suspend
-  during charge. Ring entry dips the world to 0.4× for 1.2s wall clock
-  (unpausable timer; pause wins ties) so hands can answer. Fill bar
-  (HOLD: yellow filling, green release zone, red limit marker) vs shrinking cyan pulse ball (TAP) + step text in
-  placeholder style. Charge taps judge with the live streak windows but
-  never move the streak counter (no combo system in M2).
+- **New:** 5 fixed rings in the world (alternating swim/air depth).
+  REVISED twice by feel pass: (1) holds never landed in wall-clock
+  perception, so charge steps are arrow taps — swim through, match 3
+  seeded arrows (WASD/stick flicks) for +2 each, +4 all-clean jackpot,
+  wrong key +0, 6s overall timeout, no penalties; (2) marker cubes
+  (grey pending/green hit/red missed) + overlay arrow text. No streak
+  coupling, no penalties in charge mode; gains ratchet cruise to the 70
+  cap like tap hits. Beats suspend during charge. Ring entry dips the
+  world to 0.4× for 1.2s wall clock (unpausable timer; pause wins ties)
+  so hands can answer.
 
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 

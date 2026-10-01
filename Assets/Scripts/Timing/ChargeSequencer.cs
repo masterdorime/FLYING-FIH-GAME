@@ -1,82 +1,63 @@
+using System.Collections.Generic;
+using UnityEngine;
+
 namespace FlyingFishMomentum
 {
-    public enum ChargeStepKind { Hold, Tap }
+    public enum ChargeArrow { Up, Down, Left, Right }
 
-    // Pure charge-sequence logic (spec: ring QTE). Explicit clock, no Unity
-    // state: fully unit-testable. Tick returns the speed gain to bank
-    // (0 most ticks); the completing tick adds the jackpot when clean.
+    // Pure arrow-sequence logic (ring QTE): tap the shown arrows in order.
+    // Explicit inputs, no Unity state: fully unit-testable. Tick returns the
+    // speed gain to bank (0 most ticks); the completing tick adds the
+    // jackpot when every step was clean.
     public class ChargeSequencer
     {
         public bool IsActive { get; private set; }
         public int StepIndex { get; private set; }
         public int StepCount { get; private set; }
-        public ChargeStepKind CurrentKind { get; private set; }
+        public ChargeArrow CurrentArrow { get; private set; }
         public bool AllSucceeded { get; private set; } = true;
-        public float StepStartTime => _stepStart;
+        public IReadOnlyList<bool?> StepResults => _results;
 
-        ChargeStepKind[] _order;
-        float _stepStart;
-        float _holdFor;
+        ChargeArrow[] _order;
+        readonly List<bool?> _results = new List<bool?>();
+        float _beginTime;
 
-        public void Begin(ChargeStepKind[] order, float startTime)
+        public void Begin(ChargeArrow[] order, float startTime)
         {
             _order = order;
             StepCount = order.Length;
             StepIndex = 0;
-            CurrentKind = order[0];
-            _stepStart = startTime;
-            _holdFor = 0f;
+            CurrentArrow = order[0];
+            _beginTime = startTime;
+            _results.Clear();
+            for (int i = 0; i < order.Length; i++) _results.Add(null);
             AllSucceeded = true;
             IsActive = true;
         }
 
-        public float StepProgress01(float now, TimingSettings s)
+        public float Tick(float now, ChargeArrow? keyDown, TimingSettings s)
         {
             if (!IsActive || s == null) return 0f;
-            if (CurrentKind == ChargeStepKind.Hold)
-                return _holdFor / UnityEngine.Mathf.Max(s.HoldRequired, 0.001f);
-            return TimingDialMath.Progress01(_stepStart + s.TapLead, now, s.TapLead);
+            if (now - _beginTime > s.ChargeTimeout)
+            {
+                IsActive = false;
+                return 0f;
+            }
+            if (!keyDown.HasValue) return 0f;
+            return Resolve(keyDown.Value == CurrentArrow, s.ChargeStepGain, s);
         }
 
-        public float Tick(float now, float dt, bool held, bool pressed,
-            float speed, TimingSettings s, float minSpeed, float maxSpeed, int streak)
-        {
-            if (!IsActive || s == null) return 0f;
-            if (CurrentKind == ChargeStepKind.Hold)
-            {
-                if (held)
-                {
-                    _holdFor += dt;
-                    if (_holdFor > s.HoldLimit) return Resolve(false, 0f, now, s);
-                    return 0f;
-                }
-                return Resolve(_holdFor >= s.HoldRequired, s.ChargeStepGain, now, s);
-            }
-            float target = _stepStart + s.TapLead;
-            float good = TimingEvaluator.GoodWindowAt(speed, s, minSpeed, maxSpeed, streak);
-            if (pressed)
-            {
-                var r = TimingEvaluator.Evaluate(now - target, speed, s, minSpeed, maxSpeed, streak);
-                return Resolve(r != TimingResult.Miss,
-                    r == TimingResult.Perfect ? s.ChargeStepGain : s.ChargeTapGoodGain, now, s);
-            }
-            if (now > target + good + UnityEngine.Mathf.Min(s.LateBuffer, good))
-                return Resolve(false, 0f, now, s);
-            return 0f;
-        }
-
-        float Resolve(bool success, float gain, float now, TimingSettings s)
+        float Resolve(bool success, float gain, TimingSettings s)
         {
             // Successful steps bank immediately; failures bank nothing.
             // The jackpot applies only when every step was clean.
+            _results[StepIndex] = success;
             if (!success)
             {
                 AllSucceeded = false;
                 gain = 0f;
             }
             StepIndex++;
-            _stepStart = now;
-            _holdFor = 0f;
             if (StepIndex >= StepCount)
             {
                 IsActive = false;
@@ -84,9 +65,27 @@ namespace FlyingFishMomentum
             }
             else
             {
-                CurrentKind = _order[StepIndex];
+                CurrentArrow = _order[StepIndex];
             }
             return gain;
         }
+
+        // Stick/keyboard edge → arrow. Fires once per fresh crossing of the
+        // dead zone; held directions and sub-threshold wobble give nothing.
+        public static ChargeArrow? ArrowFromStick(Vector2 prev, Vector2 cur)
+        {
+            if (cur.magnitude < 0.5f || prev.magnitude >= 0.5f) return null;
+            return Mathf.Abs(cur.x) > Mathf.Abs(cur.y)
+                ? (cur.x > 0f ? ChargeArrow.Right : ChargeArrow.Left)
+                : (cur.y > 0f ? ChargeArrow.Up : ChargeArrow.Down);
+        }
+
+        public static string Glyph(ChargeArrow arrow) => arrow switch
+        {
+            ChargeArrow.Up => "↑",
+            ChargeArrow.Down => "↓",
+            ChargeArrow.Left => "←",
+            _ => "→",
+        };
     }
 }
