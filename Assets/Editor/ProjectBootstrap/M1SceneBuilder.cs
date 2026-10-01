@@ -131,14 +131,13 @@ namespace ProjectBootstrap
             var ring = ringGo.AddComponent<TimingPromptDial>();
             ring.Configure(spawner, player.transform, momentum);
             // Charge rings: one every 150m down the runway (z pacing fixed
-            // for timing rhythm); x lane + swim/fly depth re-roll every run
-            // from the spawner seed. Base spots just alternate lanes.
+            // for timing rhythm), all on the swim lane; x lane re-rolls
+            // every run from the spawner seed. Base spots just spread x.
             var rings = new List<ChargeRing>();
             for (int i = 0; i < 20; i++)
             {
                 float x = ((i % 3) - 1) * 15f;
-                float y = i % 2 == 0 ? -3f : 10f;
-                rings.Add(AddChargeRing("ChargeRing_" + (i + 1), new Vector3(x, y, 150f * (i + 1))));
+                rings.Add(AddChargeRing("ChargeRing_" + (i + 1), new Vector3(x, -3f, 150f * (i + 1))));
             }
             spawner.SetRings(rings);
             var barGo = new GameObject("ChargeBar");

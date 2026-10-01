@@ -80,14 +80,14 @@ namespace FlyingFishMomentum
             ShuffleRingLayout();
         }
 
-        // Testing layout: every run re-rolls each ring's x lane and
-        // swim/fly depth from the seed (live runs seed by wall clock, so
-        // every playthrough differs). Z pacing is fixed so timing rhythm
-        // stays stable. Bounds are test-scaffold consts until M4 owns
-        // chunk layout (see M2 spec change record).
+        // Testing layout: every run re-rolls each ring's x lane from the
+        // seed (live runs seed by wall clock, so every playthrough
+        // differs). All rings sit on the swim lane — fly-depth rings need
+        // a full gauge to reach, which made the first launch uncatchable.
+        // Z pacing is fixed so timing rhythm stays stable. Bounds are
+        // test-scaffold consts until M4 owns chunk layout (see M2 spec).
         const float LayoutLaneX = 20f;
         const float LayoutSwimY = -3f;
-        const float LayoutFlyY = 10f;
 
         void ShuffleRingLayout()
         {
@@ -97,7 +97,7 @@ namespace FlyingFishMomentum
                 if (ring == null) continue;
                 var p = ring.transform.position;
                 p.x = Mathf.Lerp(-LayoutLaneX, LayoutLaneX, (float)_rngLayout.NextDouble());
-                p.y = _rngLayout.NextDouble() < 0.5 ? LayoutSwimY : LayoutFlyY;
+                p.y = LayoutSwimY;
                 ring.transform.position = p;
             }
         }

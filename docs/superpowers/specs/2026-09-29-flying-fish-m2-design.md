@@ -91,7 +91,10 @@ UI independent from gameplay state, events over coupling.
   so hands can answer. (3) 2026-09-30 testing layout: 20 rings, one
   every 150m down the 2x runway (z 150..3000); x lane + swim/fly depth
   re-roll every run from the spawner seed (z pacing fixed). Sequences
-  are 4 arrows (see ship record); timeout 8s.
+  are 4 arrows (see ship record); timeout 8s. (4) 2026-10-01 all-swim:
+  fly-depth rings made the first launch uncatchable (air needs a full
+  gauge, gauge needs rings), so every ring sits on the swim lane until
+  M4 owns air layout.
 
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 

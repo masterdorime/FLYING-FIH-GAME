@@ -275,6 +275,26 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void RingLayoutAllSwim()
+        {
+            // First-launch unblock: every ring sits on the swim lane — no
+            // fly-depth rings until M4 owns air layout.
+            var spawner = NewSpawner(out _);
+            var rings = new System.Collections.Generic.List<ChargeRing>();
+            for (int i = 0; i < 4; i++)
+            {
+                var rgo = new GameObject("ring");
+                rgo.transform.position = new Vector3(0f, -3f, 150f * (i + 1));
+                rings.Add(rgo.AddComponent<ChargeRing>());
+            }
+            spawner.SetRings(rings);
+            spawner.SetSeed(7);
+            foreach (var r in rings)
+                Assert.AreEqual(-3f, r.transform.position.y, 0.001f,
+                    "ring is not on the swim lane");
+        }
+
+        [Test]
         public void RingLayoutSeededAndBounded()
         {
             // Testing layout: every run shuffles ring x/y from the seed
