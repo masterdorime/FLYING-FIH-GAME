@@ -48,6 +48,12 @@ namespace FlyingFishMomentum
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public float SlowTimer { get; private set; }
 
+        // Gearless world: taps always judge on the Medium row, no matter the
+        // active tier. (The table's None row is all zeros, which froze speed
+        // at spawn — reported bug.) M3 gauge tiers may re-enable per-tier
+        // rows; changing this back must update BeatRowIsFlatMediumAtAnyTier.
+        public static FlightTier BeatRowFor(FlightTier activeTier) => FlightTier.Medium;
+
         public void SetSeed(int seed)
         {
             // Separate streams so charge draws never perturb the beat schedule.
@@ -196,9 +202,9 @@ namespace FlyingFishMomentum
                     speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
                 if (pressed)
                     Resolve(TimingEvaluator.Evaluate(now - Active.TargetTime,
-                        speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount), tier);
+                        speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount), BeatRowFor(tier));
                 else if (now > Active.TargetTime + good + Mathf.Min(_timing.LateBuffer, good))
-                    Resolve(TimingResult.Miss, tier);
+                    Resolve(TimingResult.Miss, BeatRowFor(tier));
                 return;
             }
             _meters += speed * dt;

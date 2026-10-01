@@ -106,7 +106,9 @@ UI independent from gameplay state, events over coupling.
   reach 83; unreachable in M2 (tier locked Medium) — M3 must pick one
   rule when tiers move again.
   Tier bands stay for turning/breach/windows but are dormant for speed
-  until M3 replans the gauge around this world.
+  until M3 replans the gauge around this world. All taps judge on the
+  flat Medium row at any tier (`Spawner.BeatRowFor`; the None row's
+  zeros froze speed at spawn — reported bug, fixed).
 
 ## Change record — red sliver, moving hit, slow world (§34.1, 2026-09-29, approved)
 

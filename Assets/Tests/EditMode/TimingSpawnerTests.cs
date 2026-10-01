@@ -395,6 +395,29 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void BeatRowIsFlatMediumAtAnyTier()
+        {
+            // Gearless world: taps always judge on the Medium row, even at None.
+            foreach (var tier in new[] { FlightTier.None, FlightTier.Low, FlightTier.Medium, FlightTier.High, FlightTier.Max })
+                Assert.AreEqual(FlightTier.Medium, TimingPromptSpawner.BeatRowFor(tier));
+        }
+
+        [Test]
+        public void NoneTierPerfectBanksMediumBoost()
+        {
+            // The reported bug: None-row zeros froze speed at spawn.
+            var spawner = NewSpawner(out var momentum);
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            float now = 0f;
+            int guard = 0;
+            while (!spawner.Active.Open && guard++ < 100) { now += 0.1f; spawner.Tick(now, 0.1f, 10f, FlightTier.None, false); }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.None, true);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            Assert.AreEqual(15f, momentum.CurrentSpeed, 0.5f);
+        }
+
+        [Test]
         public void FastJumpOverRingStillTriggers()
         {
             // A 0.1s hitch at 70u/s moves 7m through the 4m window: the
