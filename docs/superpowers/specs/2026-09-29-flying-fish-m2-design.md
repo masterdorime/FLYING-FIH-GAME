@@ -167,7 +167,8 @@ UI independent from gameplay state, events over coupling.
   underwater, yaw steers in the cone; air keeps full heading control.
   Swim-up breach retired (depth lock makes it unreachable). Charge steps
   are line-drawn arrow glyphs (grey/green/red) + overlay arrow text;
-  sequences are 4 arrows (`+2` each, `+4` jackpot = 12 max per ring).
+  sequences are 4 arrows (`+4` each, `+8` jackpot = 24 max per ring;
+  doubled 2026-10-01 so the gauge charges in ~5 clean rings).
   Reading order is left-to-right from step 0; the live step pulses big
   and yellow so it never blends into the grey steps ahead. (2026-09-30
   fix: the billboard mirrored local +X to screen-left, so the row read

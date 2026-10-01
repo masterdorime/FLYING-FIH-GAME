@@ -26,7 +26,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             var q = new ChargeSequencer();
             q.Begin(new[] { ChargeArrow.Up }, 0f);
             float gain = q.Tick(0.5f, ChargeArrow.Up, s);
-            Assert.AreEqual(6f, gain, 0.001f); // +2 step +4 single-step jackpot
+            Assert.AreEqual(12f, gain, 0.001f); // +4 step +8 single-step jackpot
             Assert.IsFalse(q.IsActive);
         }
 
@@ -41,7 +41,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.IsTrue(q.IsActive);
             Assert.AreEqual(ChargeArrow.Down, q.CurrentArrow);
             float second = q.Tick(1f, ChargeArrow.Down, s);
-            Assert.AreEqual(2f, second, 0.001f); // step gain only, no jackpot
+            Assert.AreEqual(4f, second, 0.001f); // step gain only, no jackpot
             Assert.IsFalse(q.IsActive);
         }
 

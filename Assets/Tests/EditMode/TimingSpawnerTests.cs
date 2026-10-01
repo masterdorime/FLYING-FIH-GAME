@@ -342,7 +342,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         [Test]
         public void ChargeCleanRunBanksJackpot()
         {
-            // Match every arrow: 3x+2 plus +4 jackpot: 10 → 20.
+            // Match every arrow: 4x+4 plus +8 jackpot: 10 → 34.
             var spawner = NewSpawnerWithRing(out var momentum, out _);
             momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
             spawner.CheckRingTrigger(0f, Vector3.zero);
@@ -354,7 +354,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
             }
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(22f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(34f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -563,7 +563,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 now = t; guard = g;
             });
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(22f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(34f, momentum.CurrentSpeed, 0.5f);
         }
     }
 }

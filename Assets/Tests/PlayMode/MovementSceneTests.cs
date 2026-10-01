@@ -741,13 +741,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator TwoCleanRingsReachLowGear()
+        public IEnumerator CleanRingReachesLowGear()
         {
             // Fully manual: no live frames anywhere. Mover, spawner and
             // gauge all freeze upfront; rings trigger via direct
-            // CheckRingTrigger on an explicit manual clock. Two clean
-            // sequences (3x+2 plus +4 jackpot each = 10 gauge each)
-            // reach the Low floor at 20 with a tier-up kick.
+            // CheckRingTrigger on an explicit manual clock. One clean
+            // sequence (4x+4 plus +8 jackpot = 24 gauge) clears the Low
+            // floor at 20 with a tier-up kick.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
@@ -769,7 +769,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 // live time during setup frames, so a 0-start would eat
                 // the first manual inputs and fail a Hold-first step 0.
                 float now = Time.time;
-                for (int ring = 0; ring < 2; ring++)
+                for (int ring = 0; ring < 1; ring++)
                 {
                     mover.transform.position = spawner.Rings[ring].transform.position;
                     spawner.CheckRingTrigger(now, mover.transform.position);
@@ -782,7 +782,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     }
                     Assert.IsFalse(spawner.ChargeActive, "charge never finished");
                 }
-                Assert.GreaterOrEqual(gauge.CurrentGauge, 20f, "two clean rings did not reach Low");
+                Assert.GreaterOrEqual(gauge.CurrentGauge, 20f, "clean ring did not reach Low");
                 Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
                 Assert.AreEqual(1f, cam.KickEnvelope, 0.001f);
             }

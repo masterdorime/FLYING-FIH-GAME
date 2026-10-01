@@ -30,8 +30,8 @@ namespace FlyingFishMomentum
         public float SpeedCap = 70f;
         // Charge sequences (rings): tap the shown arrows in order.
         public float ChargeTimeout = 6f;
-        public float ChargeStepGain = 2f;
-        public float ChargeJackpot = 4f;
+        public float ChargeStepGain = 4f;
+        public float ChargeJackpot = 8f;
         // Ring entry slow-motion: world dips to this scale for this long
         // (wall clock), giving hands time to answer the charge steps.
         public float ChargeSlowScale = 0.4f;
