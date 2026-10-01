@@ -42,7 +42,7 @@ MonoBehaviour:
   - 70
   StartSpeed: 10
   SpeedCap: 70
-  ChargeTimeout: 6
+  ChargeTimeout: 8
   ChargeStepGain: 2
   ChargeJackpot: 4
   ChargeSlowScale: 0.4

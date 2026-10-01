@@ -14,12 +14,23 @@ namespace FlyingFishMomentum
         [SerializeField] FlightStateMachine _sm;
         [SerializeField] FlightGaugeSettings _settings;
         [SerializeField] CameraSpeedReactor _camera;
+        [SerializeField] PlayerMovementController _movement;
 
         public void Configure(FlightStateMachine sm, FlightGaugeSettings settings, CameraSpeedReactor camera)
         {
             _sm = sm;
             _settings = settings;
             _camera = camera;
+        }
+
+        public void Configure(
+            FlightStateMachine sm,
+            FlightGaugeSettings settings,
+            CameraSpeedReactor camera,
+            PlayerMovementController movement)
+        {
+            Configure(sm, settings, camera);
+            _movement = movement;
         }
 
         void Start()
@@ -30,7 +41,17 @@ namespace FlyingFishMomentum
         public void AddFill(float amount)
         {
             if (_settings == null) return;
+            bool wasMax = CurrentGauge >= _settings.MaxGauge;
             CurrentGauge = Mathf.Clamp(CurrentGauge + amount, 0f, _settings.MaxGauge);
+            // Rising edge to full while swimming: launch sky-high, empty the
+            // tank. Sitting full (or flying) fires nothing — dip and refill.
+            if (!wasMax && CurrentGauge >= _settings.MaxGauge
+                && _movement != null && _sm != null
+                && _sm.Locomotion == PlayerLocomotionState.Swimming)
+            {
+                _movement.Launch();
+                CurrentGauge = 0f;
+            }
             Reconcile();
         }
 

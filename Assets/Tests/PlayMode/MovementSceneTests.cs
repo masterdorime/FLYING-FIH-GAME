@@ -51,29 +51,38 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator SwimFlySwimRoundTripViaBreach()
+        public IEnumerator LaunchRoundTripViaGaugeFull()
         {
+            // Spec: ship swim + gauge-full launch + dive re-entry. Full tank
+            // rising edge launches sky-high; aiming down returns to swim.
             // Steering is driven via TickMove directly, not Press(): synthetic
             // input events stall the player loop in batchmode (see Setup note
             // and ledger). Device→value plumbing is engine behavior covered by
             // InputAssetTests (bindings) plus the human feel pass (real keys).
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
+            var gauge = Object.FindFirstObjectByType<FlightGaugeSystem>();
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "spawn must be underwater Swimming");
-            sm.SetTier(FlightTier.Low);
-            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            sm.SetTier(FlightTier.Medium);
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
-            sm.Momentum.CurrentSpeed = 23f; sm.Momentum.TargetSpeed = 23f;
+            // Round trip pins movement, not timing: freeze the spawner.
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            float y0 = mover.transform.position.y;
+            gauge.AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "full tank did not launch");
+            Assert.AreEqual(1, mover.LaunchCount, "launch fired more than once");
             float t = 0f;
-            while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
+            while (t < 1f)
             {
                 t += Time.deltaTime;
                 mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
                 yield return null;
             }
-            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "fast breach did not enter Fly");
+            Assert.Greater(mover.transform.position.y - y0, 20f, "launch did not go sky-high");
+            // Launch arcs far higher than the old breach: allow a long descent.
             t = 0f;
-            while (sm.Locomotion != PlayerLocomotionState.Swimming && t < 5f)
+            while (sm.Locomotion != PlayerLocomotionState.Swimming && t < 12f)
             {
                 t += Time.deltaTime;
                 mover.TickMove(new Vector2(0f, -1f), Time.deltaTime);
@@ -94,16 +103,14 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // Climb pin, not timing: freeze the spawner (see Setup note).
             Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
-            float t = 0f;
-            while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
-            {
-                t += Time.deltaTime;
-                mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
-                yield return null;
-            }
+            // Launch setup (ship swim cannot breach upward anymore): full
+            // tank rising edge launches; re-rig speed after the tier reset.
+            var gauge = Object.FindFirstObjectByType<FlightGaugeSystem>();
+            gauge.AddFill(120f);
             Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
             float y0 = mover.transform.position.y;
-            t = 0f;
+            float t = 0f;
             while (t < 1f)
             {
                 t += Time.deltaTime;
@@ -198,12 +205,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
             for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
             float swimYaw = mover.Yaw;
             int guard = 0;
-            while (sm.Locomotion != PlayerLocomotionState.Flying && guard++ < 600)
-            {
-                mover.TickMove(new Vector2(0f, 1f), step);
-                yield return null;
-            }
+            // Launch setup (ship swim cannot breach upward anymore): full
+            // tank rising edge launches; re-take Max tier afterward (launch
+            // reconcile resets to None, and this test pins Max turn rates).
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
             Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            yield return null;
             float yawBefore = mover.Yaw;
             for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
             Assert.Greater(swimYaw, 30f, "water turn weaker than the tier promises");
@@ -221,14 +229,10 @@ namespace FlyingFishMomentum.Tests.PlayMode
             Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
             mover.enabled = false; // single-step AFTER SetTier (see Setup note)
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
-            float t = 0f;
-            while (sm.Locomotion != PlayerLocomotionState.Flying && t < 5f)
-            {
-                t += Time.deltaTime;
-                mover.TickMove(new Vector2(0f, 1f), Time.deltaTime);
-                yield return null;
-            }
+            // Launch setup (ship swim cannot breach upward anymore).
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
             Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            yield return null;
             const float step = 1f / 60f;
             int guard = 0;
             while (mover.Pitch > 0f && guard++ < 120)
@@ -323,9 +327,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator PromptSurvivesBreachMidOpen()
+        public IEnumerator PromptSurvivesLaunchMidOpen()
         {
-            // Spawner ignores locomotion: breach while open, then resolve Perfect.
+            // Spawner ignores locomotion: launch while open, then resolve Perfect.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
@@ -344,11 +348,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             Assert.IsTrue(spawner.Active.Open, "prompt never opened");
             yield return null;
-            guard = 0;
-            while (sm.Locomotion != PlayerLocomotionState.Flying && guard++ < 600)
-                mover.TickMove(new Vector2(0f, 1f), step);
-            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "breach failed mid-prompt");
-            Assert.IsTrue(spawner.Active.Open, "prompt died on breach");
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "launch failed mid-prompt");
+            Assert.IsTrue(spawner.Active.Open, "prompt died on launch");
             spawner.Tick(spawner.Active.TargetTime, 0f, sm.Momentum.CurrentSpeed, FlightTier.Medium, true);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
             yield break;
@@ -428,7 +430,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             yield return new WaitForSeconds(12f);
             var p = sm.transform.position;
             Assert.Greater(p.z, 750f, "did not reach the new water zone");
-            Assert.Less(Mathf.Abs(p.y + 3f), 1f, "left level swim on the long run");
+            Assert.Less(Mathf.Abs(p.y + 1.5f), 1f, "left locked swim depth on the long run");
             Assert.IsTrue(Physics.Raycast(p, Vector3.down, 50f), "no seabed under the fish");
         }
 
@@ -524,7 +526,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             {
                 while (!spawner.ChargeActive && t < 3f) { t += Time.deltaTime; yield return null; }
                 Assert.IsTrue(spawner.ChargeActive, "swimming through a ring did not start charge");
-                Assert.AreEqual(3, spawner.ChargeOrder.Length);
+                Assert.AreEqual(4, spawner.ChargeOrder.Length);
             }
             finally { Time.timeScale = 1f; }
         }
@@ -712,6 +714,25 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 Assert.AreEqual(1f, cam.KickEnvelope, 0.001f);
             }
             finally { Time.timeScale = 1f; }
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator SwimLocksDepthAndPitch()
+        {
+            // Ship rules: underwater, W/S does nothing — depth holds near the
+            // surface, pitch stays level, but yaw still steers in the cone.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            const float step = 1f / 60f;
+            for (int i = 0; i < 120; i++) mover.TickMove(new Vector2(1f, 1f), step);
+            Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion);
+            Assert.AreEqual(0f, mover.Pitch, 0.5f);
+            Assert.Less(Mathf.Abs(mover.transform.position.y - -1.5f), 0.5f);
+            Assert.Greater(Mathf.Abs(mover.Yaw), 20f, "ship does not steer");
             yield break;
         }
 

@@ -51,7 +51,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             var s = NewSettings();
             var q = new ChargeSequencer();
             q.Begin(new[] { ChargeArrow.Up }, 0f);
-            float gain = q.Tick(7f, null, s);
+            float gain = q.Tick(9f, null, s);
             Assert.AreEqual(0f, gain, 0.001f);
             Assert.IsFalse(q.IsActive);
         }

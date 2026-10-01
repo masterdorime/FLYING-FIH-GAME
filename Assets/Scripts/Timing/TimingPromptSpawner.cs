@@ -108,7 +108,7 @@ namespace FlyingFishMomentum
                         Time.timeScale = _timing.ChargeSlowScale;
                         SlowTimer = _timing.ChargeSlowDuration;
                     }
-                    var order = new ChargeArrow[3];
+                    var order = new ChargeArrow[4];
                     for (int i = 0; i < order.Length; i++)
                         order[i] = (ChargeArrow)_rngCharge.Next(0, 4);
                     ChargeOrder = order;

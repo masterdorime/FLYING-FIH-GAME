@@ -124,7 +124,7 @@ namespace ProjectBootstrap
             var gaugeGo = new GameObject("Gauge");
             gaugeGo.transform.SetParent(timingGo.transform, false);
             var gauge = gaugeGo.AddComponent<FlightGaugeSystem>();
-            gauge.Configure(sm, gaugeSettings, reactor);
+            gauge.Configure(sm, gaugeSettings, reactor, movement);
             spawner.Configure(movement, momentum, sm, timingSettings, momSettings, reactor, gauge);
             var ringGo = new GameObject("PromptDial");
             ringGo.transform.SetParent(timingGo.transform, false);

@@ -271,7 +271,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             b.CheckRingTrigger(0f, Vector3.zero);
             string orderB = string.Join(",", System.Array.ConvertAll(b.ChargeOrder, k => k.ToString()));
             Assert.AreEqual(orderA, orderB);
-            Assert.AreEqual(3, a.ChargeOrder.Length);
+            Assert.AreEqual(4, a.ChargeOrder.Length);
         }
 
         [Test]
@@ -289,7 +289,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
             }
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(20f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(22f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -498,7 +498,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 now = t; guard = g;
             });
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(20f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(22f, momentum.CurrentSpeed, 0.5f);
         }
     }
 }

@@ -4,18 +4,18 @@ namespace FlyingFishMomentum
 {
     // Auto-forward + steer (approved design). Kinematic CharacterController drive:
     // heading from Move input, speed from momentum, gravity as accumulated
-    // vertical drift in Fly (neutral buoyancy zeroes it in Swim — water catches
-    // you). Applies the active tier profile by subscribing to OnTierChanged, and
-    // sets TargetSpeed to the tier max, so SetTier alone drives everything
-    // (debug keys in M1, gauge events in M3).
+    // vertical drift in Fly. Swim is ship rules: locked surface depth and
+    // level pitch, yaw steering only. Applies the active tier profile by
+    // subscribing to OnTierChanged, and sets TargetSpeed to the tier max,
+    // so SetTier alone drives everything (debug keys in M1, gauge events in M3).
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMovementController : MonoBehaviour
     {
-        const float SwimPitchScale = 0.5f;
         const float StandardGravity = 9.81f;
 
         public float Yaw { get; private set; }
         public float Pitch { get; private set; }
+        public int LaunchCount { get; private set; }
         public Vector3 CurrentVelocity { get; private set; }
         public FlightStateMachine StateMachine => _sm;
         public PlayerMomentumController Momentum => _momentum;
@@ -84,14 +84,25 @@ namespace FlyingFishMomentum
             _momentum.TargetSpeed = p.MaxSpeed;
         }
 
+        // Gauge-full launch (spec: ship + launch). Caller guarantees the
+        // rising-edge context; this just flips state and kicks upward.
+        public void Launch()
+        {
+            LaunchCount++;
+            StateMachine.SetLocomotion(PlayerLocomotionState.Flying);
+            _vertVel = _settings != null ? _settings.LaunchVelocity : 40f;
+        }
+
         public void TickMove(Vector2 input, float dt)
         {
             bool swimming = StateMachine.Locomotion == PlayerLocomotionState.Swimming;
             float rate = swimming ? _turnRate : _turnRate * _airControl;
-            float pitchScale = swimming ? SwimPitchScale : 1f;
+            // Ship rules: underwater the fish holds surface depth and level
+            // pitch — W/S does nothing, only yaw steers. Air keeps full control.
+            float pitchScale = swimming ? 0f : 1f;
             var h = HeadingMath.Step(Yaw, Pitch, input, rate, pitchScale, dt);
             Yaw = h.yaw;
-            Pitch = h.pitch;
+            Pitch = swimming ? 0f : h.pitch;
             transform.rotation = HeadingMath.Orientation(Yaw, Pitch);
 
             float drag = swimming ? _settings.DragSwimming : _settings.DragFlying;
@@ -107,6 +118,12 @@ namespace FlyingFishMomentum
             vel.y += _vertVel;
             float prevY = transform.position.y;
             _controller.Move(vel * dt);
+            if (swimming)
+            {
+                var p = transform.position;
+                p.y = _settings.SwimDepthY;
+                transform.position = p;
+            }
             CurrentVelocity = vel;
             StateMachine.EvaluateSurface(prevY, transform.position.y);
         }

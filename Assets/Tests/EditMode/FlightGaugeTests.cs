@@ -80,6 +80,72 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void FullGaugeLaunchesSwimmerSkyward()
+        {
+            // Rising edge to full while swimming: locomotion flips to fly,
+            // tank empties, exactly one launch fires.
+            var gauge = NewGaugeWithMover(out var sm, out var mover);
+            gauge.AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion);
+            Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
+            Assert.AreEqual(1, mover.LaunchCount);
+        }
+
+        [Test]
+        public void FullTankDoesNotChainLaunch()
+        {
+            // Landing (or sitting) with a full tank fires nothing: only the
+            // rising edge launches. Gauge must dip and refill first.
+            var gauge = NewGaugeWithMover(out var sm, out var mover);
+            gauge.AddFill(120f);
+            Assert.AreEqual(1, mover.LaunchCount);
+            gauge.AddFill(10f);
+            gauge.AddFill(10f);
+            Assert.AreEqual(1, mover.LaunchCount, "re-filled full tank re-launched");
+        }
+
+        FlightGaugeSystem NewGaugeWithMover(out FlightStateMachine sm, out PlayerMovementController mover)
+        {
+            // Fresh rig (not shared with NewGauge): gauge needs a movement
+            // ref for launch, so build momentum + mover together here.
+            var go = new GameObject("gauge");
+            var momentum = go.AddComponent<PlayerMomentumController>();
+            var momSettings = ScriptableObject.CreateInstance<MomentumSettings>();
+            _transient.Add(momSettings);
+            momSettings.MinSpeed = 5f;
+            var timing = ScriptableObject.CreateInstance<TimingSettings>();
+            _transient.Add(timing);
+            momentum.Configure(momSettings, timing);
+            sm = go.AddComponent<FlightStateMachine>();
+            sm.Configure(
+                new List<FlightTierProfile>
+                {
+                    Profile(FlightTier.None),
+                    Profile(FlightTier.Low),
+                    Profile(FlightTier.Medium),
+                    Profile(FlightTier.High),
+                    Profile(FlightTier.Max),
+                },
+                momentum, momSettings);
+            var settings = ScriptableObject.CreateInstance<FlightGaugeSettings>();
+            _transient.Add(settings);
+            settings.MaxGauge = 120f;
+            settings.StartGauge = 0f;
+            settings.FlyDrainPerSecond = 3.5f;
+            settings.MissDrain = 10f;
+            settings.TierThresholds = new float[] { 20f, 40f, 70f, 100f };
+            var gauge = go.AddComponent<FlightGaugeSystem>();
+            var player = new GameObject("player");
+            player.AddComponent<CharacterController>();
+            mover = player.AddComponent<PlayerMovementController>();
+            mover.Configure(sm, momentum, momSettings);
+            gauge.Configure(sm, settings, null, mover);
+            _transient.Add(go);
+            _transient.Add(player);
+            return gauge;
+        }
+
+        [Test]
         public void ExactThresholdReadsUpper()
         {
             var gauge = NewGauge(out var sm);

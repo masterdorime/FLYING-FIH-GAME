@@ -9,6 +9,10 @@ namespace FlyingFishMomentum
         public float DragSwimming = 1.5f;
         public float DragFlying = 0.6f;
         public float BreachSpeedThreshold = 20f;
+        // Ship rules: swimming locks this depth near the surface.
+        public float SwimDepthY = -1.5f;
+        // Gauge-full launch: upward kick in u/s (sky-high arc, then glide out).
+        public float LaunchVelocity = 40f;
         // Haste-like forward pressure: drag scales with angle off forward
         // (0 = due +Z). Gain 3 means full-backward flight drags ~4x normal.
         public float DeviationDragGain = 3f;
