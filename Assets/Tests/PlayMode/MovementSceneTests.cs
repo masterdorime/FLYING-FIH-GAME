@@ -520,9 +520,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
             // runs. Spawner keeps updating while mover is off.
             mover.enabled = false;
             float t = 0f;
-            while (!spawner.ChargeActive && t < 3f) { t += Time.deltaTime; yield return null; }
-            Assert.IsTrue(spawner.ChargeActive, "swimming through a ring did not start charge");
-            Assert.AreEqual(3, spawner.ChargeOrder.Length);
+            try
+            {
+                while (!spawner.ChargeActive && t < 3f) { t += Time.deltaTime; yield return null; }
+                Assert.IsTrue(spawner.ChargeActive, "swimming through a ring did not start charge");
+                Assert.AreEqual(3, spawner.ChargeOrder.Length);
+            }
+            finally { Time.timeScale = 1f; }
         }
 
         [UnityTest]
@@ -540,11 +544,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
             spawner.enabled = false;
             sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
             mover.transform.position = spawner.Rings[0].transform.position;
-            spawner.CheckRingTrigger(0f, mover.transform.position);
-            Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
-            yield return null;
-            Assert.AreEqual(spawner.ChargeOrder[0].ToString(), bar.ShownKind,
-                "bar visual does not match step 0 kind");
+            try
+            {
+                spawner.CheckRingTrigger(0f, mover.transform.position);
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                yield return null;
+                Assert.AreEqual(spawner.ChargeOrder[0].ToString(), bar.ShownKind,
+                    "bar visual does not match step 0 kind");
             // Finish step 0 blindly (hold past limit AND tap target both pass
             // harmlessly for the other kind), then check step 1 matches.
             float now = 0f;
@@ -558,8 +564,10 @@ namespace FlyingFishMomentum.Tests.PlayMode
             Assert.IsTrue(spawner.ChargeActive, "charge ended after one step");
             yield return null;
             yield return null; // let bar.Update observe the new step
-            Assert.AreEqual(spawner.ChargeOrder[1].ToString(), bar.ShownKind,
-                "bar visual does not match step 1 kind");
+                Assert.AreEqual(spawner.ChargeOrder[1].ToString(), bar.ShownKind,
+                    "bar visual does not match step 1 kind");
+            }
+            finally { Time.timeScale = 1f; }
         }
 
         [UnityTest]
