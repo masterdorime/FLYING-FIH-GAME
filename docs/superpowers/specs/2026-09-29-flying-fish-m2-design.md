@@ -163,7 +163,9 @@ UI independent from gameplay state, events over coupling.
   are line-drawn arrow glyphs (grey/green/red) + overlay arrow text;
   sequences are 4 arrows (`+2` each, `+4` jackpot = 12 max per ring).
   Reading order is left-to-right from step 0; the live step pulses big
-  and yellow so it never blends into the grey steps ahead.
+  and yellow so it never blends into the grey steps ahead. (2026-09-30
+  fix: the billboard mirrored local +X to screen-left, so the row read
+  right-to-left — glyph offsets flipped to compensate.)
 
 ## Handoff notes for M3
 

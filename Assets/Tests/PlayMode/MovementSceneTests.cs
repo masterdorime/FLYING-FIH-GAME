@@ -566,6 +566,45 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ChargeRowReadsLeftToRightOnScreen()
+        {
+            // User report: "the sequence actually starts from right" — taps
+            // on the leftmost arrow go red on keyboard. Either the glyph row
+            // is mirrored on screen (display bug) or the taps arrive wrong
+            // (input side). This pins the display half: step index must grow
+            // with screen-x through the live chase camera.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var bar = Object.FindFirstObjectByType<ChargeBar>();
+            sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.transform.position = spawner.Rings[0].transform.position;
+            try
+            {
+                // Spawner stays enabled: its Update triggers the charge on
+                // the pinned fish and the bar draws through the live camera.
+                int guard = 0;
+                while (!spawner.ChargeActive && guard++ < 600) yield return null;
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                // Let the chase camera glide behind the teleported fish.
+                for (int f = 0; f < 120; f++) yield return null;
+                Assert.IsTrue(spawner.ChargeActive, "charge expired before camera settled");
+                float prevX = float.NegativeInfinity;
+                for (int i = 0; i < spawner.Charge.StepCount; i++)
+                {
+                    Vector3 sp = Camera.main.WorldToScreenPoint(bar.GlyphWorldPosition(i));
+                    Assert.Greater(sp.z, 0f, "glyph " + i + " is behind the camera");
+                    Assert.Greater(sp.x, prevX, "glyph " + i + " is not left-to-right on screen");
+                    prevX = sp.x;
+                }
+            }
+            finally { Time.timeScale = 1f; }
+        }
+
+        [UnityTest]
         public IEnumerator ChargeCurrentStepStandsOut()
         {
             // Reading order is left-to-right from step 0; the step being

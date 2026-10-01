@@ -21,6 +21,8 @@ namespace FlyingFishMomentum
         public int RedCount { get; private set; }
         public float GlyphScale(int i) => _glyphs[i].transform.localScale.x;
         public Color GlyphColor(int i) => _mats[i].color;
+        public Vector3 GlyphWorldPosition(int i) =>
+            _glyphs[i].transform.position;
 
         [SerializeField] TimingPromptSpawner _spawner;
         [SerializeField] Transform _target;
@@ -42,7 +44,10 @@ namespace FlyingFishMomentum
             {
                 var go = new GameObject("Glyph" + i);
                 go.transform.SetParent(_visuals.transform, false);
-                go.transform.localPosition = new Vector3((i - 1.5f) * Spacing, 0f, 0f);
+                // Screen-stable order: the row billboards +Z toward the
+                // camera, which mirrors local +X to screen-LEFT — so step i
+                // sits at (1.5-i) to read 0→3 left-to-right on screen.
+                go.transform.localPosition = new Vector3((1.5f - i) * Spacing, 0f, 0f);
                 var line = go.AddComponent<LineRenderer>();
                 line.positionCount = 5;
                 line.useWorldSpace = false;
