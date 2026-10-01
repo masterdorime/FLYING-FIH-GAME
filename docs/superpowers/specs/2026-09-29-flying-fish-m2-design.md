@@ -162,6 +162,8 @@ UI independent from gameplay state, events over coupling.
   Swim-up breach retired (depth lock makes it unreachable). Charge steps
   are line-drawn arrow glyphs (grey/green/red) + overlay arrow text;
   sequences are 4 arrows (`+2` each, `+4` jackpot = 12 max per ring).
+  Reading order is left-to-right from step 0; the live step pulses big
+  and yellow so it never blends into the grey steps ahead.
 
 ## Handoff notes for M3
 

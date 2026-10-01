@@ -4,18 +4,23 @@ using UnityEngine;
 namespace FlyingFishMomentum
 {
     // M2 charge-sequence meter: one line-drawn arrow glyph per step above
-    // the fish (same placeholder style as the dial arcs). Grey = waiting,
-    // green = nailed, red = missed. Reads spawner state only; the overlay
-    // text ("CHARGE 2/4 [↑]") names the current arrow.
+    // the fish (same placeholder style as the dial arcs). Reading order is
+    // left-to-right from step 0. The step being judged pulses big and
+    // yellow; steps still ahead stay small and grey; green = nailed,
+    // red = missed. Reads spawner state only; the overlay text names the
+    // current arrow in brackets.
     public class ChargeBar : MonoBehaviour
     {
         const float Hover = 3.2f;
         const float Spacing = 1.6f;
         const float GlyphSize = 0.9f;
+        const float CurrentPulse = 1.5f;
 
         public bool Visible { get; private set; }
         public int GreenCount { get; private set; }
         public int RedCount { get; private set; }
+        public float GlyphScale(int i) => _glyphs[i].transform.localScale.x;
+        public Color GlyphColor(int i) => _mats[i].color;
 
         [SerializeField] TimingPromptSpawner _spawner;
         [SerializeField] Transform _target;
@@ -72,8 +77,13 @@ namespace FlyingFishMomentum
             for (int i = 0; i < _glyphs.Count; i++)
             {
                 bool? done = i < results.Count ? results[i] : null;
-                Color color = !done.HasValue ? Color.grey : done.Value ? Color.green : Color.red;
+                bool current = charge.IsActive && i == charge.StepIndex;
+                Color color = current ? Color.yellow
+                    : !done.HasValue ? Color.grey
+                    : done.Value ? Color.green : Color.red;
+                float scale = current ? CurrentPulse + 0.2f * Mathf.Sin(Time.time * 6f) : 1f;
                 _mats[i].color = color;
+                _glyphs[i].transform.localScale = Vector3.one * scale;
                 _glyphs[i].enabled = i < order.Length;
                 if (i < order.Length) DrawArrow(_glyphs[i], order[i]);
                 if (done.HasValue && done.Value) GreenCount++;

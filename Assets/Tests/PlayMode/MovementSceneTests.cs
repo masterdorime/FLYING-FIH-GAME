@@ -566,6 +566,40 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ChargeCurrentStepStandsOut()
+        {
+            // Reading order is left-to-right from step 0; the step being
+            // judged must look different from the grey steps still ahead:
+            // bigger (pulsing) and yellow instead of grey.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var bar = Object.FindFirstObjectByType<ChargeBar>();
+            sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.transform.position = spawner.Rings[0].transform.position;
+            try
+            {
+                float now = 100f;
+                spawner.CheckRingTrigger(now, mover.transform.position);
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                yield return null; // let ChargeBar.Update draw the glyphs
+                int cur = spawner.Charge.StepIndex;
+                int next = (cur + 1) % spawner.Charge.StepCount;
+                Assert.Greater(bar.GlyphScale(cur), bar.GlyphScale(next),
+                    "current step glyph is not bigger than upcoming steps");
+                Assert.AreNotEqual(Color.grey, bar.GlyphColor(cur),
+                    "current step glyph is the same grey as upcoming steps");
+                Assert.AreEqual(Color.grey, bar.GlyphColor(next),
+                    "upcoming step glyph is not the waiting grey");
+            }
+            finally { Time.timeScale = 1f; }
+        }
+
+        [UnityTest]
         public IEnumerator DialZonesFollowStreak()
         {
             // The drawn red slice must match the judged windows: after one
