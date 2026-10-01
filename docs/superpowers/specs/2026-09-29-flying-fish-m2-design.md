@@ -80,7 +80,7 @@ UI independent from gameplay state, events over coupling.
 - **Old:** only distance-beat tap prompts.
 - **Why:** feel pass wants a second, different skill expression for gaining speed.
 - **New:** 5 fixed rings in the world (alternating swim/air depth).
-  REVISED twice by feel pass: (1) holds never landed in wall-clock
+  REVISED three times by feel pass: (1) holds never landed in wall-clock
   perception, so charge steps are arrow taps — swim through, match 3
   seeded arrows (WASD/stick flicks) for +2 each, +4 all-clean jackpot,
   wrong key +0, 6s overall timeout, no penalties; (2) marker cubes
@@ -88,7 +88,10 @@ UI independent from gameplay state, events over coupling.
   coupling, no penalties in charge mode; gains ratchet cruise to the 70
   cap like tap hits. Beats suspend during charge. Ring entry dips the
   world to 0.4× for 1.2s wall clock (unpausable timer; pause wins ties)
-  so hands can answer.
+  so hands can answer. (3) 2026-09-30 testing layout: 20 rings, one
+  every 150m down the 2x runway (z 150..3000); x lane + swim/fly depth
+  re-roll every run from the spawner seed (z pacing fixed). Sequences
+  are 4 arrows (see ship record); timeout 8s.
 
 ## Change record — gearless climb + drifting needle (§34.1, 2026-09-29, approved)
 

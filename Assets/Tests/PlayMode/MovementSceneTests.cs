@@ -791,6 +791,19 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator RunwayFilledWithRings()
+        {
+            // Testing layout: a ring every 150m down the 2x runway so every
+            // stretch has charge chances (positions shuffle per run, but z
+            // pacing and count are fixed).
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            Assert.AreEqual(20, spawner.Rings.Count);
+            for (int i = 0; i < 20; i++)
+                Assert.AreEqual(150f * (i + 1), spawner.Rings[i].transform.position.z, 0.5f);
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator SwimLocksDepthAndPitch()
         {
             // Ship rules: underwater, W/S does nothing — depth holds near the

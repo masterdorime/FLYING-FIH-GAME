@@ -37,6 +37,7 @@ namespace FlyingFishMomentum
         float _lastTickNow = float.MinValue;
         System.Random _rngBeat;
         System.Random _rngCharge;
+        System.Random _rngLayout;
         bool _seeded;
         public int StreakCount { get; private set; }
         public float HitAngleDeg { get; private set; }
@@ -73,8 +74,32 @@ namespace FlyingFishMomentum
             // Separate streams so charge draws never perturb the beat schedule.
             _rngBeat = new System.Random(seed);
             _rngCharge = new System.Random(seed);
+            _rngLayout = new System.Random(seed);
             _seeded = true;
             DrawBeat();
+            ShuffleRingLayout();
+        }
+
+        // Testing layout: every run re-rolls each ring's x lane and
+        // swim/fly depth from the seed (live runs seed by wall clock, so
+        // every playthrough differs). Z pacing is fixed so timing rhythm
+        // stays stable. Bounds are test-scaffold consts until M4 owns
+        // chunk layout (see M2 spec change record).
+        const float LayoutLaneX = 20f;
+        const float LayoutSwimY = -3f;
+        const float LayoutFlyY = 10f;
+
+        void ShuffleRingLayout()
+        {
+            if (_rings == null || _rngLayout == null) return;
+            foreach (var ring in _rings)
+            {
+                if (ring == null) continue;
+                var p = ring.transform.position;
+                p.x = Mathf.Lerp(-LayoutLaneX, LayoutLaneX, (float)_rngLayout.NextDouble());
+                p.y = _rngLayout.NextDouble() < 0.5 ? LayoutSwimY : LayoutFlyY;
+                ring.transform.position = p;
+            }
         }
 
         public void SetRings(List<ChargeRing> rings)

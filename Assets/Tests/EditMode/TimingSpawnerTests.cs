@@ -275,6 +275,51 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void RingLayoutSeededAndBounded()
+        {
+            // Testing layout: every run shuffles ring x/y from the seed
+            // (z pacing stays fixed so timing rhythm is stable). Same seed
+            // replays the same layout; x stays over water, y stays on a
+            // swimmable/flyable lane.
+            var a = NewSpawner(out _);
+            var ringsA = new System.Collections.Generic.List<ChargeRing>();
+            for (int i = 0; i < 4; i++)
+            {
+                var rgo = new GameObject("ring");
+                rgo.transform.position = new Vector3(0f, -3f, 150f * (i + 1));
+                ringsA.Add(rgo.AddComponent<ChargeRing>());
+            }
+            a.SetRings(ringsA);
+            a.SetSeed(7);
+            var posA = new System.Collections.Generic.List<Vector3>();
+            foreach (var r in ringsA) posA.Add(r.transform.position);
+            Cleanup();
+            var b = NewSpawner(out _);
+            var ringsB = new System.Collections.Generic.List<ChargeRing>();
+            for (int i = 0; i < 4; i++)
+            {
+                var rgo = new GameObject("ring");
+                rgo.transform.position = new Vector3(0f, -3f, 150f * (i + 1));
+                ringsB.Add(rgo.AddComponent<ChargeRing>());
+            }
+            b.SetRings(ringsB);
+            b.SetSeed(7);
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.AreEqual(posA[i], ringsB[i].transform.position,
+                    "same seed did not replay ring layout");
+                Assert.GreaterOrEqual(ringsB[i].transform.position.x, -20f);
+                Assert.LessOrEqual(ringsB[i].transform.position.x, 20f);
+                Assert.AreEqual(150f * (i + 1), ringsB[i].transform.position.z, 0.001f);
+            }
+            b.SetSeed(8);
+            bool anyDifferent = false;
+            for (int i = 0; i < 4; i++)
+                if (ringsB[i].transform.position != posA[i]) anyDifferent = true;
+            Assert.IsTrue(anyDifferent, "new seed did not shuffle ring layout");
+        }
+
+        [Test]
         public void ChargeCleanRunBanksJackpot()
         {
             // Match every arrow: 3x+2 plus +4 jackpot: 10 → 20.

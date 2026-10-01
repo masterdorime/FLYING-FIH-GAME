@@ -59,11 +59,11 @@ namespace ProjectBootstrap
             lightGo.transform.rotation = Quaternion.Euler(-50f, -30f, 0f);
 
             // Water: visual only — MeshCollider removed so breaches pass through.
-            // Long runway (span z -100..1500) for M2 timing play at speed.
+            // Long runway (span z -100..3100, 2x) for testing at speed.
             var water = GameObject.CreatePrimitive(PrimitiveType.Plane);
             water.name = "Water";
-            water.transform.position = new Vector3(0f, 0f, 700f);
-            water.transform.localScale = new Vector3(40f, 1f, 160f);
+            water.transform.position = new Vector3(0f, 0f, 1500f);
+            water.transform.localScale = new Vector3(40f, 1f, 320f);
             Object.DestroyImmediate(water.GetComponent<MeshCollider>());
             water.GetComponent<MeshRenderer>().sharedMaterial = waterMat;
 
@@ -71,8 +71,8 @@ namespace ProjectBootstrap
             // scaled MeshColliders misbehave).
             var seabed = GameObject.CreatePrimitive(PrimitiveType.Cube);
             seabed.name = "Seabed";
-            seabed.transform.position = new Vector3(0f, -12.5f, 700f);
-            seabed.transform.localScale = new Vector3(400f, 1f, 1600f);
+            seabed.transform.position = new Vector3(0f, -12.5f, 1500f);
+            seabed.transform.localScale = new Vector3(400f, 1f, 3200f);
             seabed.GetComponent<MeshRenderer>().sharedMaterial = sandMat;
 
             // Slalom corridor z=30..90, inner gap 20 (turn radius at Low ≈ 9.4).
@@ -109,7 +109,7 @@ namespace ProjectBootstrap
             rig.tag = "MainCamera"; // Camera.main billboarding (dial) depends on this
             rig.transform.position = new Vector3(0f, 2f, -12f);
             var rigCam = rig.AddComponent<Camera>();
-            rigCam.farClipPlane = 2000f; // long M2 runway stays visible
+            rigCam.farClipPlane = 4000f; // 2x runway stays visible
             var reactor = rig.AddComponent<CameraSpeedReactor>();
             reactor.Configure(camSettings, momSettings, momentum, sm, movement, player.transform);
             rig.transform.LookAt(player.transform.position);
@@ -130,15 +130,16 @@ namespace ProjectBootstrap
             ringGo.transform.SetParent(timingGo.transform, false);
             var ring = ringGo.AddComponent<TimingPromptDial>();
             ring.Configure(spawner, player.transform, momentum);
-            // Charge rings (M2): fixed swim/fly alternation, deterministic builds.
-            var rings = new List<ChargeRing>
+            // Charge rings: one every 150m down the runway (z pacing fixed
+            // for timing rhythm); x lane + swim/fly depth re-roll every run
+            // from the spawner seed. Base spots just alternate lanes.
+            var rings = new List<ChargeRing>();
+            for (int i = 0; i < 20; i++)
             {
-                AddChargeRing("ChargeRing_1", new Vector3(-15f, -3f, 150f)),
-                AddChargeRing("ChargeRing_2", new Vector3(15f, 10f, 400f)),
-                AddChargeRing("ChargeRing_3", new Vector3(0f, -3f, 650f)),
-                AddChargeRing("ChargeRing_4", new Vector3(-15f, 10f, 900f)),
-                AddChargeRing("ChargeRing_5", new Vector3(15f, -3f, 1200f)),
-            };
+                float x = ((i % 3) - 1) * 15f;
+                float y = i % 2 == 0 ? -3f : 10f;
+                rings.Add(AddChargeRing("ChargeRing_" + (i + 1), new Vector3(x, y, 150f * (i + 1))));
+            }
             spawner.SetRings(rings);
             var barGo = new GameObject("ChargeBar");
             barGo.transform.SetParent(timingGo.transform, false);
