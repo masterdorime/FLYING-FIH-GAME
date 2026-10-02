@@ -18,6 +18,6 @@ MonoBehaviour:
   GravityScale: 1
   AirControl: 0.65
   CameraFOV: 60
-  CameraDistance: 8
+  CameraDistance: 11
   WingVisualScale: 1
   TrailColor: {r: 1, g: 1, b: 1, a: 1}

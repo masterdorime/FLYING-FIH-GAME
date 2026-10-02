@@ -17,7 +17,7 @@ MonoBehaviour:
   TurnRate: 140
   GravityScale: 0.8
   AirControl: 0.65
-  CameraFOV: 65
-  CameraDistance: 9
+  CameraFOV: 62
+  CameraDistance: 11
   WingVisualScale: 1
   TrailColor: {r: 1, g: 1, b: 1, a: 1}

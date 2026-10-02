@@ -22,5 +22,14 @@ namespace FlyingFishMomentum
         // Flying sustains a higher top speed than swimming at the same tier
         // (fast-and-swoopy air, grippy water). 1.2 = +20% chased target in Fly.
         public float FlySpeedBonus = 1.2f;
+        // Arcade glide: lift per unit forward speed holding weight in air
+        // (0.03 ≈ level Max cruise sinks ~1u/s; slow tiers sink hard).
+        public float GlideLift = 0.03f;
+        // Slope exchange: downhill (sin<0) raises the chased target toward
+        // the cap, uphill lowers it — the existing chase does the work,
+        // same pattern as the deviation penalty. 0.5 = ±35% at 45°.
+        public float GlideSlopeTarget = 0.5f;
+        // Uphill drag multiplier per sin so climbs observably bleed.
+        public float GlideSlopeDrag = 3f;
     }
 }

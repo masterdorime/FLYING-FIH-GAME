@@ -20,3 +20,6 @@ MonoBehaviour:
   DeviationDragGain: 3
   DeviationSpeedPenalty: 0.5
   FlySpeedBonus: 1.2
+  GlideLift: 0.03
+  GlideSlopeTarget: 0.5
+  GlideSlopeDrag: 3

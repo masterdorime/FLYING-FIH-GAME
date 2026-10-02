@@ -11,8 +11,7 @@ namespace FlyingFishMomentum
     public class CameraSpeedReactor : MonoBehaviour
     {
         const float KickDecayRate = 2.5f;
-        const float KickFovGain = 20f;
-        const float KickDistanceGain = 6f;
+        const float KickFovGain = 6f;
         const float RollSmoothing = 0.1f;
         const float LookAhead = 0.3f;
         const float ShakeFrequency = 40f;
@@ -84,7 +83,9 @@ namespace FlyingFishMomentum
                 _displayFov,
                 KickEnvelope * _camSettings.TierUpCameraKick * KickFovGain,
                 _camSettings.MaxFOV);
-            float dist = profile.CameraDistance + KickEnvelope * _camSettings.TierUpCameraKick * KickDistanceGain;
+            // Constant-size fish: distance is tier-flat (all profiles 11),
+            // so no kick term here — only the mild FOV kick breathes.
+            float dist = profile.CameraDistance;
 
             float yawRate = Mathf.DeltaAngle(_lastYaw, _movement.Yaw) / dt;
             _lastYaw = _movement.Yaw;

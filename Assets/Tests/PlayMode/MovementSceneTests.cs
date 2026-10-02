@@ -219,6 +219,95 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator DiveBuildsSpeedClimbBleedsIt()
+        {
+            // Arcade glide: downhill converts to speed, uphill bleeds it.
+            // Fixed-step, mid-tier speed so caps never interfere.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 40f; sm.Momentum.TargetSpeed = 40f;
+            const float step = 1f / 60f;
+            // Climb out of the launch splash first: the dive below starts
+            // from altitude, or it ends underwater where pitch locks to 0.
+            for (int i = 0; i < 30; i++) mover.TickMove(new Vector2(0f, 1f), step);
+            for (int i = 0; i < 300; i++) mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "climb-out touched water");
+            sm.Momentum.CurrentSpeed = 40f; sm.Momentum.TargetSpeed = 40f;
+            for (int i = 0; i < 48; i++) mover.TickMove(new Vector2(0f, -1f), step);
+            Assert.Less(mover.Pitch, -15f, "setup did not dive");
+            // Fly bonus alone cruises 40 → 48: a real dive must push
+            // clearly past it (target raised toward the speed cap).
+            for (int i = 0; i < 60; i++) mover.TickMove(Vector2.zero, step);
+            Assert.Greater(sm.Momentum.CurrentSpeed, 55f, "dive did not build speed");
+            for (int i = 0; i < 60; i++) mover.TickMove(new Vector2(0f, 1f), step);
+            Assert.Greater(mover.Pitch, 15f, "setup did not climb");
+            // Climb drag bleeds slowly: 15s must fall clearly under cruise.
+            for (int i = 0; i < 900; i++) mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "climb touched water");
+            Assert.Less(sm.Momentum.CurrentSpeed, 44f, "climb did not bleed speed");
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator GlideSinksGentlyAtCruise()
+        {
+            // Lift holds most of the weight at cruise: 30s of level Max
+            // flight from a launch kick is still hundreds of meters up.
+            // Ballistic (no lift) lands in ~27s — so this pins the glide.
+            // (Flight must still end; see LevelFlightEventuallyGlidesOut.)
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            const float step = 1f / 60f;
+            for (int i = 0; i < 1800; i++) mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "glide did not hold altitude");
+            Assert.Greater(mover.transform.position.y, 300f, "level cruise sinks like a stone");
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator CameraDistanceConstantAcrossTiers()
+        {
+            // Constant-size fish: the chase camera holds the same distance
+            // at Low cruise as at Max cruise (no drift-away with speed).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var cam = Object.FindFirstObjectByType<CameraSpeedReactor>();
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.SetTier(FlightTier.Low);
+            sm.Momentum.CurrentSpeed = 25f; sm.Momentum.TargetSpeed = 25f;
+            // Wall-clock settle (batchmode frames are tiny; fixed frame
+            // counts settle nothing): the guard below proves Low anchor.
+            yield return new WaitForSecondsRealtime(1.5f);
+            float lowDist = (cam.transform.position - mover.transform.position).magnitude;
+            Assert.Less(lowDist, 12f, "camera never reached the Low anchor");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            yield return new WaitForSecondsRealtime(1.5f);
+            float maxDist = (cam.transform.position - mover.transform.position).magnitude;
+            Assert.Greater(lowDist, 10.5f); Assert.Less(lowDist, 13f);
+            Assert.Greater(maxDist, 10.5f); Assert.Less(maxDist, 13f);
+            Assert.Less(Mathf.Abs(lowDist - maxDist), 1.5f, "camera drifts with tier");
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator LevelFlightEventuallyGlidesOut()
         {
             // Structural pin for rise-then-glide: unpowered level flight must

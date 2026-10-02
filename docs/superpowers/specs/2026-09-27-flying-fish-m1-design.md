@@ -138,3 +138,22 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - **Affected systems:** `PlayerMomentumController.Tick` (new `speedBonus` param, cap scales too), `PlayerMovementController.TickMove` (passes bonus when flying), `MomentumSettings` + asset, all five tier profiles.
 - **New behavior:** breaching feels like a boost; sustained air turns are wide; unpowered level flight always glides out back to swim.
 - **Updated acceptance:** `FlyBonusRaisesChasedTarget`, `AirTurnsWiderThanWaterTurns`, `LevelFlightEventuallyGlidesOut` (turn test watched RED on old tuning); human feel pass re-confirms.
+
+## Change record — arcade glide + constant camera (§34.1, 2026-10-01, approved)
+
+- **Old:** sink-only vertical (no lift), speed indifferent to slope; chase
+  camera pulled back 8→16 by tier; FOV ladder 60→95.
+- **Why:** flight felt like a sinking projectile, not an airplane; the
+  fish shrank with speed; FOV stayed fisheyed at cruise.
+- **New:** lift `speed × GlideLift` offsets gravity (level Max cruise
+  sinks ~1u/s, slow tiers sink hard); slope drives the chased target
+  (`GlideSlopeTarget` 0.5: dive 45° ≈ +35%, climb ≈ −35%) plus uphill
+  drag (`GlideSlopeDrag` 3) — all `MomentumSettings` SO. Camera distance
+  flat 11 every tier (no distance kick); FOV ladder 60/62/64/67/70,
+  `MaxFOV` 72, FOV kick gain 20→6. Yaw cone, pitch ±60°, wide-air-turns
+  rule untouched (explicitly NOT full-airplane: no stall, no banking
+  turns, no ±90 pitch).
+- **Updated acceptance:** `DiveBuildsSpeedClimbBleedsIt`,
+  `GlideSinksGentlyAtCruise`, `CameraDistanceConstantAcrossTiers`,
+  `TierCameraDistanceConstant`, `TierFovLadderIsMild`,
+  `CameraSettingsMildMax`; human feel pass re-confirms.

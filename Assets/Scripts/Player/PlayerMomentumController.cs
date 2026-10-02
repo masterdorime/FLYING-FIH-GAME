@@ -66,7 +66,7 @@ namespace FlyingFishMomentum
             CurrentSpeed = Mathf.Clamp(CurrentSpeed + delta, _settings.MinSpeed, ceiling);
         }
 
-        public void Tick(float dt, float dragRate, float deviationDeg = 0f, float speedBonus = 1f)
+        public void Tick(float dt, float dragRate, float deviationDeg = 0f, float speedBonus = 1f, float slopeSin = 0f)
         {
             // Forward pressure (§34.1 change): off-forward headings bleed
             // speed. Deviation 0 behaves exactly as before. The drag
@@ -74,8 +74,13 @@ namespace FlyingFishMomentum
             // == max moves zero units), so deviation also caps the chased
             // target — holding a turn costs top speed, re-aiming recovers it.
             float devFrac = Mathf.Clamp01(Mathf.Abs(deviationDeg) / 180f);
-            float drag = dragRate * (1f + _settings.DeviationDragGain * devFrac);
+            float slope = Mathf.Clamp(slopeSin, -1f, 1f);
+            float drag = dragRate * (1f + _settings.DeviationDragGain * devFrac)
+                * (1f + _settings.GlideSlopeDrag * Mathf.Max(0f, slope));
             float effectiveTarget = TargetSpeed * speedBonus * (1f - _settings.DeviationSpeedPenalty * devFrac);
+            // Glide exchange: downhill raises the chased target, uphill
+            // lowers it (dive 45° ≈ +35%, climb 45° ≈ −35% before caps).
+            effectiveTarget *= 1f - _settings.GlideSlopeTarget * slope;
             // The hard cap holds even with the fly bonus: air is faster
             // through lower drag, not by breaking the cap.
             if (_timing != null) effectiveTarget = Mathf.Min(effectiveTarget, _timing.SpeedCap);

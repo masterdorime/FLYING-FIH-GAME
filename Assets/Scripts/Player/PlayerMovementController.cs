@@ -107,10 +107,14 @@ namespace FlyingFishMomentum
 
             float drag = swimming ? _settings.DragSwimming : _settings.DragFlying;
             float bonus = swimming ? 1f : _settings.FlySpeedBonus;
-            Momentum.Tick(dt, drag, Mathf.Abs(Yaw), bonus);
+            float slope = swimming ? 0f : Mathf.Sin(Pitch * Mathf.Deg2Rad);
+            Momentum.Tick(dt, drag, Mathf.Abs(Yaw), bonus, slope);
 
             if (swimming) _vertVel = 0f;
-            else _vertVel -= StandardGravity * _gravityScale * dt;
+            // Glide lift: forward speed holds weight in air, so cruise
+            // sinks gently and slow flight sinks hard (free progression).
+            else _vertVel += (Momentum.CurrentSpeed * _settings.GlideLift
+                - StandardGravity * _gravityScale) * dt;
 
             // Forward speed is the authority for FOV/thresholds; vertical drift
             // is a separate channel (dive steepens descent, climb fights gravity).

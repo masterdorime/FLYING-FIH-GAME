@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73e7cb976f5c72d49a89b18ace4c2e20, type: 3}
   m_Name: CameraSettings
   BaseFOV: 60
-  MaxFOV: 85
+  MaxFOV: 72
   FOVSpeedResponse: 0.15
   PositionLag: 0.12
   TierUpCameraKick: 0.35
