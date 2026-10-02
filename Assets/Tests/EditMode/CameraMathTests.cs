@@ -44,5 +44,17 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(0f, CameraMath.Decay(1f, 2.5f, 1f), 0.01f);
             Assert.AreEqual(0.5f, CameraMath.Decay(1f, 2.5f, 0.2f), 0.01f);
         }
+
+        [Test]
+        public void LookOffsetClamped()
+        {
+            // Telemetry-proven: a 21m look-ahead at dive speed threw the
+            // fish half a screen out of frame. Slow flight keeps the full
+            // look; fast flight clamps to 4m so the fish stays framed.
+            Assert.AreEqual(new UnityEngine.Vector3(0f, 0f, 3f),
+                CameraMath.LookOffset(new UnityEngine.Vector3(0f, 0f, 10f), 0.3f, 4f));
+            var fast = CameraMath.LookOffset(new UnityEngine.Vector3(0f, -60f, 35f), 0.3f, 4f);
+            Assert.LessOrEqual(fast.magnitude, 4.001f);
+        }
     }
 }

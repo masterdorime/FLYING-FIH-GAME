@@ -139,6 +139,30 @@ RunManager (M4), no timing/gauge (M2/M3), no menus/HUD (M5).
 - **New behavior:** breaching feels like a boost; sustained air turns are wide; unpowered level flight always glides out back to swim.
 - **Updated acceptance:** `FlyBonusRaisesChasedTarget`, `AirTurnsWiderThanWaterTurns`, `LevelFlightEventuallyGlidesOut` (turn test watched RED on old tuning); human feel pass re-confirms.
 
+## Change record — flight model v2, elytra + fireworks (§34.1, approved)
+
+- **Old:** sink-only vertical + linear lift; no air engine (leap-and-fall);
+  flat yaw; same authority at any speed; velocity look-ahead unbounded.
+- **Why:** playtest: flight never lasts, never feels like flying; telemetry
+  (`fish@1.49`) proved fast dives throw the fish out of frame.
+- **New:** lift ∝ speed² against the tier top (cruise holds weight minus
+  `GlideBaseSink`, always ends; slow flight sinks hard), sink-damped
+  terminal fall; dive/climb drive the chased target (kept);
+  `GlideLift` deleted. Firework rockets: +1 per completed ring (cap 3),
+  Space in open air bursts along the nose (`RocketBoost`) + climb pop
+  (`RocketPop`); beats/charge still own the button first; swim presses
+  ignored. Bank-to-turn is visual only (fish rolls into turns; yaw rule
+  untouched). Authority scales with speed in air (gentle stall, no spin).
+  Look-ahead clamped to 4m (`CameraMath.LookOffset`). `FlyDrain` 3.5→1.5
+  (≈32s fuel for ~60s skilled flights). Camera distance flat 11, FOV
+  ladder 60/62/64/67/70, `MaxFOV` 72. Explicitly NOT this round: stall
+  spins, yaw-coupled banking, ±90 pitch.
+- **Updated acceptance:** `SoarHoldAtCruise`, `CleanRingEarnsRocketCappedAtThree`,
+  `RocketFiresOnlyInOpenAir`, `BeatPressBeatsRocket`,
+  `BankRollsIntoTurns`, `SlowSpeedMush`, `DiveKeepsFishInFrame`,
+  `LookOffsetClamped`, `TierCameraDistanceConstant`, `TierFovLadderIsMild`,
+  `CameraSettingsMildMax`; human feel pass re-confirms.
+
 ## Change record — arcade glide + constant camera (§34.1, 2026-10-01, approved)
 
 - **Old:** sink-only vertical (no lift), speed indifferent to slope; chase

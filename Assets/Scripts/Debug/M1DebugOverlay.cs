@@ -72,6 +72,7 @@ namespace FlyingFishMomentum
                 (string.IsNullOrEmpty(charge) ? string.Empty : charge + "\n") +
                 $"FPS {_fps:F0}\n" +
                 $"Gauge {_gauge.CurrentGauge:F0}/{_gauge.MaxGauge:F0} Tier {_sm.ActiveTier}\n" +
+                (_spawner != null ? $"Rockets {_spawner.RocketCount}/{_spawner.RocketMax}\n" : string.Empty) +
                 cam);
         }
     }

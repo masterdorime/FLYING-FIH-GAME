@@ -14,6 +14,7 @@ namespace FlyingFishMomentum
         const float KickFovGain = 6f;
         const float RollSmoothing = 0.1f;
         const float LookAhead = 0.3f;
+        const float MaxLookAhead = 4f;
         const float ShakeFrequency = 40f;
 
         public float KickEnvelope { get; private set; }
@@ -101,7 +102,8 @@ namespace FlyingFishMomentum
                 transform.position += transform.right *
                     (Mathf.Sin(Time.time * ShakeFrequency) * ShakeEnvelope * _camSettings.MissCameraShake);
 
-            transform.LookAt(_target.position + _movement.CurrentVelocity * LookAhead, Vector3.up);
+            transform.LookAt(_target.position + CameraMath.LookOffset(
+                _movement.CurrentVelocity, LookAhead, MaxLookAhead), Vector3.up);
             transform.Rotate(0f, 0f, _roll);
             _cam.fieldOfView = fov;
         }

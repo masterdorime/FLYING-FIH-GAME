@@ -43,6 +43,10 @@ namespace FlyingFishMomentum
         public float HitAngleDeg { get; private set; }
         public readonly ChargeSequencer Charge = new ChargeSequencer();
         public bool ChargeActive => Charge.IsActive;
+        // Firework rockets (flight v2 engine): +1 per completed ring
+        // (capped), spent by pressing in open air for a burst + climb pop.
+        public int RocketCount { get; private set; }
+        public int RocketMax => _momSettings != null ? _momSettings.RocketMax : 3;
         public ChargeArrow[] ChargeOrder { get; private set; } = new ChargeArrow[0];
         public string ChargeText
         {
@@ -232,7 +236,13 @@ namespace FlyingFishMomentum
                 float gain = Charge.Tick(now, arrow, _timing);
                 if (gain > 0f) _momentum.AddChargeGain(gain);
                 if (gain > 0f && _gauge != null) _gauge.AddFill(gain);
-                if (!Charge.IsActive) _meters = 0f; // fresh beat gap after charge
+                if (!Charge.IsActive)
+                {
+                    _meters = 0f; // fresh beat gap after charge
+                    // Surviving all steps (clean or not) earns a firework.
+                    // Timeouts abort early (StepIndex short) and earn nothing.
+                    if (Charge.StepIndex >= Charge.StepCount) EarnRocket();
+                }
                 return;
             }
             if (_nextBeat <= 0f) DrawBeat();
@@ -257,6 +267,26 @@ namespace FlyingFishMomentum
                 HitAngleDeg = (float)(_rngBeat.NextDouble() * 360.0);
                 Active = new ActivePrompt { Open = true, TargetTime = now + _timing.LeadTime };
             }
+            // Firework rocket: open air + fresh press spends one for a burst
+            // along the nose plus a climb pop. Beats and charge own the
+            // button first (above); swimming ignores presses as before.
+            if (pressed && RocketCount > 0 && _sm != null
+                && _sm.Locomotion == PlayerLocomotionState.Flying)
+                FireRocket();
+        }
+
+        void EarnRocket()
+        {
+            if (_momSettings == null) return;
+            RocketCount = Mathf.Min(RocketCount + 1, _momSettings.RocketMax);
+        }
+
+        void FireRocket()
+        {
+            if (_momSettings == null || _momentum == null || RocketCount <= 0) return;
+            RocketCount--;
+            _momentum.AddSpeed(_momSettings.RocketBoost);
+            if (_movement != null) _movement.RocketPop(_momSettings.RocketPop);
         }
 
         void Resolve(TimingResult result, FlightTier tier)

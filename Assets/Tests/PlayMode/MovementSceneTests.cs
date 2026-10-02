@@ -323,12 +323,11 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator GlideSinksGentlyAtCruise()
+        public IEnumerator SoarHoldAtCruise()
         {
-            // Lift holds most of the weight at cruise: 30s of level Max
-            // flight from a launch kick is still hundreds of meters up.
-            // Ballistic (no lift) lands in ~27s — so this pins the glide.
-            // (Flight must still end; see LevelFlightEventuallyGlidesOut.)
+            // v2 lift (quadratic, soar = tier top): 20s of level Max cruise
+            // from the arc settles into a gentle descent, not a stone fall.
+            // Ballistic flight lands long before the window ends.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Max);
@@ -340,9 +339,106 @@ namespace FlyingFishMomentum.Tests.PlayMode
             sm.SetTier(FlightTier.Max);
             sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
             const float step = 1f / 60f;
-            for (int i = 0; i < 1800; i++) mover.TickMove(Vector2.zero, step);
-            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "glide did not hold altitude");
-            Assert.Greater(mover.transform.position.y, 300f, "level cruise sinks like a stone");
+            for (int i = 0; i < 1200; i++) mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "settle touched water");
+            float y0 = mover.transform.position.y;
+            for (int i = 0; i < 1200; i++) mover.TickMove(Vector2.zero, step);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "cruise did not hold");
+            float drop = y0 - mover.transform.position.y;
+            Assert.Greater(drop, 10f, "level cruise never sinks");
+            Assert.Less(drop, 120f, "level cruise sinks like a stone");
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator BankRollsIntoTurns()
+        {
+            // Airplane feel: the fish leans into steered turns (visual
+            // roll only; yaw physics and the wide-turns rule untouched).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            const float step = 1f / 60f;
+            for (int i = 0; i < 30; i++) mover.TickMove(new Vector2(1f, 0f), step);
+            Assert.Less(mover.Bank, -15f, "right turn did not bank right");
+            for (int i = 0; i < 60; i++) mover.TickMove(new Vector2(-1f, 0f), step);
+            Assert.Greater(mover.Bank, 15f, "left turn did not bank left");
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator SlowSpeedMush()
+        {
+            // Authority scales with speed: slow flight steers mushy, cruise
+            // bites. Air only; swim stays crisp (covered elsewhere).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            const float step = 1f / 60f;
+            sm.Momentum.CurrentSpeed = 8f; sm.Momentum.TargetSpeed = 8f;
+            float y0 = mover.Yaw;
+            for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
+            float slowDelta = mover.Yaw - y0;
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            float y1 = mover.Yaw;
+            for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 0f), step);
+            float fastDelta = mover.Yaw - y1;
+            Assert.Greater(fastDelta, 15f, "cruise turn weaker than promised");
+            Assert.Less(slowDelta, fastDelta * 0.5f, "slow flight steers as crisply as cruise");
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator DiveKeepsFishInFrame()
+        {
+            // Telemetry-proven bug: the velocity look-ahead threw the fish
+            // half a screen out of frame on fast dives. Clamped look keeps
+            // it framed at any dive speed.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var cam = Object.FindFirstObjectByType<CameraSpeedReactor>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 70f; sm.Momentum.TargetSpeed = 70f;
+            mover.transform.position = new Vector3(0f, 200f, 400f);
+            // Teleport + manual stepping bypasses the physics step: sync
+            // the CharacterController or Move resolves phantom overlap.
+            Physics.SyncTransforms();
+            const float step = 1f / 60f;
+            for (int i = 0; i < 30; i++) mover.TickMove(new Vector2(0f, -1f), step);
+            // Continuous maneuvering with no settle waits (like live play):
+            // the camera is perpetually mid-chase here. Pitch reverses
+            // every 15 steps; the look-ahead must never throw the fish.
+            float maxOff = 0f;
+            for (int i = 0; i < 90; i++)
+            {
+                float pitchIn = (i / 15) % 2 == 0 ? -1f : 1f;
+                mover.TickMove(new Vector2(0f, pitchIn), step);
+                Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "dive touched water");
+                yield return null; // live frame: reactor LateUpdate runs
+                Vector3 sp = Camera.main.WorldToScreenPoint(mover.transform.position);
+                maxOff = Mathf.Max(maxOff,
+                    new Vector2(sp.x / Screen.width - 0.5f, sp.y / Screen.height - 0.5f).magnitude);
+            }
+            Assert.Less(maxOff, 0.5f, "maneuvering threw the fish out of frame");
             yield break;
         }
 

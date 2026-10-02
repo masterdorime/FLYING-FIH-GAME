@@ -15,7 +15,7 @@ MonoBehaviour:
   StartGauge: 0
   ChargeStepFill: 2
   ChargeJackpotFill: 4
-  FlyDrainPerSecond: 3.5
+  FlyDrainPerSecond: 1.5
   MissDrain: 10
   TierThresholds:
   - 8

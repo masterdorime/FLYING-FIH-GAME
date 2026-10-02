@@ -20,6 +20,11 @@ MonoBehaviour:
   DeviationDragGain: 3
   DeviationSpeedPenalty: 0.5
   FlySpeedBonus: 1.2
-  GlideLift: 0.03
+  GlideBaseSink: 2
+  GlideSinkDamp: 0.5
   GlideSlopeTarget: 0.5
   GlideSlopeDrag: 3
+  RocketMax: 3
+  RocketBoost: 15
+  RocketPop: 8
+  BankAngle: 25

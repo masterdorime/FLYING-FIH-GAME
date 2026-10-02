@@ -35,5 +35,12 @@ namespace FlyingFishMomentum
         {
             return Mathf.Max(0f, envelope - rate * dt);
         }
+
+        // Camera look-ahead: velocity-scaled, but clamped so a fast dive
+        // can never throw the fish out of frame (telemetry: fish@1.49).
+        public static Vector3 LookOffset(Vector3 velocity, float lookAhead, float maxLookAhead)
+        {
+            return Vector3.ClampMagnitude(velocity * lookAhead, maxLookAhead);
+        }
     }
 }

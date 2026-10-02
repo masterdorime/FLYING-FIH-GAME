@@ -15,6 +15,7 @@ namespace FlyingFishMomentum
 
         public float Yaw { get; private set; }
         public float Pitch { get; private set; }
+        public float Bank { get; private set; }
         public int LaunchCount { get; private set; }
         public Vector3 CurrentVelocity { get; private set; }
         public FlightStateMachine StateMachine => _sm;
@@ -33,6 +34,7 @@ namespace FlyingFishMomentum
         float _gravityScale;
         float _airControl = 1f;
         float _vertVel;
+        float _bank;
 
         void Awake()
         {
@@ -93,17 +95,33 @@ namespace FlyingFishMomentum
             _vertVel = _settings != null ? _settings.LaunchVelocity : 40f;
         }
 
+        // Firework climb pop (flight v2): spent rockets kick upward.
+        public void RocketPop(float amount)
+        {
+            _vertVel += amount;
+        }
+
         public void TickMove(Vector2 input, float dt)
         {
             bool swimming = StateMachine.Locomotion == PlayerLocomotionState.Swimming;
+            var profile = StateMachine.ActiveProfile;
             float rate = swimming ? _turnRate : _turnRate * _airControl;
+            // Authority scales with speed in air (mushy when slow, full at
+            // cruise — the gentle stall); swim stays crisp.
+            if (!swimming && profile != null)
+                rate *= 0.3f + 0.7f * Mathf.Clamp01(Momentum.CurrentSpeed / Mathf.Max(profile.MaxSpeed, 0.01f));
             // Ship rules: underwater the fish holds surface depth and level
             // pitch — W/S does nothing, only yaw steers. Air keeps full control.
             float pitchScale = swimming ? 0f : 1f;
             var h = HeadingMath.Step(Yaw, Pitch, input, rate, pitchScale, dt);
             Yaw = h.yaw;
             Pitch = swimming ? 0f : h.pitch;
-            transform.rotation = HeadingMath.Orientation(Yaw, Pitch);
+            // Bank into steered turns (visual only — yaw physics and the
+            // wide-turns rule untouched).
+            float bankTarget = swimming ? 0f : -input.x * _settings.BankAngle;
+            _bank = Mathf.Lerp(_bank, bankTarget, 1f - Mathf.Exp(-dt / 0.15f));
+            Bank = _bank;
+            transform.rotation = HeadingMath.Orientation(Yaw, Pitch, _bank);
 
             float drag = swimming ? _settings.DragSwimming : _settings.DragFlying;
             float bonus = swimming ? 1f : _settings.FlySpeedBonus;
@@ -111,10 +129,18 @@ namespace FlyingFishMomentum
             Momentum.Tick(dt, drag, Mathf.Abs(Yaw), bonus, slope);
 
             if (swimming) _vertVel = 0f;
-            // Glide lift: forward speed holds weight in air, so cruise
-            // sinks gently and slow flight sinks hard (free progression).
-            else _vertVel += (Momentum.CurrentSpeed * _settings.GlideLift
-                - StandardGravity * _gravityScale) * dt;
+            // v2 lift: scales with speed squared against the tier top (soar
+            // speed). Cruise holds weight minus a base sink (flight always
+            // ends); slow flight sinks hard. Sink-only damping caps the
+            // terminal fall so cruise descends gently.
+            else if (profile != null)
+            {
+                float soar = Mathf.Max(profile.MaxSpeed, 0.01f);
+                float lift = Mathf.Clamp01(Mathf.Pow(Momentum.CurrentSpeed / soar, 2f));
+                _vertVel += (StandardGravity * _gravityScale * (lift - 1f) - _settings.GlideBaseSink) * dt;
+                if (_vertVel < 0f) _vertVel -= _vertVel * _settings.GlideSinkDamp * dt;
+            }
+            else _vertVel -= StandardGravity * _gravityScale * dt;
 
             // Forward speed is the authority for FOV/thresholds; vertical drift
             // is a separate channel (dive steepens descent, climb fights gravity).

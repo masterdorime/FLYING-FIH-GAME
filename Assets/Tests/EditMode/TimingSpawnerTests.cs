@@ -340,6 +340,98 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void CleanRingEarnsRocketCappedAtThree()
+        {
+            // Fireworks engine: finishing a charge sequence earns a boost
+            // rocket, capped at three. Timeout aborts earn nothing (covered
+            // by ChargeSequencer timeout: StepIndex never completes).
+            var spawner = NewSpawner(out var momentum);
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            var rings = new System.Collections.Generic.List<ChargeRing>();
+            for (int i = 0; i < 4; i++)
+            {
+                var rgo = new GameObject("ring");
+                rgo.transform.position = new Vector3(0f, -3f, 10f * i);
+                rings.Add(rgo.AddComponent<ChargeRing>());
+            }
+            spawner.SetRings(rings);
+            float now = 0f;
+            for (int r = 0; r < 4; r++)
+            {
+                spawner.CheckRingTrigger(now, rings[r].transform.position);
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                int guard = 0;
+                while (spawner.ChargeActive && guard++ < 100)
+                {
+                    now += 0.5f;
+                    spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
+                }
+                Assert.IsFalse(spawner.ChargeActive, "charge never finished");
+            }
+            Assert.AreEqual(3, spawner.RocketCount);
+        }
+
+        [Test]
+        public void RocketFiresOnlyInOpenAir()
+        {
+            var spawner = NewSpawnerWithGauge(out var momentum, out var gauge, out var sm);
+            var rgo = new GameObject("ring");
+            rgo.transform.position = Vector3.zero;
+            spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { rgo.AddComponent<ChargeRing>() });
+            momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            int guard = 0;
+            while (spawner.ChargeActive && guard++ < 100)
+            {
+                now += 0.5f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
+            }
+            Assert.AreEqual(1, spawner.RocketCount, "clean ring earned nothing");
+            // Swimming + press: ignored even holding a rocket (speed sits
+            // at whatever the ring banked).
+            float banked = momentum.CurrentSpeed;
+            Assert.Greater(banked, 10f, "ring banked nothing");
+            spawner.Tick(now + 0.5f, 0.1f, 10f, FlightTier.Medium, true);
+            Assert.AreEqual(1, spawner.RocketCount, "swim press spent a rocket");
+            Assert.AreEqual(banked, momentum.CurrentSpeed, 0.5f);
+            // Open air + press: burst and spend (tier-capped).
+            sm.SetLocomotion(PlayerLocomotionState.Flying);
+            spawner.Tick(now + 1f, 0.1f, 10f, FlightTier.Medium, true);
+            Assert.AreEqual(0, spawner.RocketCount, "air press did not spend a rocket");
+            Assert.Greater(momentum.CurrentSpeed, banked, "rocket gave no burst");
+        }
+
+        [Test]
+        public void BeatPressBeatsRocket()
+        {
+            // An open beat owns the button: exact-time taps judge the beat,
+            // never fire a held rocket.
+            var spawner = NewSpawnerWithGauge(out var momentum, out var gauge, out var sm);
+            var rgo = new GameObject("ring");
+            rgo.transform.position = Vector3.zero;
+            spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { rgo.AddComponent<ChargeRing>() });
+            momentum.CurrentSpeed = 50f; momentum.TargetSpeed = 50f;
+            spawner.CheckRingTrigger(0f, Vector3.zero);
+            float now = 0f;
+            int guard = 0;
+            while (spawner.ChargeActive && guard++ < 100)
+            {
+                now += 0.5f;
+                spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
+            }
+            Assert.AreEqual(1, spawner.RocketCount, "clean ring earned nothing");
+            sm.SetLocomotion(PlayerLocomotionState.Flying);
+            float t = now;
+            int g = 0;
+            while (!spawner.Active.Open && g++ < 100) { t += 0.1f; spawner.Tick(t, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(spawner.Active.Open, "prompt never opened");
+            spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
+            Assert.AreEqual(1, spawner.RocketCount, "beat press spent a rocket");
+        }
+
+        [Test]
         public void ChargeCleanRunBanksJackpot()
         {
             // Match every arrow: 4x+4 plus +8 jackpot: 10 → 34.
