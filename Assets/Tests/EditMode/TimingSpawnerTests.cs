@@ -419,7 +419,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             try
             {
                 spawner.CheckRingTrigger(0f, Vector3.zero);
-                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
+                Assert.AreEqual(0.25f, Time.timeScale, 0.001f);
             }
             finally { Time.timeScale = 1f; }
         }
@@ -432,8 +432,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             {
                 spawner.CheckRingTrigger(0f, Vector3.zero);
                 spawner.UpdateSlowMo(0.5f);
-                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
-                spawner.UpdateSlowMo(0.8f);
+                Assert.AreEqual(0.25f, Time.timeScale, 0.001f);
+                spawner.UpdateSlowMo(1.6f);
                 Assert.AreEqual(1f, Time.timeScale, 0.001f);
             }
             finally { Time.timeScale = 1f; }

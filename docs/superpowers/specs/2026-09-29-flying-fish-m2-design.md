@@ -87,8 +87,8 @@ UI independent from gameplay state, events over coupling.
   (grey pending/green hit/red missed) + overlay arrow text. No streak
   coupling, no penalties in charge mode; gains ratchet cruise to the 70
   cap like tap hits. Beats suspend during charge. Ring entry dips the
-  world to 0.4× for 1.2s wall clock (unpausable timer; pause wins ties)
-  so hands can answer. (3) 2026-09-30 testing layout: 20 rings, one
+  world to 0.25× for 2s wall clock (unpausable timer; pause wins ties)
+  so hands can answer (strengthened 2026-10-01: 0.4×/1.2s was unfelt). (3) 2026-09-30 testing layout: 20 rings, one
   every 150m down the 2x runway (z 150..3000); x lane + swim/fly depth
   re-roll every run from the spawner seed (z pacing fixed). Sequences
   are 4 arrows (see ship record); timeout 8s. (4) 2026-10-01 all-swim:

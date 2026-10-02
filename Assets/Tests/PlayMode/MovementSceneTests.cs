@@ -741,13 +741,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator CleanRingReachesLowGear()
+        public IEnumerator CleanRingReachesMediumGear()
         {
             // Fully manual: no live frames anywhere. Mover, spawner and
             // gauge all freeze upfront; rings trigger via direct
             // CheckRingTrigger on an explicit manual clock. One clean
-            // sequence (4x+4 plus +8 jackpot = 24 gauge) clears the Low
-            // floor at 20 with a tier-up kick.
+            // sequence (4x+4 plus +8 jackpot = 24 gauge) clears the
+            // Medium floor at 16 with a tier-up kick (testing tank).
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
@@ -782,8 +782,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     }
                     Assert.IsFalse(spawner.ChargeActive, "charge never finished");
                 }
-                Assert.GreaterOrEqual(gauge.CurrentGauge, 20f, "clean ring did not reach Low");
-                Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
+                Assert.GreaterOrEqual(gauge.CurrentGauge, 16f, "clean ring did not reach Medium");
+                Assert.AreEqual(FlightTier.Medium, sm.ActiveTier);
                 Assert.AreEqual(1f, cam.KickEnvelope, 0.001f);
             }
             finally { Time.timeScale = 1f; }

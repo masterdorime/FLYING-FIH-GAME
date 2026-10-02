@@ -64,6 +64,15 @@ independent from gameplay state, events/direct-wiring per M1 precedent.
   the gauge dips and refills. Tier reconcile still runs (down-clamp
   applies); dive re-entry unchanged.
 
+## Change record — testing tank (§34.1, 2026-10-01, approved)
+
+- **Old:** `MaxGauge` 120, thresholds 20/40/70/100 (≈10 clean rings to launch).
+- **Why:** flight was unreachable in playtests; testing needs launch in 2 rings.
+- **New (asset only, code defaults keep the spec table):** `MaxGauge` 48,
+  thresholds 8/16/28/40 — two perfect rings (24 each) fill the tank and
+  launch. Miss −10 and leak 3.5/s unchanged (≈14s flight on a full tank).
+  Final tuning deferred to M4+.
+
 ## Handoff notes for M4
 
 - M4 adds `RunManager`/chunks; gauge thresholds may re-tune per
