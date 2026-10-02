@@ -240,6 +240,52 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator SteeringDoesNotTumbleCamera()
+        {
+            // Regression pin from an end-of-flight dive report (camera
+            // allegedly tumbles and loses the fish): low slow steep dive +
+            // steering must keep roll small, the lens off singular, and the
+            // fish near frame center. Bisected values: roll 2.4, margin 78,
+            // off-center 0.06 — bounds stay loose, they catch regressions.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var cam = Object.FindFirstObjectByType<CameraSpeedReactor>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            // End-of-flight state: None tier, walking-pace speed, low.
+            sm.SetTier(FlightTier.None);
+            sm.Momentum.CurrentSpeed = 8f; sm.Momentum.TargetSpeed = 8f;
+            mover.transform.position = new Vector3(0f, 30f, 400f);
+            const float step = 1f / 60f;
+            for (int i = 0; i < 30; i++) mover.TickMove(new Vector2(0f, -1f), step);
+            float maxRoll = 0f;
+            float minDownMargin = 90f;
+            float maxOffCenter = 0f;
+            for (int i = 0; i < 90; i++)
+            {
+                float steer = (i / 15) % 2 == 0 ? 1f : -1f;
+                mover.TickMove(new Vector2(steer, 0f), step);
+                yield return null; // live frame: reactor LateUpdate runs
+                Vector3 fwd = cam.transform.forward;
+                Vector3 levelUp = Vector3.up - fwd * Vector3.Dot(Vector3.up, fwd);
+                if (levelUp.sqrMagnitude > 0.0001f)
+                    maxRoll = Mathf.Max(maxRoll, Vector3.Angle(cam.transform.up, levelUp));
+                minDownMargin = Mathf.Min(minDownMargin, Vector3.Angle(fwd, Vector3.down));
+                Vector3 sp = Camera.main.WorldToScreenPoint(mover.transform.position);
+                maxOffCenter = Mathf.Max(maxOffCenter,
+                    new Vector2(sp.x / Screen.width - 0.5f, sp.y / Screen.height - 0.5f).magnitude);
+            }
+            Assert.Less(maxRoll, 30f, "camera twisted about the view axis");
+            Assert.Greater(minDownMargin, 5f, "camera entered the look-straight-down singular zone");
+            Assert.Less(maxOffCenter, 0.4f, "fish left frame center");
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator DiveBuildsSpeedClimbBleedsIt()
         {
             // Arcade glide: downhill converts to speed, uphill bleeds it.

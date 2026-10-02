@@ -47,14 +47,32 @@ namespace FlyingFishMomentum
                     : _spawner.HasResolved ? _spawner.LastResult.ToString().ToUpper() : "-";
             timing += $" x{_spawner?.StreakCount}";
             string charge = _spawner != null ? _spawner.ChargeText : string.Empty;
-            GUI.Label(new Rect(10, 10, 420, 170),
+            // Camera-bug telemetry (user report: dive tumble loses fish).
+            // Roll = twist about view axis (the tumble); depr 90 = looking
+            // straight down (LookAt singular zone); fish@ = viewport pos.
+            string cam = "-";
+            var mainCam = Camera.main;
+            if (mainCam != null && _movement != null)
+            {
+                Vector3 fwd = mainCam.transform.forward;
+                Vector3 levelUp = Vector3.up - fwd * Vector3.Dot(Vector3.up, fwd);
+                float roll = levelUp.sqrMagnitude > 0.0001f
+                    ? Vector3.Angle(mainCam.transform.up, levelUp) : 999f;
+                float depr = 90f - Vector3.Angle(fwd, Vector3.down);
+                float dist = (mainCam.transform.position - _movement.transform.position).magnitude;
+                Vector3 sp = mainCam.WorldToScreenPoint(_movement.transform.position);
+                string behind = sp.z < 0f ? " BEHIND" : string.Empty;
+                cam = $"Cam roll {roll:F0} depr {depr:F0} dist {dist:F1} fish@({sp.x / Screen.width:F2},{sp.y / Screen.height:F2}){behind}";
+            }
+            GUI.Label(new Rect(10, 10, 460, 220),
                 $"Speed {_momentum.CurrentSpeed:F1} / Target {_momentum.TargetSpeed:F1}\n" +
                 $"State {_sm.Locomotion} Tier {_sm.ActiveTier}\n" +
                 $"Breach >= {_settings.BreachSpeedThreshold:F0} Deviate {Mathf.Abs(_movement.Yaw):F0}°\n" +
                 $"Timing {timing}\n" +
                 (string.IsNullOrEmpty(charge) ? string.Empty : charge + "\n") +
                 $"FPS {_fps:F0}\n" +
-                $"Gauge {_gauge.CurrentGauge:F0}/{_gauge.MaxGauge:F0} Tier {_sm.ActiveTier}");
+                $"Gauge {_gauge.CurrentGauge:F0}/{_gauge.MaxGauge:F0} Tier {_sm.ActiveTier}\n" +
+                cam);
         }
     }
 }
