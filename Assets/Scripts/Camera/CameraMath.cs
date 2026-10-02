@@ -24,6 +24,13 @@ namespace FlyingFishMomentum
             return Mathf.Min(fov, maxFov);
         }
 
+        // Final frame FOV: display FOV plus the tier-up kick addend, capped
+        // at the max — the kick must never stack past it.
+        public static float FinalFov(float displayFov, float kickAdd, float maxFov)
+        {
+            return Mathf.Min(displayFov + kickAdd, maxFov);
+        }
+
         public static float Decay(float envelope, float rate, float dt)
         {
             return Mathf.Max(0f, envelope - rate * dt);

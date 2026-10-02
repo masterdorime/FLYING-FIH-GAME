@@ -29,6 +29,16 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void FinalFovCapsKickAtMaxFov()
+        {
+            // Live bug: the tier-up kick (+7 at full envelope) stacked on
+            // top of an already-max display FOV, blowing past MaxFOV.
+            Assert.AreEqual(100f, CameraMath.FinalFov(100f, 7f, 100f), 0.01f);
+            Assert.AreEqual(87f, CameraMath.FinalFov(80f, 7f, 100f), 0.01f);
+            Assert.AreEqual(80f, CameraMath.FinalFov(80f, 0f, 100f), 0.01f);
+        }
+
+        [Test]
         public void EnvelopesDecayToZero()
         {
             Assert.AreEqual(0f, CameraMath.Decay(1f, 2.5f, 1f), 0.01f);

@@ -9,6 +9,7 @@ namespace FlyingFishMomentum
     public class FlightGaugeSystem : MonoBehaviour
     {
         public float CurrentGauge { get; private set; }
+        public float MaxGauge => _settings != null ? _settings.MaxGauge : 0f;
         public FlightStateMachine StateMachine => _sm;
 
         [SerializeField] FlightStateMachine _sm;

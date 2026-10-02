@@ -80,7 +80,10 @@ namespace FlyingFishMomentum
             KickEnvelope = CameraMath.Decay(KickEnvelope, KickDecayRate, dt);
             ShakeEnvelope = CameraMath.Decay(ShakeEnvelope, KickDecayRate, dt);
 
-            float fov = _displayFov + KickEnvelope * _camSettings.TierUpCameraKick * KickFovGain;
+            float fov = CameraMath.FinalFov(
+                _displayFov,
+                KickEnvelope * _camSettings.TierUpCameraKick * KickFovGain,
+                _camSettings.MaxFOV);
             float dist = profile.CameraDistance + KickEnvelope * _camSettings.TierUpCameraKick * KickDistanceGain;
 
             float yawRate = Mathf.DeltaAngle(_lastYaw, _movement.Yaw) / dt;

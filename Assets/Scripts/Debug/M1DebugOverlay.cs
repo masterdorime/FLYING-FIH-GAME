@@ -54,7 +54,7 @@ namespace FlyingFishMomentum
                 $"Timing {timing}\n" +
                 (string.IsNullOrEmpty(charge) ? string.Empty : charge + "\n") +
                 $"FPS {_fps:F0}\n" +
-                $"Gauge {_gauge.CurrentGauge:F0} Tier {_sm.ActiveTier}");
+                $"Gauge {_gauge.CurrentGauge:F0}/{_gauge.MaxGauge:F0} Tier {_sm.ActiveTier}");
         }
     }
 }
