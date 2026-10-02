@@ -90,6 +90,27 @@ namespace FlyingFishMomentum.Tests.PlayMode
             }
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "downward crossing did not re-enter Swim");
         }
+
+        [UnityTest]
+        public IEnumerator LaunchPreservesTankAndTier()
+        {
+            // Tank is fuel, not a fuse: launching keeps the fill and the
+            // tier (flight then drains it). The old empty-on-launch reset
+            // dropped takeoff to None-tier crawl and flights died fast.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var gauge = Object.FindFirstObjectByType<FlightGaugeSystem>();
+            Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "spawn must be underwater Swimming");
+            sm.SetTier(FlightTier.Medium);
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            sm.Momentum.CurrentSpeed = 33f; sm.Momentum.TargetSpeed = 33f;
+            gauge.AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "full tank did not launch");
+            Assert.AreEqual(48f, gauge.CurrentGauge, 0.001f, "launch emptied the tank");
+            Assert.AreEqual(FlightTier.Max, sm.ActiveTier, "launch reset the tier");
+            yield break;
+        }
         [UnityTest]
         public IEnumerator FlyingAtSpeedWithFullUpInputClimbs()
         {
@@ -327,7 +348,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
             while (mover.Pitch > 0f && guard++ < 120)
                 mover.TickMove(new Vector2(0f, -1f), step);
             guard = 0;
-            while (sm.Locomotion == PlayerLocomotionState.Flying && guard++ < 3600)
+            // Generous budget: launch now keeps Max-tier lift, so the arc
+            // is minutes, not seconds — but gravity debt still ends it.
+            while (sm.Locomotion == PlayerLocomotionState.Flying && guard++ < 12000)
                 mover.TickMove(Vector2.zero, step);
             Assert.AreEqual(PlayerLocomotionState.Swimming, sm.Locomotion, "level flight never glided out");
         }

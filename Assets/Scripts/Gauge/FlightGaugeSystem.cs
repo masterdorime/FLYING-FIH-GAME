@@ -44,14 +44,15 @@ namespace FlyingFishMomentum
             if (_settings == null) return;
             bool wasMax = CurrentGauge >= _settings.MaxGauge;
             CurrentGauge = Mathf.Clamp(CurrentGauge + amount, 0f, _settings.MaxGauge);
-            // Rising edge to full while swimming: launch sky-high, empty the
-            // tank. Sitting full (or flying) fires nothing — dip and refill.
+            // Rising edge to full while swimming: launch sky-high. The tank
+            // stays full — it is fuel that flight drains, not a fuse that
+            // launch spends (emptying reset takeoff to None-tier crawl).
+            // Sitting full (or flying) fires nothing — dip and refill.
             if (!wasMax && CurrentGauge >= _settings.MaxGauge
                 && _movement != null && _sm != null
                 && _sm.Locomotion == PlayerLocomotionState.Swimming)
             {
                 _movement.Launch();
-                CurrentGauge = 0f;
             }
             Reconcile();
         }

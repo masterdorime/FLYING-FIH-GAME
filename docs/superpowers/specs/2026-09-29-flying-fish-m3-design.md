@@ -53,6 +53,15 @@ agent rules still bind: SO-only tuning, dt-scaled determinism (seeded
 RNG only), gauge evaluation independent from presentation, UI
 independent from gameplay state, events/direct-wiring per M1 precedent.
 
+## Change record — launch keeps the tank (§34.1, 2026-10-01, approved)
+
+- **Old:** launch emptied the tank to 0, resetting takeoff to None-tier
+  crawl — flights died within seconds.
+- **Why:** tank is fuel, not a fuse; flight should drain it.
+- **New:** launch preserves fill and tier; flight drains 3.5/s through
+  the bands (fast-start, slow-finish glide). Rising-edge rule unchanged
+  (dip + refill relaunches; sitting full never refires).
+
 ## Change record — gauge-full launch (§34.1, 2026-09-30, approved)
 
 - **Old:** swim-up-fast breach; gauge max was a held state.

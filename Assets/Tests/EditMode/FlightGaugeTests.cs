@@ -83,11 +83,11 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void FullGaugeLaunchesSwimmerSkyward()
         {
             // Rising edge to full while swimming: locomotion flips to fly,
-            // tank empties, exactly one launch fires.
+            // tank stays full (flight drains it), exactly one launch fires.
             var gauge = NewGaugeWithMover(out var sm, out var mover);
             gauge.AddFill(120f);
             Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion);
-            Assert.AreEqual(0f, gauge.CurrentGauge, 0.001f);
+            Assert.AreEqual(120f, gauge.CurrentGauge, 0.001f);
             Assert.AreEqual(1, mover.LaunchCount);
         }
 
