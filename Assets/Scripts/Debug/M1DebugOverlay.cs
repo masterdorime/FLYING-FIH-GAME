@@ -13,6 +13,7 @@ namespace FlyingFishMomentum
         [SerializeField] PlayerMovementController _movement;
         [SerializeField] TimingPromptSpawner _spawner;
         [SerializeField] FlightGaugeSystem _gauge;
+        [SerializeField] Scoring.ScoreSystem _score;
         float _fps;
 
         public void Configure(
@@ -21,7 +22,8 @@ namespace FlyingFishMomentum
             MomentumSettings settings,
             PlayerMovementController movement,
             TimingPromptSpawner spawner,
-            FlightGaugeSystem gauge)
+            FlightGaugeSystem gauge,
+            Scoring.ScoreSystem score)
         {
             _momentum = momentum;
             _sm = sm;
@@ -29,6 +31,7 @@ namespace FlyingFishMomentum
             _movement = movement;
             _spawner = spawner;
             _gauge = gauge;
+            _score = score;
         }
 
         void Update()
@@ -73,6 +76,7 @@ namespace FlyingFishMomentum
                 $"FPS {_fps:F0}\n" +
                 $"Gauge {_gauge.CurrentGauge:F0}/{_gauge.MaxGauge:F0} Tier {_sm.ActiveTier}\n" +
                 (_spawner != null ? $"Rockets {_spawner.RocketCount}/{_spawner.RocketMax}\n" : string.Empty) +
+                (_score != null ? $"Score {_score.Score:F0} x{_score.Multiplier} • {_score.Coins}c\n" : string.Empty) +
                 cam);
         }
     }

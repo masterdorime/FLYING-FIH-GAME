@@ -170,6 +170,21 @@ UI independent from gameplay state, events over coupling.
   jackpot; an ignored tap waits for a clean re-tap). Tap clean
   single keys.
 
+## Change record — score chase v1 (§34.1, approved)
+
+- **Old:** no goal layer (PRD §14: scoring not locked, model only proposed).
+- **Why:** playtest: rich moment-to-moment, no reason — score × tier
+  multiplier + coin pathing is the cheapest true goal.
+- **New:** `ScoreSystem` (Score/Coins, multiplier = tier+1 live):
+  distance +1/m, coin = 10×mult, Perfect = 25×mult, Good = 10×mult, Miss
+  pays nothing (mult cut arrives via gauge drain lowering the tier, per
+  PRD §14). 20 coins in 5 trails (3 swim lanes + 2 air arcs), swept
+  pickup like rings, gold bobbing gems; spawner pushes beats/distance/
+  coins (null-safe without a score). Overlay: `Score 1230 x3 • 45c`.
+  All `ScoringSettings` SO. Explicitly NOT v1: coins-as-fuel, wallet/
+  spending, missions (ride M4 chunk cards), chaser (M5 obstacles),
+  high-score persistence (M5 saves).
+
 ## Change record — ship swim + arrow glyphs (§34.1, 2026-09-30, approved)
 
 - **Old:** swim pitched freely (W/S) and could breach upward; charge

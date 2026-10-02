@@ -1058,6 +1058,27 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator RunwaySownWithCoins()
+        {
+            // Score-chase pathing layer: coin trails down the runway (swim
+            // lanes + a couple of air arcs), collected by swimming them.
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var score = Object.FindFirstObjectByType<Scoring.ScoreSystem>();
+            Assert.IsNotNull(score, "no ScoreSystem in scene");
+            Assert.AreEqual(20, spawner.Coins.Count);
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            mover.transform.position = spawner.Coins[0].transform.position;
+            spawner.CheckCoinPickup(Time.time, mover.transform.position);
+            Assert.IsTrue(spawner.Coins[0].Collected, "swimming the coin did not collect it");
+            Assert.Greater(score.Score, 0f, "coin paid nothing");
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator SwimLocksDepthAndPitch()
         {
             // Ship rules: underwater, W/S does nothing — depth holds near the

@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using FlyingFishMomentum;
+using FlyingFishMomentum.Scoring;
 
 namespace ProjectBootstrap
 {
@@ -26,6 +27,7 @@ namespace ProjectBootstrap
             var timingSettings = Load<TimingSettings>("Assets/Configs/TimingSettings.asset");
             var camSettings = Load<CameraSettings>("Assets/Configs/CameraSettings.asset");
             var gaugeSettings = Load<FlightGaugeSettings>("Assets/Configs/FlightGaugeSettings.asset");
+            var scoringSettings = Load<ScoringSettings>("Assets/Configs/ScoringSettings.asset");
 
             var fishMat = new Material(Shader.Find("Standard"));
             fishMat.color = new Color(1f, 0.45f, 0.1f);
@@ -49,6 +51,12 @@ namespace ProjectBootstrap
 
             var rockMat = new Material(Shader.Find("Standard"));
             rockMat.color = new Color(0.4f, 0.42f, 0.45f);
+
+            var coinMat = new Material(Shader.Find("Standard"));
+            coinMat.color = new Color(1f, 0.75f, 0.15f);
+            coinMat.SetFloat("_Metallic", 0.85f);
+            coinMat.SetFloat("_Glossiness", 0.55f);
+            AssetDatabase.CreateAsset(coinMat, "Assets/Materials/M1Coin.mat");
             AssetDatabase.CreateAsset(rockMat, "Assets/Materials/M1Rock.mat");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -140,12 +148,31 @@ namespace ProjectBootstrap
                 rings.Add(AddChargeRing("ChargeRing_" + (i + 1), new Vector3(x, -3f, 150f * (i + 1))));
             }
             spawner.SetRings(rings);
+            // Score chase v1: coin trails down the runway (swim lanes plus
+            // two air arcs for flight pathing); 5 trails x 4 coins.
+            var coinSpots = new (float x, float y, float z)[]
+            {
+                (-10f, -3f, 300f), (10f, -3f, 800f), (0f, 8f, 1300f),
+                (-10f, -3f, 1800f), (10f, 8f, 2300f),
+            };
+            var coins = new List<CoinPickup>();
+            for (int t = 0; t < coinSpots.Length; t++)
+                for (int i = 0; i < 4; i++)
+                    coins.Add(AddCoin("Coin_" + t + "_" + i,
+                        new Vector3(coinSpots[t].x, coinSpots[t].y, coinSpots[t].z + (i - 1.5f) * 15f),
+                        coinMat));
+            spawner.SetCoins(coins);
+            // Score system (goal layer): spawner pushes beats/distance/coins.
+            var scoringGo = new GameObject("Scoring");
+            var score = scoringGo.AddComponent<ScoreSystem>();
+            score.Configure(sm, scoringSettings);
+            spawner.SetScoreSystem(score);
             var barGo = new GameObject("ChargeBar");
             barGo.transform.SetParent(timingGo.transform, false);
             var bar = barGo.AddComponent<ChargeBar>();
             bar.Configure(spawner, player.transform);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge);
+            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge, score);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");
@@ -162,6 +189,20 @@ namespace ProjectBootstrap
             island.transform.position = center;
             island.transform.localScale = new Vector3(10f, 25f, 10f);
             island.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        }
+
+        static CoinPickup AddCoin(string name, Vector3 center, Material mat)
+        {
+            var go = new GameObject(name);
+            go.transform.position = center;
+            var gem = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            gem.name = "Gem";
+            gem.transform.SetParent(go.transform, false);
+            gem.transform.localPosition = Vector3.zero;
+            gem.transform.localScale = new Vector3(0.45f, 0.6f, 0.45f);
+            Object.DestroyImmediate(gem.GetComponent<Collider>());
+            gem.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            return go.AddComponent<CoinPickup>();
         }
 
         static ChargeRing AddChargeRing(string name, Vector3 center)

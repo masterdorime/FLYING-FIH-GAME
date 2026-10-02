@@ -97,7 +97,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             Time.timeScale = 1f; // ring triggers touch global slow-mo
             foreach (var go in GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
-                if (go.name == "spawner" || go.name == "m" || go.name == "gauge" || go.name == "ring") Object.DestroyImmediate(go);
+                if (go.name == "spawner" || go.name == "m" || go.name == "gauge" || go.name == "ring" || go.name == "score" || go.name == "coin") Object.DestroyImmediate(go);
         }
 
         [Test]
@@ -566,6 +566,48 @@ namespace FlyingFishMomentum.Tests.EditMode
             spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.None, true);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
             Assert.AreEqual(15f, momentum.CurrentSpeed, 0.5f);
+        }
+
+        [Test]
+        public void CoinPickupCollectsAndScores()
+        {
+            // Coin trails pay through the score (value x live multiplier):
+            // swim the coin's position, it hides, score rises by one coin.
+            var spawner = NewSpawner(out var momentum);
+            var sgo = new GameObject("score");
+            var score = sgo.AddComponent<Scoring.ScoreSystem>();
+            score.Configure(null, ScriptableObject.CreateInstance<Scoring.ScoringSettings>());
+            spawner.SetScoreSystem(score);
+            var cgo = new GameObject("coin");
+            var coin = cgo.AddComponent<Scoring.CoinPickup>();
+            spawner.SetCoins(new System.Collections.Generic.List<Scoring.CoinPickup> { coin });
+            spawner.CheckCoinPickup(0f, Vector3.zero);
+            Assert.IsTrue(coin.Collected, "swimming the coin did not collect it");
+            Assert.AreEqual(10f, score.Score, 0.001f);
+            Object.DestroyImmediate(sgo);
+            Object.DestroyImmediate(cgo);
+        }
+
+        [Test]
+        public void FastJumpOverCoinStillCollects()
+        {
+            // Swept check like rings: a hitch flying clean over the coin
+            // still collects it — position is sampled, not simulated.
+            var spawner = NewSpawner(out _);
+            var sgo = new GameObject("score");
+            var score = sgo.AddComponent<Scoring.ScoreSystem>();
+            score.Configure(null, ScriptableObject.CreateInstance<Scoring.ScoringSettings>());
+            spawner.SetScoreSystem(score);
+            var cgo = new GameObject("coin");
+            cgo.transform.position = Vector3.zero;
+            cgo.AddComponent<Scoring.CoinPickup>();
+            spawner.SetCoins(new System.Collections.Generic.List<Scoring.CoinPickup>
+                { cgo.GetComponent<Scoring.CoinPickup>() });
+            spawner.CheckCoinPickup(0f, new Vector3(0f, 0f, -10f));
+            spawner.CheckCoinPickup(0.1f, new Vector3(0f, 0f, 10f));
+            Assert.AreEqual(10f, score.Score, 0.001f, "tunneled the coin");
+            Object.DestroyImmediate(sgo);
+            Object.DestroyImmediate(cgo);
         }
 
         [Test]

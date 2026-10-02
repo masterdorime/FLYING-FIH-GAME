@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using FlyingFishMomentum.Scoring;
 
 namespace FlyingFishMomentum
 {
@@ -29,6 +30,10 @@ namespace FlyingFishMomentum
         [SerializeField] CameraSpeedReactor _camera;
         [SerializeField] FlightGaugeSystem _gauge;
         [SerializeField] List<ChargeRing> _rings = new List<ChargeRing>();
+        [SerializeField] List<CoinPickup> _coins = new List<CoinPickup>();
+        [SerializeField] ScoreSystem _score;
+        Vector3 _lastCoinPos;
+        bool _hasCoinPos;
         Vector2 _lastMoveVec;
         Vector3 _lastPlayerPos;
         bool _hasLastPos;
@@ -109,6 +114,38 @@ namespace FlyingFishMomentum
         public void SetRings(List<ChargeRing> rings)
         {
             _rings = rings ?? new List<ChargeRing>();
+        }
+
+        public void SetScoreSystem(ScoreSystem score)
+        {
+            _score = score;
+        }
+
+        public IReadOnlyList<CoinPickup> Coins => _coins;
+
+        public void SetCoins(List<CoinPickup> coins)
+        {
+            _coins = coins ?? new List<CoinPickup>();
+        }
+
+        // Coin trails: same swept-segment pattern as rings (generous 2m
+        // window for feel), own position history so ring/coin cadences
+        // never share a stale segment.
+        public void CheckCoinPickup(float now, Vector3 playerPos)
+        {
+            if (_coins == null) return;
+            Vector3 prev = _hasCoinPos ? _lastCoinPos : playerPos;
+            _lastCoinPos = playerPos;
+            _hasCoinPos = true;
+            foreach (var coin in _coins)
+            {
+                if (coin == null || coin.Collected) continue;
+                if (SegmentPassesDisc(prev, playerPos, coin.transform.position, 2f))
+                {
+                    coin.Collect();
+                    if (_score != null) _score.AddCoins(1);
+                }
+            }
         }
 
         public void CheckRingTrigger(float now, Vector3 playerPos)
@@ -205,6 +242,7 @@ namespace FlyingFishMomentum
                 arrow = ChargeSequencer.ArrowFromStick(_lastMoveVec, moveVec);
                 _lastMoveVec = moveVec;
                 CheckRingTrigger(Time.time, _movement.transform.position);
+                CheckCoinPickup(Time.time, _movement.transform.position);
             }
             Tick(Time.time, Time.deltaTime,
                 _momentum.CurrentSpeed,
@@ -260,6 +298,7 @@ namespace FlyingFishMomentum
                 return;
             }
             _meters += speed * dt;
+            if (_score != null) _score.AddDistance(speed * dt);
             if (_meters >= _nextBeat)
             {
                 _meters = 0f;
@@ -292,6 +331,7 @@ namespace FlyingFishMomentum
         void Resolve(TimingResult result, FlightTier tier)
         {
             _momentum.ApplyTimingResult(result, tier);
+            if (_score != null) _score.OnBeat(result);
             // Beat-Miss drains the gauge; charge-internal misses never reach
             // Resolve, and taps never touch the gauge.
             if (result == TimingResult.Miss && _gauge != null) _gauge.DrainMiss();
