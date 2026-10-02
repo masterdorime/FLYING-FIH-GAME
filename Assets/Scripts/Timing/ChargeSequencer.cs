@@ -72,12 +72,17 @@ namespace FlyingFishMomentum
 
         // Stick/keyboard edge → arrow. Fires once per fresh crossing of the
         // dead zone; held directions and sub-threshold wobble give nothing.
+        // Diagonals never guess: one axis must double the other, or the tap
+        // is ignored (a wrong guess lights red and kills the jackpot; a
+        // missed tap just waits for a clean re-tap).
         public static ChargeArrow? ArrowFromStick(Vector2 prev, Vector2 cur)
         {
             if (cur.magnitude < 0.5f || prev.magnitude >= 0.5f) return null;
-            return Mathf.Abs(cur.x) > Mathf.Abs(cur.y)
-                ? (cur.x > 0f ? ChargeArrow.Right : ChargeArrow.Left)
-                : (cur.y > 0f ? ChargeArrow.Up : ChargeArrow.Down);
+            float ax = Mathf.Abs(cur.x);
+            float ay = Mathf.Abs(cur.y);
+            if (ax > ay * 2f) return cur.x > 0f ? ChargeArrow.Right : ChargeArrow.Left;
+            if (ay > ax * 2f) return cur.y > 0f ? ChargeArrow.Up : ChargeArrow.Down;
+            return null;
         }
 
         public static string Glyph(ChargeArrow arrow) => arrow switch

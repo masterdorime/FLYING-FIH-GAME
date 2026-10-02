@@ -16,7 +16,12 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(ChargeArrow.Down, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0f, -1f)));
             Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(1f, 0f), new Vector2(1f, 0f)));
             Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.2f, 0f)));
-            Assert.AreEqual(ChargeArrow.Up, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.7f, 0.7f)));
+            // Near-cardinal tilts still count; true diagonals never guess
+            // (a wrong guess lights red — ignoring is cheaper than missing).
+            Assert.AreEqual(ChargeArrow.Right, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(1f, 0.4f)));
+            Assert.AreEqual(ChargeArrow.Up, ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.4f, 1f)));
+            Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(0.7f, 0.7f)));
+            Assert.IsNull(ChargeSequencer.ArrowFromStick(new Vector2(0f, 0f), new Vector2(1f, 1f)));
         }
 
         [Test]

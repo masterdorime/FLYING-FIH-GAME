@@ -15,7 +15,7 @@ MonoBehaviour:
   MaxSpeed: 73
   Acceleration: 120
   TurnRate: 200
-  GravityScale: 0.8
+  GravityScale: 0.3
   AirControl: 0.65
   CameraFOV: 95
   CameraDistance: 16

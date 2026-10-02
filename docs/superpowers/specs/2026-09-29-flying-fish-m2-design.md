@@ -158,6 +158,18 @@ UI independent from gameplay state, events over coupling.
   span z −100..1500, camera far plane 2000. `TimingPromptRing` deleted.
 - **M5 note updated:** M5 reskins the dial (not the ring) + overlay text.
 
+## Change record — feel tuning (§34.1, 2026-10-01, approved)
+
+- **FOV:** `MaxFOV` 100 → 85 (100 stayed fisheyed at speed; tier FOVs
+  above 85 now clip at the cap).
+- **Glide:** tier `GravityScale` lightened (None 1.0, Low 0.8, Medium 0.6,
+  High 0.45, Max 0.3) so climbs hold and flight goes high. `AirControl`
+  untouched at 0.65 — the air-turns-wider rule stands (test-pinned).
+- **Charge taps:** diagonals never guess — one axis must double the
+  other or the tap is ignored (a wrong guess lights red and kills the
+  jackpot; an ignored tap waits for a clean re-tap). Tap clean
+  single keys.
+
 ## Change record — ship swim + arrow glyphs (§34.1, 2026-09-30, approved)
 
 - **Old:** swim pitched freely (W/S) and could breach upward; charge
