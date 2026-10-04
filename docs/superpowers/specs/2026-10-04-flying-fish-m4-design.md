@@ -6,6 +6,13 @@ Difficulty ramps on the run clock. Recovery is in-flow (lagoon
 breathers); runs never end (no fail screens — M5 owns results/menus).
 Success (PRD Milestone 4): a complete 60–90 second playable run exists.
 
+Player goal (explicit): high score by distance traveled and coins
+collected. Score = distance trickle + coin pickups + timing bonuses,
+all scaled by the live tier multiplier (score chase v1, already live).
+Every system serves the score: tiers multiply it, rings feed the gauge
+that sustains the flight that reaches the coins, missions bonus it.
+Session score shows in the overlay; saved high scores wait for M5.
+
 Decisions already approved: endless + always recoverable; hybrid chunks
 (all four types below); difficulty = run clock; testing tunes revert to
 spec; spawn director (no prefabs); score-chase + coin lines feed chunks;
