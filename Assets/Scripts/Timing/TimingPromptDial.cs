@@ -84,7 +84,7 @@ namespace FlyingFishMomentum
         void Update()
         {
             if (_spawner == null || _target == null || _momentum == null ||
-                _spawner.Settings == null || Camera.main == null)
+                _spawner.EffectiveSettings == null || Camera.main == null)
             {
                 SetVisible(false);
                 return;
@@ -94,7 +94,7 @@ namespace FlyingFishMomentum
             if (!prompt.Open) return;
             transform.position = _target.position + new Vector3(0f, Hover, 0f);
             transform.LookAt(Camera.main.transform);
-            float lead = _spawner.Settings.LeadTime;
+            float lead = _spawner.EffectiveSettings.LeadTime;
             float progress = _spawner.Progress01;
             float hit = _spawner.HitAngleDeg;
             NeedleAngleZ = TimingDialMath.NeedleAngle(progress, hit);
@@ -103,11 +103,11 @@ namespace FlyingFishMomentum
             float speed = _momentum.CurrentSpeed;
             int streak = _spawner.StreakCount;
             float perfectHalf = TimingDialMath.HalfWidthDeg(
-                TimingEvaluator.PerfectWindowAt(speed, _spawner.Settings,
-                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef, streak), lead);
+                TimingEvaluator.PerfectWindowAt(speed, _spawner.EffectiveSettings,
+                    _spawner.MomSettings.MinSpeed, _spawner.EffectiveSettings.MaxSpeedRef, streak), lead);
             float goodHalf = TimingDialMath.HalfWidthDeg(
-                TimingEvaluator.GoodWindowAt(speed, _spawner.Settings,
-                    _spawner.MomSettings.MinSpeed, _spawner.Settings.MaxSpeedRef, streak), lead);
+                TimingEvaluator.GoodWindowAt(speed, _spawner.EffectiveSettings,
+                    _spawner.MomSettings.MinSpeed, _spawner.EffectiveSettings.MaxSpeedRef, streak), lead);
             PerfectHalfWidthDeg = perfectHalf;
             GoodHalfWidthDeg = goodHalf;
             DrawArc(_base, -180f, 180f, 0f);

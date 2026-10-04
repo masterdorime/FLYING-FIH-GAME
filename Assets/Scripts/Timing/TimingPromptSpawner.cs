@@ -22,6 +22,22 @@ namespace FlyingFishMomentum
         public MomentumSettings MomSettings => _momSettings;
         public float Progress01 { get; private set; }
 
+        // M4 difficulty view: runtime clone of the timing asset. Judging
+        // reads _view; Settings keeps returning the pristine original.
+        // t=0 reproduces legacy values bit-identically (scale factor 1).
+        TimingSettings _view;
+        public TimingSettings EffectiveSettings => _view;
+
+        public void SetDifficulty(float t)
+        {
+            t = Mathf.Clamp01(t);
+            if (_timing == null || _view == null) return;
+            _view.BeatMinMeters = Mathf.Max(0.01f, _timing.BeatMinMeters * (1f - 0.5f * t));
+            _view.BeatMaxMeters = Mathf.Max(0.01f, _timing.BeatMaxMeters * (1f - 0.5f * t));
+            _view.PerfectWindow = Mathf.Max(0.01f, _timing.PerfectWindow * (1f - 0.3f * t));
+            _view.GoodWindow = Mathf.Max(0.01f, _timing.GoodWindow * (1f - 0.3f * t));
+        }
+
         [SerializeField] PlayerMovementController _movement;
         [SerializeField] PlayerMomentumController _momentum;
         [SerializeField] FlightStateMachine _sm;
@@ -169,10 +185,10 @@ namespace FlyingFishMomentum
                     Progress01 = 0f;
                     _meters = 0f;
                     // Slow-mo beat to answer the charge: pause always wins.
-                    if (_timing != null && Time.timeScale != 0f)
+                    if (_view != null && Time.timeScale != 0f)
                     {
-                        Time.timeScale = _timing.ChargeSlowScale;
-                        SlowTimer = _timing.ChargeSlowDuration;
+                        Time.timeScale = _view.ChargeSlowScale;
+                        SlowTimer = _view.ChargeSlowDuration;
                     }
                     var order = new ChargeArrow[4];
                     for (int i = 0; i < order.Length; i++)
@@ -195,6 +211,15 @@ namespace FlyingFishMomentum
             return za * zb < 0f;
         }
 
+        void Awake()
+        {
+            // Build-time Configure fills serialized fields, but _view is
+            // not serialized: clone at load so live judging never sees
+            // null. (Configure re-clones when given a new asset.)
+            if (_view == null && _timing != null)
+                _view = Object.Instantiate(_timing);
+        }
+
         void Start()
         {
             // Fresh shuffle every run (unpredictable beats); tests lock a seed.
@@ -204,8 +229,8 @@ namespace FlyingFishMomentum
         void DrawBeat()
         {
             if (_rngBeat == null) _rngBeat = new System.Random(0);
-            if (_timing == null) { _nextBeat = 60f; return; }
-            _nextBeat = Mathf.Lerp(_timing.BeatMinMeters, _timing.BeatMaxMeters,
+            if (_view == null) { _nextBeat = 60f; return; }
+            _nextBeat = Mathf.Lerp(_view.BeatMinMeters, _view.BeatMaxMeters,
                 (float)_rngBeat.NextDouble());
         }
 
@@ -222,6 +247,8 @@ namespace FlyingFishMomentum
             _momentum = momentum;
             _sm = sm;
             _timing = timing;
+            // Clone the asset, never mutate it: judging reads _view.
+            _view = timing != null ? Object.Instantiate(timing) : null;
             _momSettings = momSettings;
             _camera = camera;
             _gauge = gauge;
@@ -229,7 +256,7 @@ namespace FlyingFishMomentum
 
         void Update()
         {
-            if (_momentum == null || _timing == null || _momSettings == null) return;
+            if (_momentum == null || _view == null || _momSettings == null) return;
             UpdateSlowMo(Time.unscaledDeltaTime);
             bool pressed = false;
             bool held = false;
@@ -254,16 +281,16 @@ namespace FlyingFishMomentum
         // full speed, but never overrides an active pause (scale 0).
         public void UpdateSlowMo(float unscaledDt)
         {
-            if (SlowTimer <= 0f || _timing == null) return;
+            if (SlowTimer <= 0f || _view == null) return;
             SlowTimer -= unscaledDt;
-            if (Time.timeScale != 0f) Time.timeScale = _timing.ChargeSlowScale;
-            if (SlowTimer <= 0f && Time.timeScale == _timing.ChargeSlowScale)
+            if (Time.timeScale != 0f) Time.timeScale = _view.ChargeSlowScale;
+            if (SlowTimer <= 0f && Time.timeScale == _view.ChargeSlowScale)
                 Time.timeScale = 1f;
         }
 
         public void Tick(float now, float dt, float speed, FlightTier tier, bool pressed, bool held = false, ChargeArrow? arrow = null)
         {
-            if (_momentum == null || _timing == null || _momSettings == null) return;
+            if (_momentum == null || _view == null || _momSettings == null) return;
             // Frozen or rewound clock (pause) carries no input: a press must
             // advance time to count. Recorded before any early return below.
             if (now <= _lastTickNow) { pressed = false; held = false; arrow = null; }
@@ -271,7 +298,7 @@ namespace FlyingFishMomentum
             // Charge mode owns the button: beats suspend, arrows route here.
             if (Charge.IsActive)
             {
-                float gain = Charge.Tick(now, arrow, _timing);
+                float gain = Charge.Tick(now, arrow, _view);
                 if (gain > 0f) _momentum.AddChargeGain(gain);
                 if (gain > 0f && _gauge != null) _gauge.AddFill(gain);
                 if (!Charge.IsActive)
@@ -287,13 +314,13 @@ namespace FlyingFishMomentum
             if (Active.Open)
             {
                 Progress01 = TimingDialMath.Progress01(
-                    Active.TargetTime, now, _timing.LeadTime);
+                    Active.TargetTime, now, _view.LeadTime);
                 float good = TimingEvaluator.GoodWindowAt(
-                    speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount);
+                    speed, _view, _momSettings.MinSpeed, _view.MaxSpeedRef, StreakCount);
                 if (pressed)
                     Resolve(TimingEvaluator.Evaluate(now - Active.TargetTime,
-                        speed, _timing, _momSettings.MinSpeed, _timing.MaxSpeedRef, StreakCount), BeatRowFor(tier));
-                else if (now > Active.TargetTime + good + Mathf.Min(_timing.LateBuffer, good))
+                        speed, _view, _momSettings.MinSpeed, _view.MaxSpeedRef, StreakCount), BeatRowFor(tier));
+                else if (now > Active.TargetTime + good + Mathf.Min(_view.LateBuffer, good))
                     Resolve(TimingResult.Miss, BeatRowFor(tier));
                 return;
             }
@@ -304,7 +331,7 @@ namespace FlyingFishMomentum
                 _meters = 0f;
                 if (_rngBeat == null) _rngBeat = new System.Random(0);
                 HitAngleDeg = (float)(_rngBeat.NextDouble() * 360.0);
-                Active = new ActivePrompt { Open = true, TargetTime = now + _timing.LeadTime };
+                Active = new ActivePrompt { Open = true, TargetTime = now + _view.LeadTime };
             }
             // Firework rocket: open air + fresh press spends one for a burst
             // along the nose plus a climb pop. Beats and charge own the

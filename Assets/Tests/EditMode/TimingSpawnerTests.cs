@@ -699,5 +699,33 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
             Assert.AreEqual(16f, momentum.CurrentSpeed, 0.5f);
         }
+
+        [Test]
+        public void DifficultyTightensWindowsAndGap()
+        {
+            var a = NewSpawner(out _); // t=0 default
+            var b = NewSpawner(out _); b.SetDifficulty(1f);
+            Assert.Less(b.EffectiveSettings.GoodWindow, a.EffectiveSettings.GoodWindow);
+            Assert.GreaterOrEqual(b.EffectiveSettings.GoodWindow, 0.01f); // never zero (MinGood precedent)
+            Assert.Less(b.EffectiveSettings.BeatMaxMeters, a.EffectiveSettings.BeatMaxMeters);
+        }
+
+        [Test]
+        public void ZeroDifficultyMatchesLegacyBehavior()
+        {
+            // One perfect press banks identically with and without SetDifficulty(0).
+            var a = NewSpawner(out var ma); ma.CurrentSpeed = 50f; ma.TargetSpeed = 50f;
+            var b = NewSpawner(out var mb); mb.CurrentSpeed = 50f; mb.TargetSpeed = 50f;
+            b.SetDifficulty(0f);
+            // Open a prompt on each (16 travel ticks) and tap TargetTime exactly.
+            float now = 0f;
+            for (int i = 0; i < 16; i++) { now += 0.1f; a.Tick(now, 0.1f, 50f, FlightTier.Medium, false); b.Tick(now, 0.1f, 50f, FlightTier.Medium, false); }
+            Assert.IsTrue(a.Active.Open, "legacy prompt never opened");
+            Assert.IsTrue(b.Active.Open, "t=0 prompt never opened");
+            a.Tick(a.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            b.Tick(b.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
+            Assert.AreEqual(a.LastResult, b.LastResult);
+            Assert.AreEqual(ma.CurrentSpeed, mb.CurrentSpeed, 0.001f);
+        }
     }
 }
