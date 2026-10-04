@@ -713,6 +713,22 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void ZeroFactorsDisableDifficultyScaling()
+        {
+            var spawner = NewSpawner(out _);
+            float baseMin = spawner.EffectiveSettings.BeatMinMeters;
+            float baseMax = spawner.EffectiveSettings.BeatMaxMeters;
+            float basePerfect = spawner.EffectiveSettings.PerfectWindow;
+            float baseGood = spawner.EffectiveSettings.GoodWindow;
+            spawner.SetDifficultyFactors(0f, 0f);
+            spawner.SetDifficulty(1f);
+            Assert.AreEqual(baseMin, spawner.EffectiveSettings.BeatMinMeters, 0.001f);
+            Assert.AreEqual(baseMax, spawner.EffectiveSettings.BeatMaxMeters, 0.001f);
+            Assert.AreEqual(basePerfect, spawner.EffectiveSettings.PerfectWindow, 0.001f);
+            Assert.AreEqual(baseGood, spawner.EffectiveSettings.GoodWindow, 0.001f);
+        }
+
+        [Test]
         public void ZeroDifficultyMatchesLegacyBehavior()
         {
             // One perfect press banks identically with and without SetDifficulty(0).

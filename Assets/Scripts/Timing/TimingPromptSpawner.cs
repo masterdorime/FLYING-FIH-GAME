@@ -28,14 +28,23 @@ namespace FlyingFishMomentum
         TimingSettings _view;
         public TimingSettings EffectiveSettings => _view;
 
+        public void SetDifficultyFactors(float gapShrink, float windowTighten)
+        {
+            _gapShrink = gapShrink;
+            _windowTighten = windowTighten;
+        }
+
+        float _gapShrink = 0.5f;
+        float _windowTighten = 0.3f;
+
         public void SetDifficulty(float t)
         {
             t = Mathf.Clamp01(t);
             if (_timing == null || _view == null) return;
-            _view.BeatMinMeters = Mathf.Max(0.01f, _timing.BeatMinMeters * (1f - 0.5f * t));
-            _view.BeatMaxMeters = Mathf.Max(0.01f, _timing.BeatMaxMeters * (1f - 0.5f * t));
-            _view.PerfectWindow = Mathf.Max(0.01f, _timing.PerfectWindow * (1f - 0.3f * t));
-            _view.GoodWindow = Mathf.Max(0.01f, _timing.GoodWindow * (1f - 0.3f * t));
+            _view.BeatMinMeters = Mathf.Max(0.01f, _timing.BeatMinMeters * (1f - _gapShrink * t));
+            _view.BeatMaxMeters = Mathf.Max(0.01f, _timing.BeatMaxMeters * (1f - _gapShrink * t));
+            _view.PerfectWindow = Mathf.Max(0.01f, _timing.PerfectWindow * (1f - _windowTighten * t));
+            _view.GoodWindow = Mathf.Max(0.01f, _timing.GoodWindow * (1f - _windowTighten * t));
         }
 
         [SerializeField] PlayerMovementController _movement;

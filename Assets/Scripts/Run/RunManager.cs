@@ -86,6 +86,8 @@ namespace FlyingFishMomentum.Run
             _sm = sm;
             _difficulty = diff;
             _deck = deck;
+            if (_spawner != null && _difficulty != null)
+                _spawner.SetDifficultyFactors(_difficulty.GapShrink, _difficulty.WindowTighten);
         }
 
         // Scene wiring, called once at build (persists via SerializeFields).

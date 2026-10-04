@@ -499,6 +499,17 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
         }
 
+        [Test]
+        public void LagoonReentryResetsMissionProgress()
+        {
+            var m = NewMissionManager(out _, out var score, out _, out _);
+            var spec = NewMissionSpec("Lagoon", "collect 30 coins", 30);
+            m.EnterChunk(spec); m.Tick(0f, 0.1f); score.AddCoins(15); m.Tick(10f, 0.1f);
+            Assert.AreEqual(0.5f, m.MissionProgress01, 0.001f);
+            m.EnterChunk(spec); m.Tick(10f, 0.1f);
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+        }
+
         private static void AssertColorsEqual(Color expected, Color actual)
         {
             Assert.AreEqual(expected.r, actual.r, 0.001f);
