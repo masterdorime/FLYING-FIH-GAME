@@ -25,7 +25,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 "Assets/Configs/FlightGaugeSettings.asset");
             Assert.IsNotNull(asset, "FlightGaugeSettings.asset failed to import");
             Assert.AreEqual(1.5f, asset.FlyDrainPerSecond, 0.001f);
-            Assert.AreEqual(10f, asset.MissDrain, 0.001f);
+            Assert.AreEqual(3f, asset.MissDrain, 0.001f);
             // Testing tune: small tank so two clean rings launch (spec
             // table lives in code defaults — see TableMatchesSpec).
             Assert.AreEqual(48f, asset.MaxGauge, 0.001f);

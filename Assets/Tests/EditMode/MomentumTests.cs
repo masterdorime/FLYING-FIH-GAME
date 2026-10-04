@@ -115,11 +115,11 @@ namespace FlyingFishMomentum.Tests.EditMode
             var m = NewMomentum(max: 100f, accel: 120f);
             m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
             m.ApplyTimingResult(TimingResult.Good, FlightTier.Medium);
-            Assert.AreEqual(53f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(51f, m.CurrentSpeed, 0.001f);
             m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Max);
-            Assert.AreEqual(63f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(53f, m.CurrentSpeed, 0.001f);
             m.ApplyTimingResult(TimingResult.Miss, FlightTier.Medium);
-            Assert.AreEqual(35f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(47f, m.CurrentSpeed, 0.001f);
         }
 
         [Test]
@@ -127,7 +127,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var m = NewMomentum();
             m.CurrentSpeed = 10f; m.TargetSpeed = 8f;
-            m.ApplyTimingResult(TimingResult.Miss, FlightTier.Max); // -70
+            m.ApplyTimingResult(TimingResult.Miss, FlightTier.Max); // -16
             m.Tick(1f, 1.5f);
             Assert.AreEqual(5f, m.CurrentSpeed, 0.01f);
         }
@@ -137,11 +137,11 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var m = NewMomentum(max: 50f, accel: 120f);
             m.CurrentSpeed = 50f; m.TargetSpeed = 50f;
-            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → 55, above max
-            Assert.AreEqual(55f, m.CurrentSpeed, 0.001f);
-            m.Tick(1f, 0.6f); // gain sticks: target ratcheted to 55, no bleed
-            Assert.AreEqual(55f, m.CurrentSpeed, 0.001f);
-            Assert.AreEqual(55f, m.TargetSpeed, 0.001f);
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +1 → 51, above max
+            Assert.AreEqual(51f, m.CurrentSpeed, 0.001f);
+            m.Tick(1f, 0.6f); // gain sticks: target ratcheted to 51, no bleed
+            Assert.AreEqual(51f, m.CurrentSpeed, 0.001f);
+            Assert.AreEqual(51f, m.TargetSpeed, 0.001f);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var m = NewMomentum(max: 50f, accel: 120f);
             m.CurrentSpeed = 69f; m.TargetSpeed = 50f;
-            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → capped 70
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +1 → capped 70
             Assert.AreEqual(70f, m.CurrentSpeed, 0.001f);
         }
 
@@ -160,9 +160,9 @@ namespace FlyingFishMomentum.Tests.EditMode
             // typical beat gap, not bled away by drag toward the old target.
             var m = NewMomentum(max: 100f, accel: 120f);
             m.CurrentSpeed = 10f; m.TargetSpeed = 10f;
-            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +5 → 15
+            m.ApplyTimingResult(TimingResult.Perfect, FlightTier.Medium); // +1 → 11
             for (int i = 0; i < 240; i++) m.Tick(1f / 60f, 1.5f); // 4s of swim
-            Assert.Greater(m.CurrentSpeed, 12f, "Perfect gain bled away before the next prompt");
+            Assert.Greater(m.CurrentSpeed, 10f, "Perfect gain bled away before the next prompt");
         }
 
         [Test]

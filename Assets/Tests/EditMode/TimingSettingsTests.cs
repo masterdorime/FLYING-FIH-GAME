@@ -15,9 +15,9 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(1f, s.LeadTime, 0.001f);
             Assert.AreEqual(0.07f, s.PerfectWindow, 0.0001f);
             Assert.AreEqual(0.015f, s.MinPerfectWindow, 0.0001f);
-            Assert.AreEqual(5f, s.DeltaFor(TimingResult.Perfect, FlightTier.Medium), 0.001f);
-            Assert.AreEqual(3f, s.DeltaFor(TimingResult.Good, FlightTier.Medium), 0.001f);
-            Assert.AreEqual(-28f, s.DeltaFor(TimingResult.Miss, FlightTier.Medium), 0.001f);
+            Assert.AreEqual(1f, s.DeltaFor(TimingResult.Perfect, FlightTier.Medium), 0.001f);
+            Assert.AreEqual(1f, s.DeltaFor(TimingResult.Good, FlightTier.Medium), 0.001f);
+            Assert.AreEqual(-6f, s.DeltaFor(TimingResult.Miss, FlightTier.Medium), 0.001f);
             Assert.AreEqual(0f, s.DeltaFor(TimingResult.Perfect, FlightTier.None), 0.001f);
         }
 
@@ -31,8 +31,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(40f, asset.BeatMinMeters, 0.001f);
             Assert.AreEqual(80f, asset.BeatMaxMeters, 0.001f);
             Assert.AreEqual(0.06f, asset.LateBuffer, 0.0001f);
-            Assert.AreEqual(10f, asset.DeltaFor(TimingResult.Perfect, FlightTier.Max), 0.001f);
-            Assert.AreEqual(-70f, asset.DeltaFor(TimingResult.Miss, FlightTier.Max), 0.001f);
+            Assert.AreEqual(2f, asset.DeltaFor(TimingResult.Perfect, FlightTier.Max), 0.001f);
+            Assert.AreEqual(-16f, asset.DeltaFor(TimingResult.Miss, FlightTier.Max), 0.001f);
         }
     }
 }

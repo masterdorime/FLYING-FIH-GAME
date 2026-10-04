@@ -11,7 +11,7 @@ namespace FlyingFishMomentum
         public float ChargeStepFill = 2f;
         public float ChargeJackpotFill = 4f;
         public float FlyDrainPerSecond = 1.5f;
-        public float MissDrain = 10f;
+        public float MissDrain = 3f;
         public float[] TierThresholds = { 20f, 40f, 70f, 100f };
 
         public FlightTier TierFor(float gauge)

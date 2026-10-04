@@ -173,7 +173,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             spawner.Tick(spawner.Active.TargetTime, 0f, 50f, FlightTier.Medium, true);
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
-            Assert.AreEqual(55f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(51f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -434,7 +434,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         [Test]
         public void ChargeCleanRunBanksJackpot()
         {
-            // Match every arrow: 4x+4 plus +8 jackpot: 10 → 34.
+            // Match every arrow: 4x+1 plus +2 jackpot: 10 → 16.
             var spawner = NewSpawnerWithRing(out var momentum, out _);
             momentum.CurrentSpeed = 10f; momentum.TargetSpeed = 10f;
             spawner.CheckRingTrigger(0f, Vector3.zero);
@@ -446,7 +446,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 spawner.Tick(now, 0.1f, 10f, FlightTier.Medium, false, false, spawner.Charge.CurrentArrow);
             }
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(34f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(16f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -565,7 +565,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.IsTrue(spawner.Active.Open, "prompt never opened");
             spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.None, true);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
-            Assert.AreEqual(15f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(11f, momentum.CurrentSpeed, 0.5f);
         }
 
         [Test]
@@ -697,7 +697,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 now = t; guard = g;
             });
             Assert.IsFalse(spawner.ChargeActive, "charge never finished");
-            Assert.AreEqual(34f, momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(16f, momentum.CurrentSpeed, 0.5f);
         }
     }
 }

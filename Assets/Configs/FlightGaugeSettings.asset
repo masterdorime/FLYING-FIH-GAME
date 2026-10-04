@@ -16,7 +16,7 @@ MonoBehaviour:
   ChargeStepFill: 2
   ChargeJackpotFill: 4
   FlyDrainPerSecond: 1.5
-  MissDrain: 10
+  MissDrain: 3
   TierThresholds:
   - 8
   - 16

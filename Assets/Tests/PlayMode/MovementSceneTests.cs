@@ -546,7 +546,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             spawner.Tick(spawner.Active.TargetTime, 0f, 10f, FlightTier.Medium, true);
             Assert.IsTrue(spawner.HasResolved);
             Assert.AreEqual(TimingResult.Perfect, spawner.LastResult);
-            Assert.AreEqual(15f, sm.Momentum.CurrentSpeed, 0.5f);
+            Assert.AreEqual(11f, sm.Momentum.CurrentSpeed, 0.5f);
             yield break;
         }
 
@@ -995,13 +995,13 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator CleanRingReachesMediumGear()
+        public IEnumerator TwoCleanRingsReachLowGear()
         {
             // Fully manual: no live frames anywhere. Mover, spawner and
             // gauge all freeze upfront; rings trigger via direct
-            // CheckRingTrigger on an explicit manual clock. One clean
-            // sequence (4x+4 plus +8 jackpot = 24 gauge) clears the
-            // Medium floor at 16 with a tier-up kick (testing tank).
+            // CheckRingTrigger on an explicit manual clock. Two clean
+            // sequences (4x+1 plus +2 jackpot = 6 gauge each) clear the
+            // Low floor at 8 with a tier-up kick.
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
@@ -1023,7 +1023,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 // live time during setup frames, so a 0-start would eat
                 // the first manual inputs and fail a Hold-first step 0.
                 float now = Time.time;
-                for (int ring = 0; ring < 1; ring++)
+                for (int ring = 0; ring < 2; ring++)
                 {
                     mover.transform.position = spawner.Rings[ring].transform.position;
                     spawner.CheckRingTrigger(now, mover.transform.position);
@@ -1036,8 +1036,8 @@ namespace FlyingFishMomentum.Tests.PlayMode
                     }
                     Assert.IsFalse(spawner.ChargeActive, "charge never finished");
                 }
-                Assert.GreaterOrEqual(gauge.CurrentGauge, 16f, "clean ring did not reach Medium");
-                Assert.AreEqual(FlightTier.Medium, sm.ActiveTier);
+                Assert.GreaterOrEqual(gauge.CurrentGauge, 8f, "two clean rings did not reach Low");
+                Assert.AreEqual(FlightTier.Low, sm.ActiveTier);
                 Assert.AreEqual(1f, cam.KickEnvelope, 0.001f);
             }
             finally { Time.timeScale = 1f; }

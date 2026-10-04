@@ -70,7 +70,12 @@ environment looks ride per chunk type.
 
 ## S4 — Tune lock (testing tunes revert to spec in M4)
 
-- Revert: tank 120, bands 20/40/70/100, charge +2/+4, slow-mo 0.4×/1.2s.
+- Revert: tank 120, bands 20/40/70/100, slow-mo 0.4×/1.2s.
+- Flattened 2026-10-04 per playtest (below spec, replaces the revert
+  for these rows): charge +1/+2 (perfect ring 6), Perfect {0,1,1,2,2},
+  Good {0,1,1,1,1}, Miss {0,4,6,10,16}, MissDrain 3 — tiny gains, tiny
+  losses. Consequence accepted: ~8 perfect rings to fill the tank;
+  retune launch pacing in the plan if testing drags.
 - Keep (approved mechanics, not testing tunes): 8s timeout (pairs with
   4-arrow sequences), ship swim, launch-keeps-tank, arrow glyphs, glide
   v2, rockets, score chase, all-swim rings (rings dissolve into chunk

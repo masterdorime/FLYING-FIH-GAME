@@ -22,16 +22,16 @@ namespace FlyingFishMomentum
         public float StreakFloor = 0.5f;
         // Speed reference for window shrink (PRD §7.2: InverseLerp up to Max tier max).
         public float MaxSpeedRef = 73f;
-        public float[] PerfectBoost = { 0f, 4f, 5f, 7f, 10f };
-        public float[] GoodBoost = { 0f, 2f, 3f, 4f, 5f };
-        public float[] MissPenalty = { 0f, 18f, 28f, 45f, 70f }; // positive magnitudes
+        public float[] PerfectBoost = { 0f, 1f, 1f, 2f, 2f };
+        public float[] GoodBoost = { 0f, 1f, 1f, 1f, 1f };
+        public float[] MissPenalty = { 0f, 4f, 6f, 10f, 16f }; // positive magnitudes
         // Gearless climb: runs start slow, hits stack toward this cap.
         public float StartSpeed = 10f;
         public float SpeedCap = 70f;
         // Charge sequences (rings): tap the shown arrows in order.
         public float ChargeTimeout = 8f;
-        public float ChargeStepGain = 4f;
-        public float ChargeJackpot = 8f;
+        public float ChargeStepGain = 1f;
+        public float ChargeJackpot = 2f;
         // Ring entry slow-motion: world dips to this scale for this long
         // (wall clock), giving hands time to answer the charge steps.
         public float ChargeSlowScale = 0.25f;
