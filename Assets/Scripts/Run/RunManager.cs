@@ -14,7 +14,7 @@ namespace FlyingFishMomentum.Run
         private DifficultySettings _difficulty;
         private List<ChunkSpec> _deck;
         private float _elapsed;
-        private System.Random _rng = new System.Random();
+        private System.Random _rng = new System.Random(0);
 
         public void Configure(TimingPromptSpawner spawner, Scoring.ScoreSystem score, DifficultySettings diff, List<ChunkSpec> deck)
         {

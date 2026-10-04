@@ -23,6 +23,9 @@ namespace FlyingFishMomentum.Tests.EditMode
             _spawned.Add(go);
             var m = go.AddComponent<RunManager>();
             var diff = ScriptableObject.CreateInstance<DifficultySettings>();
+            diff.RampSeconds = 240f;
+            diff.StormWeightEnd = 3f;
+            diff.LagoonFloor = 0.5f;
             var deck = new List<ChunkSpec>
             {
                 NewSpec("Lagoon", 0f, 0.6f, 1f),
@@ -68,7 +71,8 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void DeckReplaysPerSeed()
         {
             var a = NewManager(7); var b = NewManager(7);
-            Assert.AreEqual(a.NextType().ChunkId, b.NextType().ChunkId);
+            for (int i = 0; i < 20; i++)
+                Assert.AreEqual(a.NextType().ChunkId, b.NextType().ChunkId);
         }
 
         [Test]
