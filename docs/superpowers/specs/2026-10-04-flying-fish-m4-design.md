@@ -116,6 +116,22 @@ Menus, results screens, audio, real UI/VFX (overlay text only),
 tutorial, saves, damage/obstacle penalties, chaser (M5 obstacles),
 high-score persistence (M5 saves), prefabs for chunks, multiplayer.
 
+## Change record — sky layer per chunk + realm blend (§34.1, approved)
+
+- **Old:** chunks were water-only; flight had nowhere to go and the sky
+  was empty mood.
+- **Why:** flight needs a destination: a cloud realm parallel to the
+  whole run (launch can happen at any z, so sky content can't live in
+  zones).
+- **New:** each chunk builds a sky half from new spec fields
+  (`SkyRingCount/SkyCoinTrails/SkySpireCount`; Lagoon 0/1/0, Gauntlet
+  2/1/2, Storm 0/1/3, Sky 4/2/4): rings/coins above 55m through the
+  existing pools and spawner feed, spires as tall colliders under the
+  same clearance rule (3D bounds). A cloud-sea deck fades in 40→60m
+  (`RealmBlend`) and follows the fish; ocean below, clouds above, no
+  teleport, descent always lands back in the swim flow. Spawner, gauge,
+  missions, and difficulty untouched (all altitude-blind already).
+
 ## Change record — water stays transparent (§34.1, approved)
 
 - **Old:** mood tints stamped full water color incl. alpha 1 onto an

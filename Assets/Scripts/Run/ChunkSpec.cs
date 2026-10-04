@@ -16,6 +16,11 @@ namespace FlyingFishMomentum.Run
         public int CoinTrails;
         public int CoinsPerTrail = 4;
         public int IslandPairs;
+        // Cloud-realm layer (above 55m): per-chunk sky content so flight
+        // has somewhere to go. Zero keeps a type water-only.
+        public int SkyRingCount;
+        public int SkyCoinTrails;
+        public int SkySpireCount;
         public float MinDifficulty;
         public float MaxDifficulty = 1f;
         public float Weight = 1f;

@@ -19,6 +19,9 @@ MonoBehaviour:
   CoinTrails: 1
   CoinsPerTrail: 4
   IslandPairs: 4
+  SkyRingCount: 0
+  SkyCoinTrails: 1
+  SkySpireCount: 3
   MinDifficulty: 0.35
   MaxDifficulty: 1
   Weight: 0.3

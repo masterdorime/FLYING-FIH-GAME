@@ -26,10 +26,23 @@ namespace FlyingFishMomentum.Run
         public const float IslandHalfX = 5f;
         public const float IslandHalfDepth = 5f;
         public const float IslandCenterY = 5f;
+        // Cloud-realm layer: sky content lives above 55m; the cloud sea
+        // fades in 40→60m (RealmBlend). Spires are tall colliders.
+        public const float SkyBaseY = 60f;
+        public const float SkyStepY = 12f;
+        public const float SpireCenterY = 55f;
+        public const float SpireHalfDepth = 2f;
+        public const float RealmLowY = 40f;
+        public const float RealmHighY = 60f;
+        public const float CloudY = 35f;
+        public const float CloudSize = 1200f;
+        public const float CloudMaxAlpha = 0.95f;
 
         private readonly List<ChargeRing> _rings = new List<ChargeRing>();
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
         private readonly List<GameObject> _islands = new List<GameObject>();
+        private readonly List<GameObject> _spires = new List<GameObject>();
+        private readonly Queue<GameObject> _spirePool = new Queue<GameObject>();
         private readonly List<GameObject> _roots = new List<GameObject>();
         private readonly Queue<GameObject> _ringPool = new Queue<GameObject>();
         private readonly Queue<GameObject> _coinPool = new Queue<GameObject>();
@@ -48,6 +61,7 @@ namespace FlyingFishMomentum.Run
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public IReadOnlyList<CoinPickup> Coins => _coins;
         public IReadOnlyList<GameObject> Islands => _islands;
+        public IReadOnlyList<GameObject> Spires => _spires;
 
         // M4 Task 7 (Task 6 review): the sky tint rides a real renderer,
         // not a dangling material — the scene passes its sky shell here
@@ -69,6 +83,8 @@ namespace FlyingFishMomentum.Run
                     if (c != null) furthest = Mathf.Max(furthest, c.transform.position.z);
                 foreach (var i in _islands)
                     if (i != null) furthest = Mathf.Max(furthest, i.transform.position.z + IslandHalfDepth);
+                foreach (var s in _spires)
+                    if (s != null) furthest = Mathf.Max(furthest, s.transform.position.z + SpireHalfDepth);
                 return furthest;
             }
         }
@@ -101,6 +117,58 @@ namespace FlyingFishMomentum.Run
                 var rend = s.GetComponent<MeshRenderer>();
                 if (rend != null) rend.sharedMaterial = WaterMaterial;
             }
+            EnsureCloudSea();
+        }
+
+        // Cloud sea: one big soft deck the fish climbs into above RealmLowY
+        // and leaves below it. Plane primitive faces +Y, so it reads as a
+        // deck from the sky and stays invisible from underwater. Follows
+        // the fish (x/z) and fades with RealmBlend — purely visual.
+        private GameObject _cloudSea;
+        private Material _cloudMat;
+        private Transform _fish;
+
+        private void EnsureCloudSea()
+        {
+            if (_cloudSea != null) return;
+            _cloudMat = new Material(Shader.Find("Standard"));
+            _cloudMat.color = new Color(0.95f, 0.97f, 1f, 0f);
+            _cloudMat.SetFloat("_Mode", 3f);
+            _cloudMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            _cloudMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            _cloudMat.SetInt("_ZWrite", 0);
+            _cloudMat.DisableKeyword("_ALPHATEST_ON");
+            _cloudMat.EnableKeyword("_ALPHABLEND_ON");
+            _cloudMat.SetOverrideTag("RenderType", "Transparent");
+            _cloudMat.renderQueue = 3000;
+            _cloudSea = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            _cloudSea.name = "CloudSea";
+            var col = _cloudSea.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            _cloudSea.transform.localScale = new Vector3(CloudSize / 10f, 1f, CloudSize / 10f);
+            var rend = _cloudSea.GetComponent<MeshRenderer>();
+            rend.sharedMaterial = _cloudMat;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            rend.receiveShadows = false;
+        }
+
+        void Update()
+        {
+            if (_cloudSea == null || _cloudMat == null) return;
+            if (_fish == null)
+            {
+                var mover = Object.FindFirstObjectByType<PlayerMovementController>();
+                if (mover == null) return;
+                _fish = mover.transform;
+            }
+            var p = _cloudSea.transform.position;
+            p.x = _fish.position.x;
+            p.z = _fish.position.z;
+            p.y = CloudY;
+            _cloudSea.transform.position = p;
+            var c = _cloudMat.color;
+            c.a = RealmBlend(_fish.position.y) * CloudMaxAlpha;
+            _cloudMat.color = c;
         }
 
         // M4 Task 6 mood: per-type sky/fog/water/light on chunk entry.
@@ -169,11 +237,52 @@ namespace FlyingFishMomentum.Run
                 _islands.Add(PlaceIsland(root, new Vector3(cx, IslandCenterY, z)));
             }
 
+            // Cloud-realm layer: sky rings/coins/spires ride the same pools
+            // and clearance as water content (spawner feeds them wholesale).
+            float skySpacing = Mathf.Max(spec.RingSpacing, MinRingSpacing);
+            for (int k = 0; k < spec.SkyRingCount; k++)
+            {
+                var ring = TakeRing();
+                ring.transform.SetParent(root.transform, false);
+                ring.transform.position = new Vector3(
+                    Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble()),
+                    SkyBaseY + k * SkyStepY,
+                    zStart + (k + 1) * skySpacing);
+                _rings.Add(ring);
+            }
+            for (int t = 0; t < spec.SkyCoinTrails; t++)
+            {
+                float baseZ = zStart + spec.Length * (t + 1f) / (spec.SkyCoinTrails + 1f);
+                float x = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
+                float y = SkyBaseY + 10f + t * 8f;
+                for (int i = 0; i < spec.CoinsPerTrail; i++)
+                {
+                    var coin = TakeCoin();
+                    coin.transform.SetParent(root.transform, false);
+                    coin.transform.position = new Vector3(
+                        x, y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
+                    _coins.Add(coin);
+                }
+            }
+            for (int i = 0; i < spec.SkySpireCount; i++)
+            {
+                float z = zStart + spec.Length * (i + 1f) / (spec.SkySpireCount + 1f)
+                    + ((float)rng.NextDouble() - 0.5f) * 20f;
+                float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (12f + (float)rng.NextDouble() * 6f);
+                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z)));
+            }
+
             // Fresh transforms leave collider bounds stale until the next
             // physics step (ledger precedent): sync so the clearance pass
             // below reads true island volumes in EditMode and on frame one.
             Physics.SyncTransforms();
             ResolvePromptClearance();
+        }
+
+        // Realm blend 0..1: ocean below RealmLowY, cloud-sea above RealmHighY.
+        public static float RealmBlend(float fishY)
+        {
+            return Mathf.Clamp01((fishY - RealmLowY) / (RealmHighY - RealmLowY));
         }
 
         // Removes content fully past the line back into the pools.
@@ -201,6 +310,14 @@ namespace FlyingFishMomentum.Run
                 {
                     Stage(_islands[i], _islandPool);
                     _islands.RemoveAt(i);
+                }
+            }
+            for (int i = _spires.Count - 1; i >= 0; i--)
+            {
+                if (_spires[i] == null || _spires[i].transform.position.z + SpireHalfDepth < z)
+                {
+                    Stage(_spires[i], _spirePool);
+                    _spires.RemoveAt(i);
                 }
             }
             for (int i = _roots.Count - 1; i >= 0; i--)
@@ -259,19 +376,23 @@ namespace FlyingFishMomentum.Run
             if (t == null) return;
             Vector3 p = t.position;
             foreach (var island in _islands)
-            {
-                if (island == null) continue;
-                var col = island.GetComponent<Collider>();
-                if (col == null) continue;
-                Bounds b = col.bounds;
-                b.Expand(1f);
-                if (b.Contains(p))
-                {
-                    p.x = (p.x >= 0f ? 1f : -1f) * (GateHalfWidth - 1.5f);
-                    t.position = p;
-                    return;
-                }
-            }
+                if (TryClear(island, ref p, t)) return;
+            foreach (var spire in _spires)
+                if (TryClear(spire, ref p, t)) return;
+        }
+
+        // Bounds.Contains is 3D, so swim rocks and sky spires share it.
+        private static bool TryClear(GameObject rock, ref Vector3 p, Transform t)
+        {
+            if (rock == null) return false;
+            var col = rock.GetComponent<Collider>();
+            if (col == null) return false;
+            Bounds b = col.bounds;
+            b.Expand(1f);
+            if (!b.Contains(p)) return false;
+            p.x = (p.x >= 0f ? 1f : -1f) * (GateHalfWidth - 1.5f);
+            t.position = p;
+            return true;
         }
 
         private void Stage(GameObject go, Queue<GameObject> pool)
@@ -326,6 +447,27 @@ namespace FlyingFishMomentum.Run
             go.transform.SetParent(root.transform, false);
             go.transform.position = center;
             go.transform.localScale = new Vector3(10f, 25f, 10f);
+            return go;
+        }
+
+        // Sky spires: tall colliders (4 x 70 x 4, center y 55 → span
+        // 20..90), pooled and reclaimed exactly like islands.
+        private GameObject PlaceSpire(GameObject root, Vector3 center)
+        {
+            GameObject go;
+            if (_spirePool.Count > 0 && (go = _spirePool.Dequeue()) != null)
+            {
+                go.SetActive(true);
+            }
+            else
+            {
+                go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.GetComponent<MeshRenderer>().sharedMaterial = RockMaterial;
+            }
+            go.name = "ChunkSpire";
+            go.transform.SetParent(root.transform, false);
+            go.transform.position = center;
+            go.transform.localScale = new Vector3(4f, 70f, 4f);
             return go;
         }
 

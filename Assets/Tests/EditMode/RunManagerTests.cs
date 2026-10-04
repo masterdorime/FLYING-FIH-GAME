@@ -667,5 +667,60 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual("Transparent", mat.GetTag("RenderType", false, ""));
             Assert.Less(mat.color.a, 1f, "mood made the sea opaque");
         }
+
+        [Test]
+        public void SkyLayerBuildsHighContent()
+        {
+            // Cloud-realm layer: sky rings/coins/spires live above 55m,
+            // clear of the water game below.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 3, 4, 0);
+            spec.SkyRingCount = 2;
+            spec.SkyCoinTrails = 1;
+            spec.SkySpireCount = 2;
+            builder.BuildChunk(spec, 0f, 7);
+            int skyRings = 0;
+            foreach (var r in builder.Rings)
+                if (r.transform.position.y > 50f) skyRings++;
+            Assert.AreEqual(2, skyRings, "sky rings missing or too low");
+            Assert.AreEqual(2, builder.Spires.Count, "sky spires missing");
+            foreach (var s in builder.Spires)
+                Assert.IsNotNull(s.GetComponent<Collider>(), "spire has no collider");
+        }
+
+        [Test]
+        public void RealmBlendThresholds()
+        {
+            // Ocean below 40m, cloud-sea above 60m, linear blend between.
+            Assert.AreEqual(0f, ChunkBuilder.RealmBlend(30f), 0.001f);
+            Assert.AreEqual(0.5f, ChunkBuilder.RealmBlend(50f), 0.001f);
+            Assert.AreEqual(1f, ChunkBuilder.RealmBlend(70f), 0.001f);
+        }
+
+        [Test]
+        public void SpireClearanceKeepsPromptsOut()
+        {
+            // Air rocks obey the same never-inside rule as water rocks.
+            for (int seed = 0; seed < 5; seed++)
+            {
+                var builder = NewBuilder();
+                var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 3, 4, 0);
+                spec.SkyRingCount = 4;
+                spec.SkyCoinTrails = 2;
+                spec.SkySpireCount = 4;
+                builder.BuildChunk(spec, 0f, seed);
+                foreach (var s in builder.Spires)
+                {
+                    var col = s.GetComponent<Collider>();
+                    if (col == null) continue;
+                    Bounds b = col.bounds;
+                    b.Expand(1f);
+                    foreach (var r in builder.Rings)
+                        Assert.IsFalse(b.Contains(r.transform.position), "ring inside a spire");
+                    foreach (var c in builder.Coins)
+                        Assert.IsFalse(b.Contains(c.transform.position), "coin inside a spire");
+                }
+            }
+        }
     }
 }
