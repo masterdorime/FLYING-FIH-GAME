@@ -21,6 +21,14 @@ namespace FlyingFishMomentum.Run
         public int SkyRingCount;
         public int SkyCoinTrails;
         public int SkySpireCount;
+        // Map dressing: one decor kind per chunk + count budget (tunable,
+        // not hardcoded). Kinds: coral, rubble, crag, cloud. Decor never
+        // collides and parks off the prompt lanes (see builder).
+        public string DecorKind;
+        public int DecorCount;
+        // Gauntlet gates: rock arches (pillars + lintel, all blocking)
+        // anchored over swim ring lines — steer through the middle.
+        public int ArchCount;
         public float MinDifficulty;
         public float MaxDifficulty = 1f;
         public float Weight = 1f;

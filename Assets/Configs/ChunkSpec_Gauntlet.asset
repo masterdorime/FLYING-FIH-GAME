@@ -22,6 +22,9 @@ MonoBehaviour:
   SkyRingCount: 2
   SkyCoinTrails: 1
   SkySpireCount: 2
+  DecorKind: rubble
+  DecorCount: 6
+  ArchCount: 3
   MinDifficulty: 0.1
   MaxDifficulty: 1
   Weight: 1

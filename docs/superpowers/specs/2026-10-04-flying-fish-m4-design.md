@@ -116,6 +116,20 @@ Menus, results screens, audio, real UI/VFX (overlay text only),
 tutorial, saves, damage/obstacle penalties, chaser (M5 obstacles),
 high-score persistence (M5 saves), prefabs for chunks, multiplayer.
 
+## Change record — map density: decor + gates (§34.1, approved)
+
+- **Old:** 3 of 4 chunk types held nothing but rings and coins; spires
+  uniform; horizon void.
+- **Why:** playtest: the map feels empty; flight especially has no
+  obstacles.
+- **New:** per-chunk decor (`DecorKind`/`DecorCount`: coral/rubble/crag/
+  cloud) — pooled visuals, never colliding, parked off-lane, so decor
+  carries no safety burden. Gauntlet rock gates (`ArchCount`): blocking
+  pillar pairs + lintel anchored over swim ring lines, steer through the
+  middle (no damage — M5 owns teeth). Spire heights vary 50–90 per seed.
+  Horizon mesas follow the fish. Assets: Lagoon coral 8,   Gauntlet rubble
+  6 + 3 gates, Storm crag 8, Sky cloud 6.
+
 ## Change record — sky layer per chunk + realm blend (§34.1, approved)
 
 - **Old:** chunks were water-only; flight had nowhere to go and the sky

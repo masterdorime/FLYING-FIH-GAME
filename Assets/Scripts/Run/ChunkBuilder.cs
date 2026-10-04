@@ -42,7 +42,9 @@ namespace FlyingFishMomentum.Run
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
         private readonly List<GameObject> _islands = new List<GameObject>();
         private readonly List<GameObject> _spires = new List<GameObject>();
+        private readonly List<GameObject> _decor = new List<GameObject>();
         private readonly Queue<GameObject> _spirePool = new Queue<GameObject>();
+        private readonly Queue<GameObject> _decorPool = new Queue<GameObject>();
         private readonly List<GameObject> _roots = new List<GameObject>();
         private readonly Queue<GameObject> _ringPool = new Queue<GameObject>();
         private readonly Queue<GameObject> _coinPool = new Queue<GameObject>();
@@ -62,6 +64,7 @@ namespace FlyingFishMomentum.Run
         public IReadOnlyList<CoinPickup> Coins => _coins;
         public IReadOnlyList<GameObject> Islands => _islands;
         public IReadOnlyList<GameObject> Spires => _spires;
+        public IReadOnlyList<GameObject> Decor => _decor;
 
         // M4 Task 7 (Task 6 review): the sky tint rides a real renderer,
         // not a dangling material — the scene passes its sky shell here
@@ -85,6 +88,8 @@ namespace FlyingFishMomentum.Run
                     if (i != null) furthest = Mathf.Max(furthest, i.transform.position.z + IslandHalfDepth);
                 foreach (var s in _spires)
                     if (s != null) furthest = Mathf.Max(furthest, s.transform.position.z + SpireHalfDepth);
+                foreach (var d in _decor)
+                    if (d != null) furthest = Mathf.Max(furthest, d.transform.position.z);
                 return furthest;
             }
         }
@@ -154,21 +159,60 @@ namespace FlyingFishMomentum.Run
 
         void Update()
         {
-            if (_cloudSea == null || _cloudMat == null) return;
             if (_fish == null)
             {
                 var mover = Object.FindFirstObjectByType<PlayerMovementController>();
                 if (mover == null) return;
                 _fish = mover.transform;
             }
-            var p = _cloudSea.transform.position;
-            p.x = _fish.position.x;
-            p.z = _fish.position.z;
-            p.y = CloudY;
-            _cloudSea.transform.position = p;
-            var c = _cloudMat.color;
-            c.a = RealmBlend(_fish.position.y) * CloudMaxAlpha;
-            _cloudMat.color = c;
+            if (_cloudSea != null && _cloudMat != null)
+            {
+                var p = _cloudSea.transform.position;
+                p.x = _fish.position.x;
+                p.z = _fish.position.z;
+                p.y = CloudY;
+                _cloudSea.transform.position = p;
+                var c = _cloudMat.color;
+                c.a = RealmBlend(_fish.position.y) * CloudMaxAlpha;
+                _cloudMat.color = c;
+            }
+            EnsureSilhouettes();
+            for (int i = 0; i < _silhouettes.Count; i++)
+            {
+                if (_silhouettes[i] == null) continue;
+                var p = _silhouettes[i].transform.position;
+                p.z = SilhouetteZ(_fish.position.z, i);
+                _silhouettes[i].transform.position = p;
+            }
+        }
+
+        // Horizon mesas: three dark slabs that always sit ahead, so the
+        // runway never reads as void. Decor (no colliders), follow the
+        // fish, never reclaimed. Pure spacing math for tests.
+        public static float SilhouetteZ(float fishZ, int i)
+        {
+            return fishZ + 500f + i * 250f;
+        }
+
+        private readonly List<GameObject> _silhouettes = new List<GameObject>();
+
+        private void EnsureSilhouettes()
+        {
+            if (_silhouettes.Count > 0) return;
+            for (int i = 0; i < 3; i++)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "HorizonSilhouette";
+                go.transform.SetParent(transform, false);
+                go.transform.position = new Vector3(i % 2 == 0 ? -150f : 150f, 5f, SilhouetteZ(0f, i));
+                go.transform.localScale = new Vector3(80f, 40f, 30f);
+                var col = go.GetComponent<Collider>();
+                if (col != null) Object.DestroyImmediate(col);
+                var mat = new Material(Shader.Find("Standard"));
+                mat.color = new Color(0.16f, 0.2f, 0.3f);
+                go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                _silhouettes.Add(go);
+            }
         }
 
         // M4 Task 6 mood: per-type sky/fog/water/light on chunk entry.
@@ -228,6 +272,22 @@ namespace FlyingFishMomentum.Run
                 }
             }
 
+            // Gauntlet gates: rock arches anchored over swim ring lines —
+            // pillars flank the ring, lintel clears it above. All blocking;
+            // steer through the middle. Falls back to lane center when the
+            // chunk has no swim rings of its own.
+            int waterStart = _rings.Count - spec.RingCount;
+            for (int a = 0; a < spec.ArchCount; a++)
+            {
+                Vector3 anchor = new Vector3(0f, SwimY, zStart + spec.Length * (a + 1f) / (spec.ArchCount + 1f));
+                if (spec.RingCount > 0 && waterStart >= 0 && waterStart + (a % spec.RingCount) < _rings.Count
+                    && _rings[waterStart + (a % spec.RingCount)] != null)
+                    anchor = _rings[waterStart + (a % spec.RingCount)].transform.position;
+                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar"));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar"));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel"));
+            }
+
             float cx = GateHalfWidth + IslandHalfX;
             for (int i = 0; i < spec.IslandPairs; i++)
             {
@@ -269,7 +329,17 @@ namespace FlyingFishMomentum.Run
                 float z = zStart + spec.Length * (i + 1f) / (spec.SkySpireCount + 1f)
                     + ((float)rng.NextDouble() - 0.5f) * 20f;
                 float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (12f + (float)rng.NextDouble() * 6f);
-                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z)));
+                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z), 50f + (float)rng.NextDouble() * 40f));
+            }
+
+            // Dressing: one decor kind per chunk, always off the prompt
+            // lanes (|x| >= 25 or sunk to the seabed) and never colliding,
+            // so decor carries no safety burden. Not pooled — primitives
+            // are cheap to rebuild at streaming cadence.
+            for (int i = 0; i < spec.DecorCount; i++)
+            {
+                float z = zStart + spec.Length * (i + 1f) / (spec.DecorCount + 1f);
+                _decor.Add(PlaceDecor(root, spec.DecorKind, z, rng));
             }
 
             // Fresh transforms leave collider bounds stale until the next
@@ -319,6 +389,16 @@ namespace FlyingFishMomentum.Run
                     Stage(_spires[i], _spirePool);
                     _spires.RemoveAt(i);
                 }
+            }
+            // Decor is rebuilt, not pooled (cheap primitives at streaming
+            // cadence); silhouettes follow the fish and are never reclaimed.
+            for (int i = _decor.Count - 1; i >= 0; i--)
+            {
+                var go = _decor[i];
+                _decor.RemoveAt(i);
+                if (go == null) continue;
+                if (Application.isPlaying) Object.Destroy(go);
+                else Object.DestroyImmediate(go);
             }
             for (int i = _roots.Count - 1; i >= 0; i--)
             {
@@ -433,6 +513,13 @@ namespace FlyingFishMomentum.Run
 
         private GameObject PlaceIsland(GameObject root, Vector3 center)
         {
+            return PlaceRock(root, center, new Vector3(10f, 25f, 10f), "ChunkIsland");
+        }
+
+        // Rock obstacles share one pool: placement always resets scale,
+        // name, and transform, so islands, spires, and arch stones mix.
+        private GameObject PlaceRock(GameObject root, Vector3 center, Vector3 scale, string name)
+        {
             GameObject go;
             if (_islandPool.Count > 0 && (go = _islandPool.Dequeue()) != null)
             {
@@ -443,16 +530,16 @@ namespace FlyingFishMomentum.Run
                 go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 go.GetComponent<MeshRenderer>().sharedMaterial = RockMaterial;
             }
-            go.name = "ChunkIsland";
+            go.name = name;
             go.transform.SetParent(root.transform, false);
             go.transform.position = center;
-            go.transform.localScale = new Vector3(10f, 25f, 10f);
+            go.transform.localScale = scale;
             return go;
         }
 
-        // Sky spires: tall colliders (4 x 70 x 4, center y 55 → span
-        // 20..90), pooled and reclaimed exactly like islands.
-        private GameObject PlaceSpire(GameObject root, Vector3 center)
+        // Sky spires: tall colliders centered on SpireCenterY, pooled and
+        // reclaimed exactly like islands. Height varies per seed.
+        private GameObject PlaceSpire(GameObject root, Vector3 center, float height)
         {
             GameObject go;
             if (_spirePool.Count > 0 && (go = _spirePool.Dequeue()) != null)
@@ -467,8 +554,48 @@ namespace FlyingFishMomentum.Run
             go.name = "ChunkSpire";
             go.transform.SetParent(root.transform, false);
             go.transform.position = center;
-            go.transform.localScale = new Vector3(4f, 70f, 4f);
+            go.transform.localScale = new Vector3(4f, height, 4f);
             return go;
+        }
+
+        // Dressing composer: kind selects the shape set, count is the
+        // budget. Every piece parks off-lane with no collider.
+        private GameObject PlaceDecor(GameObject root, string kind, float z, System.Random rng)
+        {
+            var go = new GameObject("ChunkDecor_" + (kind ?? "rubble"));
+            go.transform.SetParent(root.transform, false);
+            float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (25f + (float)rng.NextDouble() * 35f);
+            go.transform.position = new Vector3(x, kind == "cloud" ? 95f : -10f, z);
+            switch (kind)
+            {
+                case "coral":
+                    AddBlob(go, new Vector3(x, -10.5f, z), new Vector3(2.5f, 1f, 2.5f), DecorMaterial("rubble"));
+                    AddBlob(go, new Vector3(x, -9f, z), new Vector3(1.5f, 3f, 0.8f), DecorMaterial("coral"));
+                    break;
+                case "cloud":
+                    AddBlob(go, new Vector3(x, 95f + (float)rng.NextDouble() * 25f, z), new Vector3(8f, 4f, 6f), DecorMaterial("cloud"));
+                    AddBlob(go, new Vector3(x + 5f, 97f + (float)rng.NextDouble() * 25f, z), new Vector3(6f, 3f, 5f), DecorMaterial("cloud"));
+                    break;
+                case "crag":
+                    AddBlob(go, new Vector3(x, -3f, z), new Vector3(3f, 10f, 3f), RockMaterial, 15f * ((float)rng.NextDouble() - 0.5f));
+                    break;
+                default: // "rubble" and anything unknown: seabed scatter
+                    AddBlob(go, new Vector3(x, -11.3f, z), Vector3.one * (1f + (float)rng.NextDouble() * 1.5f), DecorMaterial("rubble"));
+                    break;
+            }
+            return go;
+        }
+
+        private static void AddBlob(GameObject root, Vector3 center, Vector3 scale, Material mat, float tiltZ = 0f)
+        {
+            var part = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            part.name = "Blob";
+            part.transform.SetParent(root.transform, false);
+            part.transform.position = center;
+            part.transform.localScale = scale;
+            part.transform.localRotation = Quaternion.Euler(0f, 0f, tiltZ);
+            Object.DestroyImmediate(part.GetComponent<Collider>());
+            part.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
 
         private ChargeRing CreateRing()
@@ -542,6 +669,40 @@ namespace FlyingFishMomentum.Run
                     _rockMat.color = new Color(0.4f, 0.42f, 0.45f);
                 }
                 return _rockMat;
+            }
+        }
+
+        private Material _coralMat;
+        private Material _puffMat;
+        private Material _sandMat;
+
+        // Decor palette (shared instances like the rest): coral pink,
+        // cloud white, sand. RockMaterial covers crag/rubble.
+        private Material DecorMaterial(string kind)
+        {
+            switch (kind)
+            {
+                case "cloud":
+                    if (_puffMat == null)
+                    {
+                        _puffMat = new Material(Shader.Find("Standard"));
+                        _puffMat.color = new Color(0.96f, 0.97f, 1f);
+                    }
+                    return _puffMat;
+                case "coral":
+                    if (_coralMat == null)
+                    {
+                        _coralMat = new Material(Shader.Find("Standard"));
+                        _coralMat.color = new Color(0.95f, 0.45f, 0.55f);
+                    }
+                    return _coralMat;
+                default:
+                    if (_sandMat == null)
+                    {
+                        _sandMat = new Material(Shader.Find("Standard"));
+                        _sandMat.color = new Color(0.8f, 0.7f, 0.5f);
+                    }
+                    return _sandMat;
             }
         }
 

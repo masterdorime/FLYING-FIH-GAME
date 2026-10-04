@@ -722,5 +722,71 @@ namespace FlyingFishMomentum.Tests.EditMode
                 }
             }
         }
+
+        [Test]
+        public void DecorBuildsOffLaneWithoutColliders()
+        {
+            // Decor fills the map visually but never touches gameplay: no
+            // colliders, and parked off the prompt lanes.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 2, 4, 0);
+            spec.DecorKind = "coral";
+            spec.DecorCount = 6;
+            builder.BuildChunk(spec, 0f, 9);
+            Assert.AreEqual(6, builder.Decor.Count);
+            foreach (var d in builder.Decor)
+            {
+                Assert.IsNull(d.GetComponent<Collider>(), "decor must never collide");
+                bool offLane = Mathf.Abs(d.transform.position.x) >= 25f
+                    || d.transform.position.y <= -8f;
+                Assert.IsTrue(offLane, "decor sits in a prompt lane");
+            }
+        }
+
+        [Test]
+        public void ArchGatesFlankRingLines()
+        {
+            // Gauntlet gates: pillar pairs with a lintel over swim ring
+            // lines — steer through the middle, all blocking rock.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Gauntlet", 1000f, 2, 150f, 1f, 0, 0, 0);
+            spec.ArchCount = 2;
+            builder.BuildChunk(spec, 0f, 11);
+            int lintels = 0, pillars = 0;
+            foreach (var r in builder.Islands)
+            {
+                if (r.transform.localScale.x > 10f) lintels++;
+                else pillars++;
+                Assert.IsNotNull(r.GetComponent<Collider>(), "gate rock must block");
+            }
+            Assert.AreEqual(2, lintels);
+            Assert.AreEqual(4, pillars);
+        }
+
+        [Test]
+        public void SilhouetteZStaysAheadSpaced()
+        {
+            Assert.AreEqual(500f, ChunkBuilder.SilhouetteZ(0f, 0), 0.001f);
+            Assert.AreEqual(750f, ChunkBuilder.SilhouetteZ(0f, 1), 0.001f);
+            Assert.Greater(ChunkBuilder.SilhouetteZ(100f, 0), 100f);
+        }
+
+        [Test]
+        public void SpireHeightsVaryInRange()
+        {
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Sky", 400f, 0, 150f, 0f, 0, 0, 0);
+            spec.SkySpireCount = 4;
+            builder.BuildChunk(spec, 0f, 21);
+            var heights = new System.Collections.Generic.HashSet<float>();
+            foreach (var s in builder.Spires)
+            {
+                float h = s.transform.localScale.y;
+                Assert.GreaterOrEqual(h, 50f);
+                Assert.LessOrEqual(h, 90f);
+                heights.Add(h);
+            }
+            Assert.Greater(heights.Count, 1, "spires are uniform");
+        }
     }
 }
