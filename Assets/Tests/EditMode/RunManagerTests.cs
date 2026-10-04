@@ -636,7 +636,11 @@ namespace FlyingFishMomentum.Tests.EditMode
                 builder.BuildChunk(spec, 0f, 4);
                 Assert.AreEqual(spec.FogColor, RenderSettings.fogColor);
                 Assert.AreEqual(spec.FogDensity, RenderSettings.fogDensity, 0.0001f);
-                AssertColorsEqual(spec.WaterTint, builder.WaterMaterial.color);
+                AssertColorsEqual(spec.WaterTint, new Color(
+                    builder.WaterMaterial.color.r,
+                    builder.WaterMaterial.color.g,
+                    builder.WaterMaterial.color.b, 1f));
+                Assert.AreEqual(0.6f, builder.WaterMaterial.color.a, 0.001f);
                 AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.color);
             }
             finally
@@ -647,6 +651,21 @@ namespace FlyingFishMomentum.Tests.EditMode
                 RenderSettings.fogDensity = density;
                 RenderSettings.ambientLight = ambient;
             }
+        }
+
+        [Test]
+        public void WaterStaysTransparentUnderAnyMood()
+        {
+            // Live bug: an opaque sea hid the fish and the swim rings.
+            // Mood tints water RGB only; the sea keeps its transparent
+            // blend and alpha so underwater gameplay stays visible.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+            spec.WaterTint = new Color(0.12f, 0.22f, 0.3f, 1f);
+            builder.BuildChunk(spec, 0f, 4);
+            var mat = builder.WaterMaterial;
+            Assert.AreEqual("Transparent", mat.GetTag("RenderType", false, ""));
+            Assert.Less(mat.color.a, 1f, "mood made the sea opaque");
         }
     }
 }

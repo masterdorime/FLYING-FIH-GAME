@@ -116,7 +116,10 @@ namespace FlyingFishMomentum.Run
             RenderSettings.fogDensity = spec.FogDensity;
             RenderSettings.ambientLight = spec.SkyTint;
             SkyMaterial.color = spec.SkyTint;
-            WaterMaterial.color = spec.WaterTint;
+            // Tint water RGB only: stamping the spec alpha (1 everywhere)
+            // would turn the sea opaque and hide underwater gameplay.
+            var water = WaterMaterial.color;
+            WaterMaterial.color = new Color(spec.WaterTint.r, spec.WaterTint.g, spec.WaterTint.b, water.a);
         }
 
         public void BuildChunk(ChunkSpec spec, float zStart, int seed)
@@ -401,7 +404,9 @@ namespace FlyingFishMomentum.Run
         }
 
         // Shared mood instances, created once (Task 6). Defaults match the
-        // Lagoon starter; ApplyMood re-tints per chunk type.
+        // Lagoon starter; ApplyMood re-tints per chunk type. The sea keeps
+        // the M1 transparent blend (alpha 0.6) under every mood: opaque
+        // water hides the fish and the swim rings (live bug).
         public Material WaterMaterial
         {
             get
@@ -409,7 +414,15 @@ namespace FlyingFishMomentum.Run
                 if (_waterMat == null)
                 {
                     _waterMat = new Material(Shader.Find("Standard"));
-                    _waterMat.color = new Color(0.2f, 0.6f, 0.75f);
+                    _waterMat.color = new Color(0.2f, 0.6f, 0.75f, 0.6f);
+                    _waterMat.SetFloat("_Mode", 3f);
+                    _waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    _waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    _waterMat.SetInt("_ZWrite", 0);
+                    _waterMat.DisableKeyword("_ALPHATEST_ON");
+                    _waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    _waterMat.SetOverrideTag("RenderType", "Transparent");
+                    _waterMat.renderQueue = 3000;
                 }
                 return _waterMat;
             }

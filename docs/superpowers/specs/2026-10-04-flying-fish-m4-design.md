@@ -116,6 +116,14 @@ Menus, results screens, audio, real UI/VFX (overlay text only),
 tutorial, saves, damage/obstacle penalties, chaser (M5 obstacles),
 high-score persistence (M5 saves), prefabs for chunks, multiplayer.
 
+## Change record — water stays transparent (§34.1, approved)
+
+- **Old:** mood tints stamped full water color incl. alpha 1 onto an
+  opaque runtime material — the sea hid the fish and the swim rings.
+- **Why:** gameplay visibility beats mood: underwater play must read.
+- **New:** sea material keeps the M1 transparent blend (alpha 0.6);
+  moods tint RGB only. Storm murk stays a color shift, never opacity.
+
 ## Handoff notes for M5
 
 - M5 reskins dial/bar/overlay/coins/gems with real UI/VFX and deletes
