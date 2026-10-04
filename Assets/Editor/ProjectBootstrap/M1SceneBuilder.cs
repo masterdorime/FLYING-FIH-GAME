@@ -172,7 +172,8 @@ namespace ProjectBootstrap
             var bar = barGo.AddComponent<ChargeBar>();
             bar.Configure(spawner, player.transform);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge, score);
+            // M4 Task 7 wires the scene RunManager here (no RunManager exists yet).
+            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge, score, null);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");

@@ -332,5 +332,171 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var s in water)
                 Assert.GreaterOrEqual(s.transform.position.z + 500f, 1200f);
         }
+
+        // M4 Task 5: missions poll existing public state only (score Coins,
+        // spawner charge, sm locomotion, player z). Real components, no mocks.
+        private static ChunkSpec NewMissionSpec(string id, string text, int target)
+        {
+            var s = ScriptableObject.CreateInstance<ChunkSpec>();
+            s.ChunkId = id;
+            s.MissionText = text;
+            s.MissionTarget = target;
+            return s;
+        }
+
+        private RunManager NewMissionManager(
+            out TimingPromptSpawner spawner,
+            out Scoring.ScoreSystem score,
+            out FlightStateMachine sm,
+            out Scoring.ScoringSettings settings)
+        {
+            var smGo = new GameObject("missionSm");
+            _spawned.Add(smGo);
+            sm = smGo.AddComponent<FlightStateMachine>();
+            var spawnerGo = new GameObject("missionSpawner");
+            _spawned.Add(spawnerGo);
+            spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
+            settings = ScriptableObject.CreateInstance<Scoring.ScoringSettings>();
+            var scoreGo = new GameObject("missionScore");
+            _spawned.Add(scoreGo);
+            score = scoreGo.AddComponent<Scoring.ScoreSystem>();
+            score.Configure(sm, settings);
+            var go = new GameObject("missionRunManager");
+            _spawned.Add(go);
+            var m = go.AddComponent<RunManager>();
+            m.Configure(spawner, score, sm, ScriptableObject.CreateInstance<DifficultySettings>(), null);
+            m.SetSeed(5);
+            return m;
+        }
+
+        private static void CompleteRingCharge(
+            RunManager m, TimingPromptSpawner spawner, TimingSettings timing, float t0)
+        {
+            spawner.Charge.Begin(
+                new[] { ChargeArrow.Up, ChargeArrow.Down, ChargeArrow.Left, ChargeArrow.Right }, t0);
+            m.Tick(0f, 0.1f); // observe the active charge (arms the edge)
+            spawner.Charge.Tick(t0 + 1f, ChargeArrow.Up, timing);
+            spawner.Charge.Tick(t0 + 2f, ChargeArrow.Down, timing);
+            spawner.Charge.Tick(t0 + 3f, ChargeArrow.Left, timing);
+            spawner.Charge.Tick(t0 + 4f, ChargeArrow.Right, timing);
+            Assert.IsFalse(spawner.Charge.IsActive);
+            Assert.AreEqual(4, spawner.Charge.StepIndex);
+            m.Tick(0f, 0.1f); // observe active->inactive (counts one ring)
+        }
+
+        [Test]
+        public void CollectMissionCompletesOnCoinsDelta()
+        {
+            var spec = NewMissionSpec("Lagoon", "collect 30 coins", 30);
+            var m = NewMissionManager(out _, out var score, out _, out _);
+            score.AddCoins(5); // pre-entry coins must not count
+            m.EnterChunk(spec);
+            m.Tick(0f, 0.1f); // entry observed: baseline snapped, card shows
+            Assert.AreEqual("collect 30 coins", m.MissionText);
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+            score.AddCoins(15);
+            m.Tick(10f, 0.1f);
+            Assert.AreEqual(0.5f, m.MissionProgress01, 0.001f);
+            score.AddCoins(15);
+            m.Tick(20f, 0.1f);
+            Assert.AreEqual(1f, m.MissionProgress01, 0.001f);
+        }
+
+        [Test]
+        public void RingMissionCompletesOnFullCharge()
+        {
+            var spec = NewMissionSpec("Gauntlet", "2 clean rings", 2);
+            var m = NewMissionManager(out var spawner, out _, out _, out _);
+            var timing = ScriptableObject.CreateInstance<TimingSettings>();
+            m.EnterChunk(spec);
+            m.Tick(0f, 0.1f);
+            // Aborted charge (timeout, steps short) counts nothing.
+            spawner.Charge.Begin(
+                new[] { ChargeArrow.Up, ChargeArrow.Down, ChargeArrow.Left, ChargeArrow.Right }, 0f);
+            m.Tick(0f, 0.1f);
+            spawner.Charge.Tick(100f, null, timing);
+            Assert.IsFalse(spawner.Charge.IsActive);
+            m.Tick(0f, 0.1f);
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+            CompleteRingCharge(m, spawner, timing, 200f);
+            Assert.AreEqual(0.5f, m.MissionProgress01, 0.001f);
+            CompleteRingCharge(m, spawner, timing, 300f);
+            Assert.AreEqual(1f, m.MissionProgress01, 0.001f);
+        }
+
+        [Test]
+        public void AirtimeMissionAccumulatesFlyingSeconds()
+        {
+            var spec = NewMissionSpec("Sky", "stay airborne 20s", 20);
+            var m = NewMissionManager(out _, out _, out var sm, out _);
+            m.EnterChunk(spec);
+            m.Tick(0f, 0.1f);
+            sm.SetLocomotion(PlayerLocomotionState.Swimming);
+            m.Tick(0f, 5f);
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+            sm.SetLocomotion(PlayerLocomotionState.Flying);
+            m.Tick(0f, 10f);
+            Assert.AreEqual(0.5f, m.MissionProgress01, 0.001f);
+            m.Tick(0f, 10f);
+            Assert.AreEqual(1f, m.MissionProgress01, 0.001f);
+        }
+
+        [Test]
+        public void GateMissionCompletesOnZCrossings()
+        {
+            var spec = NewMissionSpec("Storm", "pass 4 rock gates", 4);
+            var m = NewMissionManager(out _, out _, out _, out _);
+            m.EnterChunk(spec);
+            m.SetGates(new List<float> { 10f, 100f, 200f, 300f, 400f });
+            m.Tick(50f, 0.1f); // entry z = 50: gate at 10 stays behind
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+            m.Tick(150f, 0.1f);
+            Assert.AreEqual(0.25f, m.MissionProgress01, 0.001f);
+            m.Tick(450f, 0.1f);
+            Assert.AreEqual(1f, m.MissionProgress01, 0.001f);
+        }
+
+        [Test]
+        public void CompletionPaysMissionBonusTimesMultiplierOnce()
+        {
+            FlightTierProfile Profile(FlightTier tier)
+            {
+                var p = ScriptableObject.CreateInstance<FlightTierProfile>();
+                p.Tier = tier;
+                p.MaxSpeed = 10f + (float)tier * 10f;
+                p.Acceleration = 45f;
+                return p;
+            }
+            var spec = NewMissionSpec("Lagoon", "collect 2 coins", 2);
+            var m = NewMissionManager(out _, out var score, out var sm, out var settings);
+            sm.Configure(
+                new List<FlightTierProfile> { Profile(FlightTier.None), Profile(FlightTier.Medium) },
+                null, null);
+            sm.SetTier(FlightTier.Medium);
+            Assert.AreEqual(3, score.Multiplier);
+            m.EnterChunk(spec);
+            m.Tick(0f, 0.1f);
+            score.AddCoins(2);
+            float before = score.Score;
+            m.Tick(10f, 0.1f);
+            Assert.AreEqual(before + settings.MissionBonus * score.Multiplier, score.Score, 0.001f);
+            m.Tick(20f, 0.1f); // no double pay
+            Assert.AreEqual(before + settings.MissionBonus * score.Multiplier, score.Score, 0.001f);
+        }
+
+        [Test]
+        public void NewChunkEntryResetsProgress()
+        {
+            var m = NewMissionManager(out _, out var score, out _, out _);
+            m.EnterChunk(NewMissionSpec("Lagoon", "collect 30 coins", 30));
+            m.Tick(0f, 0.1f);
+            score.AddCoins(15);
+            m.Tick(10f, 0.1f);
+            Assert.AreEqual(0.5f, m.MissionProgress01, 0.001f);
+            m.EnterChunk(NewMissionSpec("Sky", "stay airborne 20s", 20));
+            m.Tick(10f, 0.1f);
+            Assert.AreEqual("stay airborne 20s", m.MissionText);
+            Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
+        }
     }
 }

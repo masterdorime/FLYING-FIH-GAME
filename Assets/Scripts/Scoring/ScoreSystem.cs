@@ -10,6 +10,9 @@ namespace FlyingFishMomentum.Scoring
         public float Score { get; private set; }
         public int Coins { get; private set; }
         public int Multiplier => _sm != null ? (int)_sm.ActiveTier + 1 : 1;
+        // Read-only accessor for the M4 mission payout (Task 5 polls it;
+        // no scoring logic changes — AddBonus math is untouched).
+        public float MissionBonus => _settings != null ? _settings.MissionBonus : 0f;
 
         [SerializeField] FlightStateMachine _sm;
         [SerializeField] ScoringSettings _settings;
