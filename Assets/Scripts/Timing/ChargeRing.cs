@@ -14,5 +14,14 @@ namespace FlyingFishMomentum
             foreach (var r in GetComponentsInChildren<Renderer>(true))
                 r.enabled = false;
         }
+
+        // Pooled reuse (M4 ChunkBuilder): clear the consumed flag and
+        // re-enable renderers, mirroring Consume.
+        public void Reset()
+        {
+            Consumed = false;
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+                r.enabled = true;
+        }
     }
 }

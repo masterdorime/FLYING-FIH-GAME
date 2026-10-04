@@ -20,6 +20,16 @@ namespace FlyingFishMomentum.Scoring
                 r.enabled = false;
         }
 
+        // Pooled reuse (M4 ChunkBuilder): clear the collected flag,
+        // re-arm the bob from the new position, re-enable renderers.
+        public void Reset()
+        {
+            Collected = false;
+            _armed = false;
+            foreach (var r in GetComponentsInChildren<Renderer>(true))
+                r.enabled = true;
+        }
+
         void Update()
         {
             if (Collected) return;

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using FlyingFishMomentum.Run;
 
 namespace FlyingFishMomentum.Tests.PlayMode
 {
@@ -1113,6 +1114,75 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 Assert.AreEqual(before, mover.transform.position, "moved while paused");
             }
             finally { Time.timeScale = 1f; }
+        }
+
+        static ChunkSpec NewEndlessSpec(string id, int rings, int trails, int pairs)
+        {
+            var s = ScriptableObject.CreateInstance<ChunkSpec>();
+            s.ChunkId = id;
+            s.Length = 300f;
+            s.RingCount = rings;
+            s.RingSpacing = 150f;
+            s.RingSwimFraction = id == "Sky" ? 0.3f : 1f;
+            s.CoinTrails = trails;
+            s.CoinsPerTrail = 4;
+            s.IslandPairs = pairs;
+            return s;
+        }
+
+        [UnityTest]
+        public IEnumerator EndlessContentStaysAhead()
+        {
+            // M4 streaming: the builder lays chunks ahead while the fish
+            // flies Max; content must stay >=500m ahead across 120s of
+            // sim-time. Manual TickMove with fixed steps (live frames
+            // settle nothing in batchmode); no teleports, so no
+            // Physics.SyncTransforms needed.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            var builderGo = new GameObject("ChunkBuilder");
+            var builder = builderGo.AddComponent<ChunkBuilder>();
+            var specs = new[]
+            {
+                NewEndlessSpec("Lagoon", 3, 2, 0),
+                NewEndlessSpec("Gauntlet", 6, 2, 0),
+                NewEndlessSpec("Storm", 2, 1, 3),
+                NewEndlessSpec("Sky", 2, 3, 0),
+            };
+            float nextZ = 0f;
+            int seed = 1;
+            int si = 0;
+            const float step = 1f / 60f;
+            try
+            {
+                for (int i = 0; i < 7200; i++)
+                {
+                    mover.TickMove(Vector2.zero, step);
+                    if (i % 30 != 0) continue;
+                    float fishZ = mover.transform.position.z;
+                    int guard = 0;
+                    while (builder.FurthestContentZ < fishZ + 1500f && guard++ < 8)
+                    {
+                        var spec = specs[si % specs.Length];
+                        builder.BuildChunk(spec, nextZ, seed++);
+                        si++;
+                        nextZ += spec.Length;
+                    }
+                    builder.ReclaimBefore(fishZ - 300f);
+                    Assert.Greater(fishZ, -1f, "fish never left spawn");
+                    Assert.GreaterOrEqual(builder.FurthestContentZ - fishZ, 500f,
+                        "fish outran content at step " + i);
+                }
+                Assert.Greater(mover.transform.position.z, 8000f, "120s at Max did not travel far");
+            }
+            finally { Object.Destroy(builderGo); }
+            yield break;
         }
     }
 }
