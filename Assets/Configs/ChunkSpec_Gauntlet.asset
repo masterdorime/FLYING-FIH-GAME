@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondentSource: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9d94e9bd0bac34bbb008703b896138, type: 3}
+  m_Name: ChunkSpec_Gauntlet
+  ChunkId: Gauntlet
+  Length: 300
+  RingCount: 6
+  RingSpacing: 150
+  RingSwimFraction: 1
+  CoinTrails: 2
+  CoinsPerTrail: 4
+  IslandPairs: 0
+  MinDifficulty: 0.1
+  MaxDifficulty: 1
+  Weight: 1
+  MissionText: 2 clean rings
+  MissionTarget: 2
+  SkyTint: {r: 1, g: 0.75, b: 0.45, a: 1}
+  FogColor: {r: 0.95, g: 0.75, b: 0.55, a: 1}
+  FogDensity: 0.003
+  WaterTint: {r: 0.25, g: 0.5, b: 0.6, a: 1}

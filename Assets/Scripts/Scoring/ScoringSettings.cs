@@ -12,5 +12,6 @@ namespace FlyingFishMomentum.Scoring
         public float PerfectBonus = 25f;
         public float GoodBonus = 10f;
         public float DistancePerMeter = 1f;
+        public float MissionBonus = 100f;
     }
 }

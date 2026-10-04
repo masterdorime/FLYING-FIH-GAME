@@ -1,0 +1,29 @@
+using UnityEngine;
+
+namespace FlyingFishMomentum.Run
+{
+    // M4 endless run: one ScriptableObject per chunk type (Lagoon,
+    // Gauntlet, Storm, Sky). Declares content counts, the difficulty
+    // band it may appear in, deck weight, mission card, and mood.
+    [CreateAssetMenu(fileName = "ChunkSpec", menuName = "FlyingFish/Chunk Spec")]
+    public class ChunkSpec : ScriptableObject
+    {
+        public string ChunkId;
+        public float Length = 300f;
+        public int RingCount;
+        public float RingSpacing = 150f;
+        public float RingSwimFraction = 1f;
+        public int CoinTrails;
+        public int CoinsPerTrail = 4;
+        public int IslandPairs;
+        public float MinDifficulty;
+        public float MaxDifficulty = 1f;
+        public float Weight = 1f;
+        public string MissionText;
+        public int MissionTarget = 1;
+        public Color SkyTint;
+        public Color FogColor;
+        public float FogDensity;
+        public Color WaterTint;
+    }
+}

@@ -9,10 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 114e1ffee82f6cd4b9ed21feac8f3329, type: 3}
-  m_Name: ScoringSettings
-  CoinValue: 10
-  PerfectBonus: 25
-  GoodBonus: 10
-  DistancePerMeter: 1
-  MissionBonus: 100
+  m_Script: {fileID: 11500000, guid: cffcc19887f205345a0d1608c47ee62e, type: 3}
+  m_Name: DifficultySettings
+  RampSeconds: 240
+  SpeedCreep: 0.5
+  WindowTighten: 0.3
+  GapShrink: 0.5
+  StormWeightEnd: 3
+  LagoonFloor: 0.5

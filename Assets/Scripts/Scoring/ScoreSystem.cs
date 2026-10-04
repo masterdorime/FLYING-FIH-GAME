@@ -33,6 +33,12 @@ namespace FlyingFishMomentum.Scoring
             Score += n * _settings.CoinValue * Multiplier;
         }
 
+        public void AddBonus(float baseAmount)
+        {
+            if (_settings == null) return;
+            Score += baseAmount * Multiplier;
+        }
+
         public void OnBeat(TimingResult result)
         {
             if (_settings == null) return;
