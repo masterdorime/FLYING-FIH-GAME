@@ -59,7 +59,22 @@ namespace ProjectBootstrap
             AssetDatabase.CreateAsset(coinMat, "Assets/Materials/M1Coin.mat");
             AssetDatabase.CreateAsset(rockMat, "Assets/Materials/M1Rock.mat");
 
+            // M4 Task 6 mood: shared sky-tint instance (water keeps the
+            // shared M1Water.mat instance above). ChunkBuilder re-tints
+            // these per chunk type at runtime; Task 7 wires the scene.
+            var skyMat = new Material(Shader.Find("Standard"));
+            skyMat.color = new Color(0.53f, 0.81f, 0.92f); // Lagoon starter
+            AssetDatabase.CreateAsset(skyMat, "Assets/Materials/M1Sky.mat");
+
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // Mood defaults match the Lagoon starter (fog setup rides the
+            // scene; per-type switches happen in ChunkBuilder.ApplyMood).
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = new Color(0.75f, 0.87f, 0.93f);
+            RenderSettings.fogDensity = 0.002f;
+            RenderSettings.ambientLight = new Color(0.53f, 0.81f, 0.92f);
 
             var lightGo = new GameObject("Directional Light");
             var light = lightGo.AddComponent<Light>();

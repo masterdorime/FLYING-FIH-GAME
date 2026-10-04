@@ -41,6 +41,9 @@ namespace FlyingFishMomentum.Run
         private Material _ringMat;
         private Material _coinMat;
         private Material _rockMat;
+        private Material _waterMat;
+        private Material _skyMat;
+        private string _appliedMoodId;
 
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public IReadOnlyList<CoinPickup> Coins => _coins;
@@ -68,11 +71,36 @@ namespace FlyingFishMomentum.Run
             _seabedSegs = seabedSegs ?? new List<GameObject>();
             _waterHalf = Halves(_waterSegs);
             _seabedHalf = Halves(_seabedSegs);
+            // Shared water instance drives the visible tint (Task 6 mood);
+            // recycle math below is untouched.
+            foreach (var s in _waterSegs)
+            {
+                if (s == null) continue;
+                var rend = s.GetComponent<MeshRenderer>();
+                if (rend != null) rend.sharedMaterial = WaterMaterial;
+            }
+        }
+
+        // M4 Task 6 mood: per-type sky/fog/water/light on chunk entry.
+        // Instant switch (smoothing deferred); skips re-apply for the same
+        // type. Visual only: no spawn/reclaim/recycle or judging changes.
+        public void ApplyMood(ChunkSpec spec)
+        {
+            if (spec == null || spec.ChunkId == _appliedMoodId) return;
+            _appliedMoodId = spec.ChunkId;
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = spec.FogColor;
+            RenderSettings.fogDensity = spec.FogDensity;
+            RenderSettings.ambientLight = spec.SkyTint;
+            SkyMaterial.color = spec.SkyTint;
+            WaterMaterial.color = spec.WaterTint;
         }
 
         public void BuildChunk(ChunkSpec spec, float zStart, int seed)
         {
             if (spec == null) return;
+            ApplyMood(spec);
             var rng = new System.Random(seed);
             var root = new GameObject(string.Format("Chunk_{0}_{1}_{2}", spec.ChunkId, zStart, seed));
             root.transform.SetParent(transform, false);
@@ -347,6 +375,34 @@ namespace FlyingFishMomentum.Run
                     _rockMat.color = new Color(0.4f, 0.42f, 0.45f);
                 }
                 return _rockMat;
+            }
+        }
+
+        // Shared mood instances, created once (Task 6). Defaults match the
+        // Lagoon starter; ApplyMood re-tints per chunk type.
+        public Material WaterMaterial
+        {
+            get
+            {
+                if (_waterMat == null)
+                {
+                    _waterMat = new Material(Shader.Find("Standard"));
+                    _waterMat.color = new Color(0.2f, 0.6f, 0.75f);
+                }
+                return _waterMat;
+            }
+        }
+
+        public Material SkyMaterial
+        {
+            get
+            {
+                if (_skyMat == null)
+                {
+                    _skyMat = new Material(Shader.Find("Standard"));
+                    _skyMat.color = new Color(0.53f, 0.81f, 0.92f);
+                }
+                return _skyMat;
             }
         }
 

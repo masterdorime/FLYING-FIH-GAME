@@ -498,5 +498,45 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual("stay airborne 20s", m.MissionText);
             Assert.AreEqual(0f, m.MissionProgress01, 0.001f);
         }
+
+        private static void AssertColorsEqual(Color expected, Color actual)
+        {
+            Assert.AreEqual(expected.r, actual.r, 0.001f);
+            Assert.AreEqual(expected.g, actual.g, 0.001f);
+            Assert.AreEqual(expected.b, actual.b, 0.001f);
+            Assert.AreEqual(expected.a, actual.a, 0.001f);
+        }
+
+        [Test]
+        public void MoodAppliesFromSpec()
+        {
+            bool fog = RenderSettings.fog;
+            FogMode mode = RenderSettings.fogMode;
+            Color fogColor = RenderSettings.fogColor;
+            float density = RenderSettings.fogDensity;
+            Color ambient = RenderSettings.ambientLight;
+            try
+            {
+                var builder = NewBuilder();
+                var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+                spec.SkyTint = new Color(0.2f, 0.25f, 0.32f);
+                spec.FogColor = new Color(0.25f, 0.28f, 0.33f);
+                spec.FogDensity = 0.015f;
+                spec.WaterTint = new Color(0.12f, 0.22f, 0.3f);
+                builder.BuildChunk(spec, 0f, 4);
+                Assert.AreEqual(spec.FogColor, RenderSettings.fogColor);
+                Assert.AreEqual(spec.FogDensity, RenderSettings.fogDensity, 0.0001f);
+                AssertColorsEqual(spec.WaterTint, builder.WaterMaterial.color);
+                AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.color);
+            }
+            finally
+            {
+                RenderSettings.fog = fog;
+                RenderSettings.fogMode = mode;
+                RenderSettings.fogColor = fogColor;
+                RenderSettings.fogDensity = density;
+                RenderSettings.ambientLight = ambient;
+            }
+        }
     }
 }
