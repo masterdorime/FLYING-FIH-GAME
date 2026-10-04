@@ -1,0 +1,108 @@
+# M4 — Endless Run (spec, approved in brainstorming 2026-10-04)
+
+Goal: the dead-end 3100m runway becomes an endless run. A RunManager
+builds chunked world ahead of the fish and deletes it behind, forever.
+Difficulty ramps on the run clock. Recovery is in-flow (lagoon
+breathers); runs never end (no fail screens — M5 owns results/menus).
+Success (PRD Milestone 4): a complete 60–90 second playable run exists.
+
+Decisions already approved: endless + always recoverable; hybrid chunks
+(all four types below); difficulty = run clock; testing tunes revert to
+spec; spawn director (no prefabs); score-chase + coin lines feed chunks;
+environment looks ride per chunk type.
+
+## S1 — Architecture (all new unless noted)
+
+- `RunManager` (new, on a GameManager object): owns the difficulty clock
+  (elapsed run seconds → 0..1 ramp), the type deck (weighted shuffle of
+  the four chunk types, seeded; Storm weight grows with difficulty), and
+  spawn/recycle (spawn horizon 2 chunk lengths ahead of the fish,
+  reclaim anything more than 1 chunk length behind).
+- `ChunkSpec` (new ScriptableObjects, one per type): length, ring lines,
+  coin trails, island set, mood params (sky color, fog density, water
+  tint), difficulty bands it may appear in, mission card text, difficulty
+  rating. Declares the PRD §12.5 set: entry/exit speed range, required
+  movement space, obstacle set, prompt set, recovery availability.
+- `ChunkBuilder` (new): turns a spec + seed into placed content using
+  pooled primitives (rings, coins, islands — the existing entity types;
+  water/seabed become long recycled segments, not one plane).
+- `TimingPromptSpawner` (existing, untouched logic): keeps judging taps,
+  charges, beats, rockets, coins; receives its rings/coins from the
+  builder instead of the scene file. Behaviors (windows, gains, jackpots,
+  slow-mo, shuffle) do not change in M4.
+- `DifficultySettings` (new SO): ramp rate (seconds to full difficulty),
+  band edges, speed-ramp cap, window-tighten factor, prompt-density
+  factor, per-type weight curves.
+- Boundaries (PRD rule 6): RunManager never touches timing evaluation,
+  gauge math, or scoring math. All numbers in SOs (rule 2); seeded RNG
+  only (rule 3); evaluation independent from presentation (rule 4).
+
+## S2 — Chunk types (gameplay + look + mission)
+
+- **Lagoon** (recovery breather): calm water, coin trails, easy beats,
+  no islands. Bright day, clear water. Mission: "collect 30 coins".
+- **Ring gauntlet** (gauge/rocket building): dense charge-ring lines
+  with coin connectors. Golden-hour light. Mission: "2 clean rings".
+- **Storm slalom** (pressure): rock stacks to steer around (colliders
+  block like today's islands, no damage), sparse rewards. Dark sky,
+  choppy water tint, denser fog. Mission: "pass 4 rock gates".
+- **Sky arcs** (flight legs): high air-coin arcs + dive gaps between
+  swim stretches. Sunset, clouds. Mission: "stay airborne 20s".
+- Mission cards show as one overlay line on chunk entry (scaffold text;
+  M5 does real UI). Completing a mission pays `MissionBonus` (100) ×
+  multiplier (new `ScoringSettings` field).
+
+## S3 — Difficulty (run clock)
+
+- `t = clamp01(elapsed / rampSeconds)`: baseline target speed creeps up
+  (capped), timing windows tighten ×(1−t·factor), beat/ring density rises,
+  Storm deck weight grows, Lagoon keeps a weight floor (a breather is
+  always drawable — the recovery guarantee).
+- Gauge thresholds may re-tune per difficulty band (M3 handoff); final
+  numbers in the plan, bounded by the reverted spec table.
+
+## S4 — Tune lock (testing tunes revert to spec in M4)
+
+- Revert: tank 120, bands 20/40/70/100, charge +2/+4, slow-mo 0.4×/1.2s.
+- Keep (approved mechanics, not testing tunes): 8s timeout (pairs with
+  4-arrow sequences), ship swim, launch-keeps-tank, arrow glyphs, glide
+  v2, rockets, score chase, all-swim rings (rings dissolve into chunk
+  spawning anyway; air rings return via Sky arcs).
+- Open (deferred, revisit under load): the burst-ceiling contradiction
+  (`max(tier max + boost, SpeedCap)`).
+
+## S5 — Safety (PRD §12.4, must-prevents, pinned by tests)
+
+- No impossible collision configurations (gates wider than turn radius
+  at the band's top speed), no unavoidable timing failures (beat gaps
+  fit inside chunk lengths at band speed), no prompts hidden behind
+  geometry (spawns keep line-of-sight from entry), no paths beyond
+  control limits (pitch/yaw cone respected by arc placement), no
+  impossible recovery states (Lagoon floor + swim always rebuilds).
+
+## S6 — Tests (TDD, red → green → commit)
+
+- Streaming: chunks spawn ahead / reclaim behind over long runs; fish
+  never outruns content; no duplicate spawns.
+- Determinism: same seed replays the same chunk order + ring/coin layout.
+- Difficulty: clock advances bands; windows tighten; Storm weight grows;
+  Lagoon floor holds.
+- Tune lock: asset values back at spec table (revert pins).
+- Missions: entering a chunk shows its card; completing pays the bonus.
+- Full EditMode + PlayMode suites green (batchmode; live-only camera
+  transients stay telemetry-covered per ledger).
+
+## S7 — Out of scope (explicitly NOT M4)
+
+Menus, results screens, audio, real UI/VFX (overlay text only),
+tutorial, saves, damage/obstacle penalties, chaser (M5 obstacles),
+high-score persistence (M5 saves), prefabs for chunks, multiplayer.
+
+## Handoff notes for M5
+
+- M5 reskins dial/bar/overlay/coins/gems with real UI/VFX and deletes
+  `[M1-SCAFFOLD]` leftovers (incl. debug input + overlay).
+- M5 adds menus, tutorial, audio, obstacles-with-penalties (chaser),
+  results, saves, settings; chunk mission cards graduate to real UI.
+- Final tuning (M6 territory): windows, gains, drains, profiles, camera,
+  VFX, obstacle density, difficulty curve.
