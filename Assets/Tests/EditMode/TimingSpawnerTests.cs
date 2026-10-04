@@ -507,11 +507,12 @@ namespace FlyingFishMomentum.Tests.EditMode
         [Test]
         public void RingTriggerStartsSlowMo()
         {
+            // M4 tune lock (R3): slow-mo reverts to 0.4x (was 0.25 testing tune).
             var spawner = NewSpawnerWithRing(out _, out _);
             try
             {
                 spawner.CheckRingTrigger(0f, Vector3.zero);
-                Assert.AreEqual(0.25f, Time.timeScale, 0.001f);
+                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
             }
             finally { Time.timeScale = 1f; }
         }
@@ -519,13 +520,14 @@ namespace FlyingFishMomentum.Tests.EditMode
         [Test]
         public void SlowMoExpiresBackToFullSpeed()
         {
+            // M4 tune lock (R3): 1.2s duration (was 2s testing tune).
             var spawner = NewSpawnerWithRing(out _, out _);
             try
             {
                 spawner.CheckRingTrigger(0f, Vector3.zero);
                 spawner.UpdateSlowMo(0.5f);
-                Assert.AreEqual(0.25f, Time.timeScale, 0.001f);
-                spawner.UpdateSlowMo(1.6f);
+                Assert.AreEqual(0.4f, Time.timeScale, 0.001f);
+                spawner.UpdateSlowMo(0.8f);
                 Assert.AreEqual(1f, Time.timeScale, 0.001f);
             }
             finally { Time.timeScale = 1f; }

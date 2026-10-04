@@ -17,3 +17,5 @@ MonoBehaviour:
   GapShrink: 0.5
   StormWeightEnd: 3
   LagoonFloor: 0.5
+  SpawnAheadMeters: 1500
+  ReclaimBehindMeters: 300

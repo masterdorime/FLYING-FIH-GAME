@@ -70,7 +70,13 @@ environment looks ride per chunk type.
 
 ## S4 — Tune lock (testing tunes revert to spec in M4)
 
-- Revert: tank 120, bands 20/40/70/100, slow-mo 0.4×/1.2s.
+- AMENDED per controller ruling R3 (M4 Task 7, PRD §34.1 change
+  protocol — rationale recorded, no silent rule change): tank STAYS
+  48, bands STAY 8/16/28/40 (flat +6/ring gains × 120-tank ≈ 20
+  rings to launch — unplayable, contradicts the standing
+  2-ring-flight goal). ONLY slow-mo reverts to spec: 0.4×/1.2s
+  (code defaults + asset). Original revert line it replaces: tank
+  120, bands 20/40/70/100, slow-mo 0.4×/1.2s.
 - Flattened 2026-10-04 per playtest (below spec, replaces the revert
   for these rows): charge +1/+2 (perfect ring 6), Perfect {0,1,1,2,2},
   Good {0,1,1,1,1}, Miss {0,4,6,10,16}, MissDrain 3 — tiny gains, tiny

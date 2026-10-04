@@ -45,5 +45,5 @@ MonoBehaviour:
   ChargeTimeout: 8
   ChargeStepGain: 1
   ChargeJackpot: 2
-  ChargeSlowScale: 0.25
-  ChargeSlowDuration: 2
+  ChargeSlowScale: 0.4
+  ChargeSlowDuration: 1.2

@@ -34,8 +34,8 @@ namespace FlyingFishMomentum.Run
         private readonly Queue<GameObject> _ringPool = new Queue<GameObject>();
         private readonly Queue<GameObject> _coinPool = new Queue<GameObject>();
         private readonly Queue<GameObject> _islandPool = new Queue<GameObject>();
-        private List<GameObject> _waterSegs = new List<GameObject>();
-        private List<GameObject> _seabedSegs = new List<GameObject>();
+        [SerializeField] private List<GameObject> _waterSegs = new List<GameObject>();
+        [SerializeField] private List<GameObject> _seabedSegs = new List<GameObject>();
         private List<float> _waterHalf = new List<float>();
         private List<float> _seabedHalf = new List<float>();
         private Material _ringMat;
@@ -48,6 +48,15 @@ namespace FlyingFishMomentum.Run
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public IReadOnlyList<CoinPickup> Coins => _coins;
         public IReadOnlyList<GameObject> Islands => _islands;
+
+        // M4 Task 7 (Task 6 review): the sky tint rides a real renderer,
+        // not a dangling material — the scene passes its sky shell here
+        // once at wiring, mirroring the water-segment pattern below.
+        // Serialized so build-time wiring survives save/load (a prior
+        // revision kept these transient: the rebuilt scene loaded with
+        // empty segment lists and static water past 4000m).
+        [SerializeField] private Renderer _skyRenderer;
+        public Transform SkyAnchor => _skyRenderer != null ? _skyRenderer.transform : null;
 
         public float FurthestContentZ
         {
@@ -65,14 +74,27 @@ namespace FlyingFishMomentum.Run
         }
 
         // Water/seabed segment refs for recycling (passed once at wiring).
-        public void Configure(List<GameObject> waterSegs, List<GameObject> seabedSegs)
+        // Stores refs only: shared mood instances are assigned in Start
+        // (runtime), never at build — build-time assignment of unsaved
+        // instances does not survive save/load.
+        public void Configure(List<GameObject> waterSegs, List<GameObject> seabedSegs, Renderer skyRenderer = null)
         {
             _waterSegs = waterSegs ?? new List<GameObject>();
             _seabedSegs = seabedSegs ?? new List<GameObject>();
+            _skyRenderer = skyRenderer;
             _waterHalf = Halves(_waterSegs);
             _seabedHalf = Halves(_seabedSegs);
-            // Shared water instance drives the visible tint (Task 6 mood);
-            // recycle math below is untouched.
+        }
+
+        void Start()
+        {
+            // Re-derive recycle math from the persisted refs and point
+            // the scene renderers at the shared mood instances (Task 6
+            // tints these per chunk type; order vs RunManager.Start is
+            // irrelevant — both sides hold the same instances).
+            _waterHalf = Halves(_waterSegs);
+            _seabedHalf = Halves(_seabedSegs);
+            if (_skyRenderer != null) _skyRenderer.sharedMaterial = SkyMaterial;
             foreach (var s in _waterSegs)
             {
                 if (s == null) continue;

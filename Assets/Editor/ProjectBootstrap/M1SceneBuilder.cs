@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using FlyingFishMomentum;
+using FlyingFishMomentum.Run;
 using FlyingFishMomentum.Scoring;
 
 namespace ProjectBootstrap
@@ -28,6 +29,13 @@ namespace ProjectBootstrap
             var camSettings = Load<CameraSettings>("Assets/Configs/CameraSettings.asset");
             var gaugeSettings = Load<FlightGaugeSettings>("Assets/Configs/FlightGaugeSettings.asset");
             var scoringSettings = Load<ScoringSettings>("Assets/Configs/ScoringSettings.asset");
+            // M4 Task 7: RunManager owns content past spawn — the type deck
+            // and difficulty ride the scene (missing files fail the build).
+            var difficulty = Load<DifficultySettings>("Assets/Configs/DifficultySettings.asset");
+            var lagoonSpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Lagoon.asset");
+            var gauntletSpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Gauntlet.asset");
+            var stormSpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Storm.asset");
+            var skySpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Sky.asset");
 
             var fishMat = new Material(Shader.Find("Standard"));
             fishMat.color = new Color(1f, 0.45f, 0.1f);
@@ -62,8 +70,10 @@ namespace ProjectBootstrap
             // M4 Task 6 mood: shared sky-tint instance (water keeps the
             // shared M1Water.mat instance above). ChunkBuilder re-tints
             // these per chunk type at runtime; Task 7 wires the scene.
+            // Front faces culled: the sky shell is viewed from inside.
             var skyMat = new Material(Shader.Find("Standard"));
             skyMat.color = new Color(0.53f, 0.81f, 0.92f); // Lagoon starter
+            skyMat.SetInt("_Cull", 1);
             AssetDatabase.CreateAsset(skyMat, "Assets/Materials/M1Sky.mat");
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -81,22 +91,42 @@ namespace ProjectBootstrap
             light.type = LightType.Directional;
             lightGo.transform.rotation = Quaternion.Euler(-50f, -30f, 0f);
 
-            // Water: visual only — MeshCollider removed so breaches pass through.
-            // Long runway (span z -100..3100, 2x) for testing at speed.
-            var water = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            water.name = "Water";
-            water.transform.position = new Vector3(0f, 0f, 1500f);
-            water.transform.localScale = new Vector3(40f, 1f, 320f);
-            Object.DestroyImmediate(water.GetComponent<MeshCollider>());
-            water.GetComponent<MeshRenderer>().sharedMaterial = waterMat;
+            // M4 Task 7: water/seabed are 4+4 recycled 1000m segments
+            // (span z 0..4000); ChunkBuilder repositions them ahead at
+            // runtime. Water stays visual-only (no MeshCollider).
+            var waterSegs = new List<GameObject>();
+            var seabedSegs = new List<GameObject>();
+            for (int i = 0; i < 4; i++)
+            {
+                var wseg = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                wseg.name = "Water_" + i;
+                wseg.transform.position = new Vector3(0f, 0f, 500f + i * 1000f);
+                wseg.transform.localScale = new Vector3(40f, 1f, 100f);
+                Object.DestroyImmediate(wseg.GetComponent<MeshCollider>());
+                wseg.GetComponent<MeshRenderer>().sharedMaterial = waterMat;
+                waterSegs.Add(wseg);
+                // Seabed: thin box (BoxColliders stay exact under
+                // non-uniform scale; scaled MeshColliders misbehave).
+                var sseg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                sseg.name = "Seabed_" + i;
+                sseg.transform.position = new Vector3(0f, -12.5f, 500f + i * 1000f);
+                sseg.transform.localScale = new Vector3(400f, 1f, 1000f);
+                sseg.GetComponent<MeshRenderer>().sharedMaterial = sandMat;
+                seabedSegs.Add(sseg);
+            }
 
-            // Seabed: thin box (BoxColliders stay exact under non-uniform scale;
-            // scaled MeshColliders misbehave).
-            var seabed = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            seabed.name = "Seabed";
-            seabed.transform.position = new Vector3(0f, -12.5f, 1500f);
-            seabed.transform.localScale = new Vector3(400f, 1f, 3200f);
-            seabed.GetComponent<MeshRenderer>().sharedMaterial = sandMat;
+            // M4 Task 7 (Task 6 review): sky tint rides a real renderer.
+            // Inside-out shell (front faces culled) so the mood tint
+            // surrounds the fish; RunManager slides it along z to follow.
+            var skyGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            skyGo.name = "Sky";
+            Object.DestroyImmediate(skyGo.GetComponent<SphereCollider>());
+            skyGo.transform.position = new Vector3(0f, 0f, 2000f);
+            skyGo.transform.localScale = new Vector3(3000f, 3000f, 3000f);
+            var skyRend = skyGo.GetComponent<MeshRenderer>();
+            skyRend.sharedMaterial = skyMat;
+            skyRend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            skyRend.receiveShadows = false;
 
             // Slalom corridor z=30..90, inner gap 20 (turn radius at Low ≈ 9.4).
             // Open water beyond z=120 for high-speed runs (radius at Max ≈ 20.9).
@@ -153,30 +183,9 @@ namespace ProjectBootstrap
             ringGo.transform.SetParent(timingGo.transform, false);
             var ring = ringGo.AddComponent<TimingPromptDial>();
             ring.Configure(spawner, player.transform, momentum);
-            // Charge rings: one every 150m down the runway (z pacing fixed
-            // for timing rhythm), all on the swim lane; x lane re-rolls
-            // every run from the spawner seed. Base spots just spread x.
-            var rings = new List<ChargeRing>();
-            for (int i = 0; i < 20; i++)
-            {
-                float x = ((i % 3) - 1) * 15f;
-                rings.Add(AddChargeRing("ChargeRing_" + (i + 1), new Vector3(x, -3f, 150f * (i + 1))));
-            }
-            spawner.SetRings(rings);
-            // Score chase v1: coin trails down the runway (swim lanes plus
-            // two air arcs for flight pathing); 5 trails x 4 coins.
-            var coinSpots = new (float x, float y, float z)[]
-            {
-                (-10f, -3f, 300f), (10f, -3f, 800f), (0f, 8f, 1300f),
-                (-10f, -3f, 1800f), (10f, 8f, 2300f),
-            };
-            var coins = new List<CoinPickup>();
-            for (int t = 0; t < coinSpots.Length; t++)
-                for (int i = 0; i < 4; i++)
-                    coins.Add(AddCoin("Coin_" + t + "_" + i,
-                        new Vector3(coinSpots[t].x, coinSpots[t].y, coinSpots[t].z + (i - 1.5f) * 15f),
-                        coinMat));
-            spawner.SetCoins(coins);
+            // M4 Task 7: no baked rings/coins — RunManager builds the
+            // deterministic Lagoonx2 starter at Start and streams every
+            // chunk after it, feeding the spawner wholesale.
             // Score system (goal layer): spawner pushes beats/distance/coins.
             var scoringGo = new GameObject("Scoring");
             var score = scoringGo.AddComponent<ScoreSystem>();
@@ -186,9 +195,18 @@ namespace ProjectBootstrap
             barGo.transform.SetParent(timingGo.transform, false);
             var bar = barGo.AddComponent<ChargeBar>();
             bar.Configure(spawner, player.transform);
+            // M4 Task 7: endless-run director. Configure once at wiring
+            // (never per chunk — Task 4 transient clone leak); Start
+            // builds the starter, Update streams + creeps + feeds.
+            var runGo = new GameObject("GameManager");
+            var builder = runGo.AddComponent<ChunkBuilder>();
+            var runManager = runGo.AddComponent<RunManager>();
+            runManager.Configure(spawner, score, sm, difficulty,
+                new List<ChunkSpec> { lagoonSpec, gauntletSpec, stormSpec, skySpec });
+            runManager.WireScene(builder, momentum);
+            builder.Configure(waterSegs, seabedSegs, skyRend);
             var overlay = debug.AddComponent<M1DebugOverlay>();
-            // M4 Task 7 wires the scene RunManager here (no RunManager exists yet).
-            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge, score, null);
+            overlay.Configure(momentum, sm, momSettings, movement, spawner, gauge, score, runManager);
 
             PrefabUtility.SaveAsPrefabAsset(player, "Assets/Prefabs/PlayerRoot.prefab");
             PrefabUtility.SaveAsPrefabAsset(rig, "Assets/Prefabs/CameraRig.prefab");

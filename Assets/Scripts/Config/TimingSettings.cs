@@ -34,8 +34,9 @@ namespace FlyingFishMomentum
         public float ChargeJackpot = 2f;
         // Ring entry slow-motion: world dips to this scale for this long
         // (wall clock), giving hands time to answer the charge steps.
-        public float ChargeSlowScale = 0.25f;
-        public float ChargeSlowDuration = 2f;
+        // M4 tune lock (R3): reverted to spec 0.4x/1.2s (was 0.25/2 testing tune).
+        public float ChargeSlowScale = 0.4f;
+        public float ChargeSlowDuration = 1.2f;
 
         public float DeltaFor(TimingResult r, FlightTier t)
         {

@@ -1046,27 +1046,23 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator RunwayFilledWithRings()
+        public IEnumerator StarterSownWithCoins()
         {
-            // Testing layout: a ring every 150m down the 2x runway so every
-            // stretch has charge chances (positions shuffle per run, but z
-            // pacing and count are fixed).
-            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
-            Assert.AreEqual(20, spawner.Rings.Count);
-            for (int i = 0; i < 20; i++)
-                Assert.AreEqual(150f * (i + 1), spawner.Rings[i].transform.position.z, 0.5f);
-            yield break;
-        }
-
-        [UnityTest]
-        public IEnumerator RunwaySownWithCoins()
-        {
-            // Score-chase pathing layer: coin trails down the runway (swim
-            // lanes + a couple of air arcs), collected by swimming them.
+            // M4 starter: RunManager builds deterministic Lagoonx2 at
+            // Start (2 trails x 4 coins per chunk) and feeds the spawner
+            // wholesale — no baked runway coins anymore.
             var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
             var score = Object.FindFirstObjectByType<Scoring.ScoreSystem>();
             Assert.IsNotNull(score, "no ScoreSystem in scene");
-            Assert.AreEqual(20, spawner.Coins.Count);
+            // Starter first: live frames may already have streamed more
+            // chunks past it, so pin the starter prefix, not the total.
+            Assert.GreaterOrEqual(spawner.Coins.Count, 16);
+            for (int i = 0; i < 16; i++)
+            {
+                float z = spawner.Coins[i].transform.position.z;
+                Assert.GreaterOrEqual(z, 0f);
+                Assert.LessOrEqual(z, 1000f);
+            }
             var sm = Object.FindFirstObjectByType<FlightStateMachine>();
             var mover = sm.GetComponent<PlayerMovementController>();
             sm.SetTier(FlightTier.Medium);
@@ -1182,6 +1178,68 @@ namespace FlyingFishMomentum.Tests.PlayMode
                 Assert.Greater(mover.transform.position.z, 8000f, "120s at Max did not travel far");
             }
             finally { Object.Destroy(builderGo); }
+            yield break;
+        }
+
+        [UnityTest]
+        public IEnumerator ChunksStreamEndlessly()
+        {
+            // M4 integration: the scene RunManager streams chunks ahead
+            // of the fish over a 3000m+ voyage — content always ahead,
+            // reclaim behind, no exceptions. Manual fixed-step drive
+            // (live frames settle nothing in batchmode); no teleports,
+            // so no Physics.SyncTransforms needed. Live Update may
+            // double-drive between yields — streaming is idempotent.
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            var run = Object.FindFirstObjectByType<RunManager>();
+            var builder = Object.FindFirstObjectByType<ChunkBuilder>();
+            Assert.IsNotNull(run, "RunManager not wired in scene");
+            Assert.IsNotNull(builder, "ChunkBuilder not wired in scene");
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            spawner.enabled = false;
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            Assert.GreaterOrEqual(spawner.Rings.Count, 6, "starter Lagoonx2 missing at spawn");
+            const float step = 1f / 60f;
+            int steps = 0;
+            try
+            {
+                while (mover.transform.position.z < 3000f && steps < 4000)
+                {
+                    mover.TickMove(Vector2.zero, step);
+                    float fishZ = mover.transform.position.z;
+                    run.Tick(fishZ, step);
+                    run.StreamAhead(fishZ);
+                    if (steps % 30 == 0)
+                    {
+                        Assert.GreaterOrEqual(builder.FurthestContentZ - fishZ, 500f,
+                            "fish outran content at step " + steps);
+                        yield return null;
+                    }
+                    steps++;
+                }
+            }
+            finally { Time.timeScale = 1f; }
+            float endZ = mover.transform.position.z;
+            Assert.Greater(endZ, 3000f, "never traveled 3000m+");
+            Assert.GreaterOrEqual(builder.FurthestContentZ - endZ, 500f,
+                "no content ahead at journey's end");
+            float minRingZ = float.MaxValue;
+            foreach (var ring in builder.Rings)
+                if (ring != null) minRingZ = Mathf.Min(minRingZ, ring.transform.position.z);
+            Assert.GreaterOrEqual(minRingZ, endZ - 300f, "reclaim left content behind");
+            Assert.Less(builder.Rings.Count, 60, "content grows unboundedly (reclaim leaking)");
+            // Recycled waterbed: every 1000m segment still reaches the
+            // fish after the voyage (static segments strand the run dry).
+            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            {
+                if (go == null || !go.name.StartsWith("Water_")) continue;
+                Assert.GreaterOrEqual(go.transform.position.z + 500f, endZ - 1f,
+                    go.name + " left behind (recycle leaking)");
+            }
             yield break;
         }
     }

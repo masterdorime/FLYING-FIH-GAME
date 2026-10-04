@@ -507,6 +507,105 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(expected.a, actual.a, 0.001f);
         }
 
+        // M4 Task 7: RunManager owns content past spawn. Fully wired
+        // manager (spawner + momentum + builder + deck) for starter,
+        // difficulty-feed, and speed-creep tests.
+        private RunManager NewWiredManager(
+            out ChunkBuilder builder,
+            out TimingPromptSpawner spawner,
+            out PlayerMomentumController momentum)
+        {
+            var smGo = new GameObject("runSm");
+            _spawned.Add(smGo);
+            var sm = smGo.AddComponent<FlightStateMachine>();
+            var spawnerGo = new GameObject("runSpawner");
+            _spawned.Add(spawnerGo);
+            spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
+            var mgo = new GameObject("runMomentum");
+            _spawned.Add(mgo);
+            momentum = mgo.AddComponent<PlayerMomentumController>();
+            var mom = ScriptableObject.CreateInstance<MomentumSettings>();
+            mom.MinSpeed = 5f;
+            var timing = ScriptableObject.CreateInstance<TimingSettings>();
+            momentum.Configure(mom, timing);
+            momentum.SetLimits(100f, 120f);
+            spawner.Configure(null, momentum, sm, timing, mom, null, null);
+            var builderGo = new GameObject("runBuilder");
+            _spawned.Add(builderGo);
+            builder = builderGo.AddComponent<ChunkBuilder>();
+            var diff = ScriptableObject.CreateInstance<DifficultySettings>();
+            diff.RampSeconds = 240f;
+            diff.SpeedCreep = 0.5f;
+            diff.SpawnAheadMeters = 1500f;
+            diff.ReclaimBehindMeters = 300f;
+            diff.StormWeightEnd = 3f;
+            diff.LagoonFloor = 0.5f;
+            var lagoon = ScriptableObject.CreateInstance<ChunkSpec>();
+            lagoon.ChunkId = "Lagoon";
+            lagoon.Length = 500f;
+            lagoon.RingCount = 3;
+            lagoon.RingSpacing = 150f;
+            lagoon.RingSwimFraction = 1f;
+            lagoon.CoinTrails = 2;
+            lagoon.CoinsPerTrail = 4;
+            lagoon.MissionText = "collect 30 coins";
+            lagoon.MissionTarget = 30;
+            var go = new GameObject("runManager7");
+            _spawned.Add(go);
+            var m = go.AddComponent<RunManager>();
+            m.Configure(spawner, null, sm, diff, new List<ChunkSpec> { lagoon });
+            m.WireScene(builder, momentum);
+            m.SetSeed(9);
+            return m;
+        }
+
+        [Test]
+        public void StarterIsDeterministicForSeed()
+        {
+            var a = NewWiredManager(out var builderA, out _, out _);
+            var b = NewWiredManager(out var builderB, out _, out _);
+            a.BuildStarter(0);
+            b.BuildStarter(0);
+            Assert.Greater(builderA.Rings.Count, 0, "starter built no rings");
+            Assert.AreEqual(builderA.Rings.Count, builderB.Rings.Count);
+            Assert.AreEqual(builderA.Coins.Count, builderB.Coins.Count);
+            for (int i = 0; i < builderA.Rings.Count; i++)
+                Assert.AreEqual(builderA.Rings[i].transform.position.ToString(),
+                    builderB.Rings[i].transform.position.ToString());
+            for (int i = 0; i < builderA.Coins.Count; i++)
+                Assert.AreEqual(builderA.Coins[i].transform.position.ToString(),
+                    builderB.Coins[i].transform.position.ToString());
+            foreach (var ring in builderA.Rings)
+            {
+                Assert.GreaterOrEqual(ring.transform.position.z, 0f);
+                Assert.LessOrEqual(ring.transform.position.z, 1000f);
+            }
+        }
+
+        [Test]
+        public void TickFeedsDifficultyToSpawner()
+        {
+            var m = NewWiredManager(out _, out var spawner, out _);
+            float fresh = spawner.EffectiveSettings.GoodWindow;
+            m.Tick(0f, 240f); // run clock to full difficulty
+            Assert.AreEqual(1f, m.DifficultyT, 0.001f);
+            Assert.Less(spawner.EffectiveSettings.GoodWindow, fresh);
+        }
+
+        [Test]
+        public void SpeedCreepsTowardCapWhileRunning()
+        {
+            var m = NewWiredManager(out _, out _, out var momentum);
+            momentum.TargetSpeed = 10f;
+            m.Tick(0f, 1f);
+            Assert.AreEqual(10f, momentum.TargetSpeed, 0.001f, "creep fired before the run started");
+            m.StartRun();
+            m.Tick(0f, 10f);
+            Assert.AreEqual(15f, momentum.TargetSpeed, 0.001f);
+            m.Tick(0f, 10000f);
+            Assert.AreEqual(70f, momentum.TargetSpeed, 0.001f, "creep blew past SpeedCap");
+        }
+
         [Test]
         public void MoodAppliesFromSpec()
         {

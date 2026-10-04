@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9d94e9bd0bac34bbb008703b896138, type: 3}
   m_Name: ChunkSpec_Storm
   ChunkId: Storm
-  Length: 300
+  Length: 400
   RingCount: 2
   RingSpacing: 150
   RingSwimFraction: 1
   CoinTrails: 1
   CoinsPerTrail: 4
-  IslandPairs: 3
+  IslandPairs: 4
   MinDifficulty: 0.35
   MaxDifficulty: 1
   Weight: 0.3

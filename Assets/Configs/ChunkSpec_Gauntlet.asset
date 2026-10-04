@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f9d94e9bd0bac34bbb008703b896138, type: 3}
   m_Name: ChunkSpec_Gauntlet
   ChunkId: Gauntlet
-  Length: 300
+  Length: 1000
   RingCount: 6
   RingSpacing: 150
   RingSwimFraction: 1
