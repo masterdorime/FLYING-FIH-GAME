@@ -103,16 +103,22 @@ namespace FlyingFishMomentum
         }
 
         // Shaft + V head in local XY, pointing along the arrow direction.
+        // Left/right are drawn mirrored: the row billboards +Z at the
+        // camera, which flips local +X to screen-left (positions already
+        // compensate the same way). A Left step draws pointing local +X
+        // so it reads as left on screen; up/down are unaffected.
+        public static Vector2 DrawDirection(ChargeArrow arrow) => arrow switch
+        {
+            ChargeArrow.Up => new Vector2(0f, 1f),
+            ChargeArrow.Down => new Vector2(0f, -1f),
+            ChargeArrow.Left => new Vector2(1f, 0f),
+            _ => new Vector2(-1f, 0f),
+        };
+
         static void DrawArrow(LineRenderer line, ChargeArrow arrow)
         {
             if (line == null) return;
-            Vector2 dir = arrow switch
-            {
-                ChargeArrow.Up => new Vector2(0f, 1f),
-                ChargeArrow.Down => new Vector2(0f, -1f),
-                ChargeArrow.Left => new Vector2(-1f, 0f),
-                _ => new Vector2(1f, 0f),
-            };
+            Vector2 dir = DrawDirection(arrow);
             Vector2 tail = -dir * GlyphSize / 2f;
             Vector2 tip = dir * GlyphSize / 2f;
             Vector2 side = new Vector2(-dir.y, dir.x) * GlyphSize * 0.25f;
