@@ -26,7 +26,7 @@ namespace FlyingFishMomentum
         // (soar speed) instead of the old linear term it replaces.
         // Base sink keeps every flight ending; sink damping caps the
         // terminal fall so cruise descends gently instead of accelerating.
-        public float GlideBaseSink = 2f;
+        public float GlideBaseSink = 0.5f;
         public float GlideSinkDamp = 0.5f;
         // Slope exchange: downhill (sin<0) raises the chased target toward
         // the cap, uphill lowers it — the existing chase does the work,

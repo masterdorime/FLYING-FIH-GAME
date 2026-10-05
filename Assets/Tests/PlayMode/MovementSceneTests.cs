@@ -403,6 +403,32 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator CeilingCapsClimbAtSkyBand()
+        {
+            // Flight stays where the sky content is: full climb input
+            // must never leave the obstacle band (spires top ~100).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            sm.SetTier(FlightTier.Max);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            Object.FindFirstObjectByType<TimingPromptSpawner>().enabled = false;
+            Object.FindFirstObjectByType<FlightGaugeSystem>().AddFill(120f);
+            Assert.AreEqual(PlayerLocomotionState.Flying, sm.Locomotion, "setup did not reach Fly");
+            sm.SetTier(FlightTier.Max);
+            sm.Momentum.CurrentSpeed = 73f; sm.Momentum.TargetSpeed = 73f;
+            const float step = 1f / 60f;
+            float top = mover.transform.position.y;
+            for (int i = 0; i < 1200; i++)
+            {
+                mover.TickMove(new Vector2(0f, 1f), step);
+                top = Mathf.Max(top, mover.transform.position.y);
+            }
+            Assert.LessOrEqual(top, 120f, "climb left the sky obstacle band");
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator DiveKeepsFishInFrame()
         {
             // Telemetry-proven bug: the velocity look-ahead threw the fish

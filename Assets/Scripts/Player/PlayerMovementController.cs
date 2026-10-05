@@ -101,6 +101,19 @@ namespace FlyingFishMomentum
             _vertVel += amount;
         }
 
+        // Thin-air factor 1..0: full lift below ThinAirStartY, nothing at
+        // ThinAirFullY and above — altitude falls back to the obstacle
+        // band instead of climbing out of the world. Structural band
+        // edges (like the pitch cone), not tuning: sky content tops ~100.
+        public const float ThinAirStartY = 60f;
+        public const float ThinAirFullY = 110f;
+        public const float FlightCeilingY = 115f;
+
+        public static float ThinAirFactor(float y)
+        {
+            return Mathf.Clamp01(1f - (y - ThinAirStartY) / (ThinAirFullY - ThinAirStartY));
+        }
+
         public void TickMove(Vector2 input, float dt)
         {
             bool swimming = StateMachine.Locomotion == PlayerLocomotionState.Swimming;
@@ -137,6 +150,7 @@ namespace FlyingFishMomentum
             {
                 float soar = Mathf.Max(profile.MaxSpeed, 0.01f);
                 float lift = Mathf.Clamp01(Mathf.Pow(Momentum.CurrentSpeed / soar, 2f));
+                lift *= ThinAirFactor(transform.position.y);
                 _vertVel += (StandardGravity * _gravityScale * (lift - 1f) - _settings.GlideBaseSink) * dt;
                 if (_vertVel < 0f) _vertVel -= _vertVel * _settings.GlideSinkDamp * dt;
             }
@@ -153,6 +167,16 @@ namespace FlyingFishMomentum
                 var p = transform.position;
                 p.y = _settings.SwimDepthY;
                 transform.position = p;
+            }
+            else if (transform.position.y > FlightCeilingY)
+            {
+                // Hard lid over the sky band: pin altitude, kill the climb.
+                // Thin air below already softens the approach, so this
+                // rarely bites — it guarantees no escape, not the feel.
+                var p = transform.position;
+                p.y = FlightCeilingY;
+                transform.position = p;
+                _vertVel = Mathf.Min(_vertVel, 0f);
             }
             CurrentVelocity = vel;
             StateMachine.EvaluateSurface(prevY, transform.position.y);

@@ -130,6 +130,16 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   Horizon mesas follow the fish. Assets: Lagoon coral 8,   Gauntlet rubble
   6 + 3 gates, Storm crag 8, Sky cloud 6.
 
+## Change record — flight ceiling over the sky band (§34.1, approved)
+
+- **Old:** climbs left the content band entirely (players flew into
+  empty sky/cloud interiors, meeting no obstacles).
+- **Why:** playtest: flight must happen where the sky obstacles are.
+- **New:** thin air fades lift 60→110m (altitude falls back to band)
+  plus a hard lid at 115m (upward velocity killed). Cloud puffs lifted
+  to 100–125m backdrop. Base sink retuned 2→0.5 so capped launches
+  still fly   ~60s+. Structural band edges (like the pitch cone).
+
 ## Change record — sky layer per chunk + realm blend (§34.1, approved)
 
 - **Old:** chunks were water-only; flight had nowhere to go and the sky

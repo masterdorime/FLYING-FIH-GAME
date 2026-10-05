@@ -573,8 +573,8 @@ namespace FlyingFishMomentum.Run
                     AddBlob(go, new Vector3(x, -9f, z), new Vector3(1.5f, 3f, 0.8f), DecorMaterial("coral"));
                     break;
                 case "cloud":
-                    AddBlob(go, new Vector3(x, 95f + (float)rng.NextDouble() * 25f, z), new Vector3(8f, 4f, 6f), DecorMaterial("cloud"));
-                    AddBlob(go, new Vector3(x + 5f, 97f + (float)rng.NextDouble() * 25f, z), new Vector3(6f, 3f, 5f), DecorMaterial("cloud"));
+                    AddBlob(go, new Vector3(x, 100f + (float)rng.NextDouble() * 25f, z), new Vector3(8f, 4f, 6f), DecorMaterial("cloud"));
+                    AddBlob(go, new Vector3(x + 5f, 102f + (float)rng.NextDouble() * 25f, z), new Vector3(6f, 3f, 5f), DecorMaterial("cloud"));
                     break;
                 case "crag":
                     AddBlob(go, new Vector3(x, -3f, z), new Vector3(3f, 10f, 3f), RockMaterial, 15f * ((float)rng.NextDouble() - 0.5f));
