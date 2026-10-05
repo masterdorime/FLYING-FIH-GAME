@@ -1102,6 +1102,23 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator AllSceneCoinsReadableSize()
+        {
+            // Both coin sources (chunk trails + score trails) must read at
+            // distance: every gem meets the minimum size.
+            yield return null;
+            var coins = Object.FindObjectsByType<Scoring.CoinPickup>(FindObjectsSortMode.None);
+            Assert.Greater(coins.Length, 0, "no coins in scene");
+            foreach (var c in coins)
+            {
+                var gem = c.transform.Find("Gem");
+                Assert.IsNotNull(gem, "coin has no gem");
+                Assert.GreaterOrEqual(gem.localScale.x, 0.8f, "coin too small to read");
+            }
+            yield break;
+        }
+
+        [UnityTest]
         public IEnumerator SwimLocksDepthAndPitch()
         {
             // Ship rules: underwater, W/S does nothing — depth holds near the

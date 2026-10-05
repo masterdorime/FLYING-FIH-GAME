@@ -23,6 +23,9 @@ namespace FlyingFishMomentum.Run
         public const float SwimY = -3f;
         public const float FlyY = 10f;
         public const float CoinSpacing = 15f;
+        // Trail weave: coins snake across x instead of one straight lane.
+        public const float WeaveAmp = 6f;
+        public const float WeaveFreq = 1.2f;
         public const float IslandHalfX = 5f;
         public const float IslandHalfDepth = 5f;
         public const float IslandCenterY = 5f;
@@ -267,7 +270,7 @@ namespace FlyingFishMomentum.Run
                     var coin = TakeCoin();
                     coin.transform.SetParent(root.transform, false);
                     coin.transform.position = new Vector3(
-                        x, y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
+                        x + WeaveAmp * Mathf.Sin(i * WeaveFreq), y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
                     _coins.Add(coin);
                 }
             }
@@ -320,7 +323,7 @@ namespace FlyingFishMomentum.Run
                     var coin = TakeCoin();
                     coin.transform.SetParent(root.transform, false);
                     coin.transform.position = new Vector3(
-                        x, y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
+                        x + WeaveAmp * Mathf.Sin(i * WeaveFreq), y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
                     _coins.Add(coin);
                 }
             }
@@ -624,7 +627,7 @@ namespace FlyingFishMomentum.Run
             gem.name = "Gem";
             gem.transform.SetParent(go.transform, false);
             gem.transform.localPosition = Vector3.zero;
-            gem.transform.localScale = new Vector3(0.45f, 0.6f, 0.45f);
+            gem.transform.localScale = new Vector3(0.9f, 1.2f, 0.9f);
             Object.DestroyImmediate(gem.GetComponent<Collider>());
             gem.GetComponent<MeshRenderer>().sharedMaterial = CoinMaterial;
             return go.AddComponent<CoinPickup>();

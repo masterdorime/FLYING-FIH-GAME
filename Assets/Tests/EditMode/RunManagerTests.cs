@@ -788,5 +788,43 @@ namespace FlyingFishMomentum.Tests.EditMode
             }
             Assert.Greater(heights.Count, 1, "spires are uniform");
         }
+
+        [Test]
+        public void ChunkCoinsAreReadableSize()
+        {
+            // Coins were specks: gems must read at distance.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Lagoon", 500f, 0, 150f, 1f, 2, 4, 0);
+            builder.BuildChunk(spec, 0f, 31);
+            Assert.Greater(builder.Coins.Count, 0);
+            foreach (var c in builder.Coins)
+            {
+                var gem = c.transform.Find("Gem");
+                Assert.IsNotNull(gem, "coin has no gem");
+                Assert.GreaterOrEqual(gem.localScale.x, 0.8f, "coin too small to read");
+                Assert.GreaterOrEqual(gem.localScale.y, 1f, "coin too small to read");
+            }
+        }
+
+        [Test]
+        public void CoinTrailsWeaveLanes()
+        {
+            // One straight lane is boring and unreadable at speed: trails
+            // weave across x instead.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Lagoon", 500f, 0, 150f, 1f, 2, 4, 0);
+            builder.BuildChunk(spec, 0f, 32);
+            for (int t = 0; t < 2; t++)
+            {
+                float minX = float.MaxValue, maxX = float.MinValue;
+                for (int i = 0; i < 4; i++)
+                {
+                    float x = builder.Coins[t * 4 + i].transform.position.x;
+                    minX = Mathf.Min(minX, x);
+                    maxX = Mathf.Max(maxX, x);
+                }
+                Assert.GreaterOrEqual(maxX - minX, 6f, "trail runs straight");
+            }
+        }
     }
 }

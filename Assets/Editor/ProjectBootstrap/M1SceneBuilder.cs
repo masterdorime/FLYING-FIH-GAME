@@ -225,43 +225,6 @@ namespace ProjectBootstrap
             island.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
 
-        static CoinPickup AddCoin(string name, Vector3 center, Material mat)
-        {
-            var go = new GameObject(name);
-            go.transform.position = center;
-            var gem = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            gem.name = "Gem";
-            gem.transform.SetParent(go.transform, false);
-            gem.transform.localPosition = Vector3.zero;
-            gem.transform.localScale = new Vector3(0.45f, 0.6f, 0.45f);
-            Object.DestroyImmediate(gem.GetComponent<Collider>());
-            gem.GetComponent<MeshRenderer>().sharedMaterial = mat;
-            return go.AddComponent<CoinPickup>();
-        }
-
-        static ChargeRing AddChargeRing(string name, Vector3 center)
-        {
-            var go = new GameObject(name);
-            go.transform.position = center;
-            var line = go.AddComponent<LineRenderer>();
-            const int points = 49;
-            const float radius = 3f;
-            line.positionCount = points;
-            line.useWorldSpace = false;
-            line.startWidth = 0.25f;
-            line.endWidth = 0.25f;
-            var mat = new Material(Shader.Find("Sprites/Default"));
-            mat.color = new Color(1f, 0.85f, 0.2f);
-            mat.renderQueue = 3000;
-            line.material = mat;
-            for (int i = 0; i < points; i++)
-            {
-                float d = Mathf.Deg2Rad * 360f * i / (points - 1);
-                line.SetPosition(i, new Vector3(radius * Mathf.Sin(d), radius * Mathf.Cos(d), 0f));
-            }
-            return go.AddComponent<ChargeRing>();
-        }
-
         static void AddFishPart(Transform parent, string name, PrimitiveType type,
             Vector3 localPos, Vector3 localScale, Vector3 localEuler, Material mat)
         {
