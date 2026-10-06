@@ -939,5 +939,117 @@ namespace FlyingFishMomentum.Tests.EditMode
             spawner.AttractCoins(new Vector3(0f, 0f, 0f), 1f);
             Assert.AreEqual(5f, coin.transform.position.z, 0.001f, "collected coin moved");
         }
+
+        private static TimingPromptSpawner NewObjectiveSpawner(
+            List<GameObject> spawned,
+            Vector3[] ringPos,
+            Vector3[] coinPos)
+        {
+            var spawnerGo = new GameObject("objectiveSpawner");
+            spawned.Add(spawnerGo);
+            var spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
+            var rings = new List<ChargeRing>();
+            foreach (var p in ringPos)
+            {
+                var go = new GameObject("objectiveRing");
+                spawned.Add(go);
+                go.transform.position = p;
+                rings.Add(go.AddComponent<ChargeRing>());
+            }
+            var coins = new List<Scoring.CoinPickup>();
+            foreach (var p in coinPos)
+            {
+                var go = new GameObject("objectiveCoin");
+                spawned.Add(go);
+                go.transform.position = p;
+                coins.Add(go.AddComponent<Scoring.CoinPickup>());
+            }
+            spawner.SetRings(rings);
+            spawner.SetCoins(coins);
+            return spawner;
+        }
+
+        [Test]
+        public void RingAheadBeatsNearerCoinBehind()
+        {
+            // Rings gate progression: a ring ahead wins over a nearer
+            // coin behind the fish.
+            var spawner = NewObjectiveSpawner(_spawned,
+                new[] { new Vector3(0f, 0f, 100f) },
+                new[] { new Vector3(0f, 0f, -5f) });
+            var objective = spawner.NextObjective(Vector3.zero);
+            Assert.IsNotNull(objective.Target);
+            Assert.IsTrue(objective.IsRing);
+            Assert.AreEqual(100f, objective.Target.position.z, 0.001f);
+        }
+
+        [Test]
+        public void CoinFallbackWithNoRingsAhead()
+        {
+            var spawner = NewObjectiveSpawner(_spawned,
+                new Vector3[0],
+                new[] { new Vector3(3f, 0f, 40f) });
+            var objective = spawner.NextObjective(Vector3.zero);
+            Assert.IsNotNull(objective.Target);
+            Assert.IsFalse(objective.IsRing);
+        }
+
+        [Test]
+        public void NothingBehindCounts()
+        {
+            var spawner = NewObjectiveSpawner(_spawned,
+                new[] { new Vector3(0f, 0f, -10f) },
+                new[] { new Vector3(0f, 0f, -5f) });
+            var objective = spawner.NextObjective(Vector3.zero);
+            Assert.IsNull(objective.Target);
+        }
+
+        [Test]
+        public void ConsumedRingsSkipped()
+        {
+            var spawner = NewObjectiveSpawner(_spawned,
+                new[] { new Vector3(0f, 0f, 20f) },
+                new[] { new Vector3(5f, 0f, 60f) });
+            spawner.Rings[0].Consume();
+            var objective = spawner.NextObjective(Vector3.zero);
+            Assert.IsNotNull(objective.Target);
+            Assert.IsFalse(objective.IsRing);
+            Assert.AreEqual(60f, objective.Target.position.z, 0.001f);
+        }
+
+        [Test]
+        public void NearestRingWins()
+        {
+            var spawner = NewObjectiveSpawner(_spawned,
+                new[] { new Vector3(10f, 0f, 80f), new Vector3(0f, 0f, 30f) },
+                new Vector3[0]);
+            var objective = spawner.NextObjective(Vector3.zero);
+            Assert.IsNotNull(objective.Target);
+            Assert.AreEqual(30f, objective.Target.position.z, 0.001f);
+        }
+
+        [Test]
+        public void PlaceEdgeKeepsOnScreenTargets()
+        {
+            var placement = TargetPointer.PlaceEdge(0.5f, 0.5f, false, 0.1f);
+            Assert.IsTrue(placement.OnScreen);
+        }
+
+        [Test]
+        public void PlaceEdgeClampsOffScreenTargets()
+        {
+            // Far right of frame: clamped to the margin with an east bearing.
+            var placement = TargetPointer.PlaceEdge(1.5f, 0.5f, false, 0.1f);
+            Assert.IsFalse(placement.OnScreen);
+            Assert.AreEqual(0.9f, placement.Clamped.x, 0.001f);
+            Assert.AreEqual(0f, placement.BearingDeg, 0.1f);
+        }
+
+        [Test]
+        public void PlaceEdgeFlipsTargetsBehindCamera()
+        {
+            var placement = TargetPointer.PlaceEdge(0.5f, 0.5f, true, 0.1f);
+            Assert.IsFalse(placement.OnScreen);
+        }
     }
 }

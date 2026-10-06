@@ -195,6 +195,10 @@ namespace ProjectBootstrap
             barGo.transform.SetParent(timingGo.transform, false);
             var bar = barGo.AddComponent<ChargeBar>();
             bar.Configure(spawner, player.transform);
+            var pointerGo = new GameObject("TargetPointer");
+            pointerGo.transform.SetParent(timingGo.transform, false);
+            var pointer = pointerGo.AddComponent<TargetPointer>();
+            pointer.Configure(spawner, player.transform);
             // M4 Task 7: endless-run director. Configure once at wiring
             // (never per chunk — Task 4 transient clone leak); Start
             // builds the starter, Update streams + creeps + feeds.

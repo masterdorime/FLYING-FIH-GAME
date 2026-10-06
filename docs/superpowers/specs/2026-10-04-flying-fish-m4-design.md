@@ -181,6 +181,18 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   teleport, descent always lands back in the swim flow. Spawner, gauge,
   missions, and difficulty untouched (all altitude-blind already).
 
+## Change record — target pointer (§34.1, approved)
+
+- **Old:** no guidance toward the next objective; fast players blew
+  past rings and coins with no indication where to turn.
+- **Why:** playtest: coins/rings get missed with no direction to follow.
+- **New:** spawner query picks nearest untriggered ring ahead, else
+  nearest uncollected coin ahead (ahead-only, never backward); hybrid
+  visual — billboarded chevron over on-screen targets (yellow ring /
+  white coin, distance-faded), screen-edge bearing arrow off-screen.
+  Judging, gauge, scoring, and difficulty untouched. Full HUD reskin
+  stays M5.
+
 ## Change record — water stays transparent (§34.1, approved)
 
 - **Old:** mood tints stamped full water color incl. alpha 1 onto an

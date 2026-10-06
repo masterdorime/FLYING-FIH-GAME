@@ -97,6 +97,51 @@ namespace FlyingFishMomentum
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public float SlowTimer { get; private set; }
 
+        // Target-pointer query (reads only, no judging side effects):
+        // nearest untriggered ring ahead wins (charge gates progression),
+        // else nearest uncollected coin ahead, else no target. Ahead-only
+        // so passed content never points backward.
+        public readonly struct Objective
+        {
+            public readonly Transform Target;
+            public readonly bool IsRing;
+            public Objective(Transform target, bool isRing)
+            {
+                Target = target;
+                IsRing = isRing;
+            }
+        }
+
+        public Objective NextObjective(Vector3 fishPos)
+        {
+            Transform best = null;
+            float bestD = float.MaxValue;
+            if (_rings != null)
+            {
+                foreach (var ring in _rings)
+                {
+                    if (ring == null || ring.Consumed) continue;
+                    Vector3 p = ring.transform.position;
+                    if (p.z <= fishPos.z) continue;
+                    float d = Vector3.Distance(fishPos, p);
+                    if (d < bestD) { bestD = d; best = ring.transform; }
+                }
+                if (best != null) return new Objective(best, true);
+            }
+            if (_coins != null)
+            {
+                foreach (var coin in _coins)
+                {
+                    if (coin == null || coin.Collected) continue;
+                    Vector3 p = coin.transform.position;
+                    if (p.z <= fishPos.z) continue;
+                    float d = Vector3.Distance(fishPos, p);
+                    if (d < bestD) { bestD = d; best = coin.transform; }
+                }
+            }
+            return new Objective(best, false);
+        }
+
         // Gearless world: taps always judge on the Medium row, no matter the
         // active tier. (The table's None row is all zeros, which froze speed
         // at spawn — reported bug.) M3 gauge tiers may re-enable per-tier

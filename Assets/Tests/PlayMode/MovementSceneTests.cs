@@ -788,6 +788,52 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TargetPointerTracksObjective()
+        {
+            // Hybrid pointer, positioned relative to the live camera so the
+            // verdict never depends on scene content layout: ring centered
+            // in frame shows the chevron, ring swung behind the camera
+            // swaps to the edge arrow.
+            var cam = Camera.main;
+            Assert.IsNotNull(cam, "no main camera");
+            Vector3 fwd = cam.transform.forward;
+            var fishGo = new GameObject("pointerFish");
+            fishGo.transform.position = cam.transform.position + fwd * 10f;
+            var spawnerGo = new GameObject("pointerSpawner");
+            var spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
+            spawner.enabled = false; // query only; unconfigured Update would NRE on momentum
+            var ringGo = new GameObject("pointerRing");
+            ringGo.transform.position = fishGo.transform.position + fwd * 5f;
+            var ring = ringGo.AddComponent<ChargeRing>();
+            spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { ring });
+            var ptrGo = new GameObject("TargetPointerTest");
+            var ptr = ptrGo.AddComponent<TargetPointer>();
+            ptr.Configure(spawner, fishGo.transform);
+            try
+            {
+                yield return null;
+                yield return null;
+                Assert.IsTrue(ptr.ChevronVisible, "chevron hidden for on-screen ring");
+                Assert.IsFalse(ptr.EdgeVisible, "edge shown for on-screen ring");
+                // Behind the camera yet ahead in travel-z (fish drops back
+                // past it): the world-z filter must still select it.
+                fishGo.transform.position = cam.transform.position - fwd * 10f;
+                ringGo.transform.position = cam.transform.position - fwd * 5f;
+                yield return null;
+                yield return null;
+                Assert.IsFalse(ptr.ChevronVisible, "chevron shown for behind-camera ring");
+                Assert.IsTrue(ptr.EdgeVisible, "edge hidden for behind-camera ring");
+            }
+            finally
+            {
+                Object.Destroy(fishGo);
+                Object.Destroy(spawnerGo);
+                Object.Destroy(ringGo);
+                Object.Destroy(ptrGo);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator RingSwimThroughTriggersLive()
         {
             // Live Update path: park the fish inside ring 1, charge must start.
