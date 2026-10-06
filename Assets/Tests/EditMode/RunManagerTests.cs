@@ -111,7 +111,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         private static ChunkSpec NewBuildSpec(string id, float length, int rings, float spacing,
-            float swimFrac, int trails, int perTrail, int pairs)
+            float swimFrac, int perTrail, int pairs)
         {
             var s = ScriptableObject.CreateInstance<ChunkSpec>();
             s.ChunkId = id;
@@ -119,7 +119,6 @@ namespace FlyingFishMomentum.Tests.EditMode
             s.RingCount = rings;
             s.RingSpacing = spacing;
             s.RingSwimFraction = swimFrac;
-            s.CoinTrails = trails;
             s.CoinsPerTrail = perTrail;
             s.IslandPairs = pairs;
             return s;
@@ -138,10 +137,10 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void BuildChunkSpawnsSpecCountsInBounds()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 2, 4, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
             builder.BuildChunk(spec, 0f, 42);
             Assert.AreEqual(3, builder.Rings.Count);
-            Assert.AreEqual(8, builder.Coins.Count);
+            Assert.AreEqual(12, builder.Coins.Count);
             Assert.AreEqual(150f, builder.Rings[0].transform.position.z, 0.01f);
             Assert.AreEqual(300f, builder.Rings[1].transform.position.z, 0.01f);
             Assert.AreEqual(450f, builder.Rings[2].transform.position.z, 0.01f);
@@ -167,7 +166,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void SwimFractionSplitsSwimAndFlyLanes()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Sky", 500f, 4, 120f, 0.5f, 2, 3, 0);
+            var spec = NewBuildSpec("Sky", 500f, 4, 120f, 0.5f, 3, 0);
             builder.BuildChunk(spec, 0f, 7);
             int swim = 0, fly = 0;
             foreach (var ring in builder.Rings)
@@ -186,14 +185,14 @@ namespace FlyingFishMomentum.Tests.EditMode
                 if (Mathf.Abs(y + 3f) < 0.5f) swimCoins++;
                 else if (Mathf.Abs(y - 10f) < 0.5f) flyCoins++;
             }
-            Assert.AreEqual(3, swimCoins);
-            Assert.AreEqual(3, flyCoins);
+            Assert.AreEqual(6, swimCoins);
+            Assert.AreEqual(6, flyCoins);
         }
 
         [Test]
         public void SameSeedReplaysIdenticalLayout()
         {
-            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 4, 3);
             var a = NewBuilder();
             var b = NewBuilder();
             a.BuildChunk(spec, 0f, 99);
@@ -211,7 +210,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void RingSpacingNeverBelowBeatGapFloor()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Gauntlet", 600f, 4, 40f, 1f, 0, 0, 0);
+            var spec = NewBuildSpec("Gauntlet", 600f, 4, 40f, 1f, 0, 0);
             builder.BuildChunk(spec, 0f, 5);
             Assert.AreEqual(4, builder.Rings.Count);
             for (int i = 1; i < builder.Rings.Count; i++)
@@ -224,7 +223,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void ChargeRingResetClearsConsumed()
         {
             var builder = NewBuilder();
-            builder.BuildChunk(NewBuildSpec("Lagoon", 500f, 1, 150f, 1f, 0, 0, 0), 0f, 3);
+            builder.BuildChunk(NewBuildSpec("Lagoon", 500f, 1, 150f, 1f, 0, 0), 0f, 3);
             var ring = builder.Rings[0];
             ring.Consume();
             Assert.IsTrue(ring.Consumed);
@@ -238,7 +237,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void ReclaimBeforeRemovesPastLineContent()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 2, 4, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
             builder.BuildChunk(spec, 0f, 11);
             builder.BuildChunk(spec, 500f, 12);
             Assert.AreEqual(6, builder.Rings.Count);
@@ -254,7 +253,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void ReclaimedContentResetsOnReuse()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 2, 150f, 1f, 1, 2, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 2, 150f, 1f, 2, 0);
             builder.BuildChunk(spec, 0f, 21);
             builder.Rings[0].Consume();
             builder.Coins[0].Collect();
@@ -263,7 +262,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(0, builder.Coins.Count);
             builder.BuildChunk(spec, 0f, 22);
             Assert.AreEqual(2, builder.Rings.Count);
-            Assert.AreEqual(2, builder.Coins.Count);
+            Assert.AreEqual(4, builder.Coins.Count);
             foreach (var ring in builder.Rings)
                 Assert.IsFalse(ring.Consumed);
             foreach (var coin in builder.Coins)
@@ -277,7 +276,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         [Test]
         public void StormGatesStayWideAndPromptsStayClear()
         {
-            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 4, 3);
             for (int seed = 1; seed <= 5; seed++)
             {
                 var builder = NewBuilder();
@@ -557,7 +556,6 @@ namespace FlyingFishMomentum.Tests.EditMode
             lagoon.RingCount = 3;
             lagoon.RingSpacing = 150f;
             lagoon.RingSwimFraction = 1f;
-            lagoon.CoinTrails = 2;
             lagoon.CoinsPerTrail = 4;
             lagoon.MissionText = "collect 30 coins";
             lagoon.MissionTarget = 30;
@@ -628,7 +626,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             try
             {
                 var builder = NewBuilder();
-                var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+                var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 4, 3);
                 spec.SkyTint = new Color(0.2f, 0.25f, 0.32f);
                 spec.FogColor = new Color(0.25f, 0.28f, 0.33f);
                 spec.FogDensity = 0.015f;
@@ -660,7 +658,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             // Mood tints water RGB only; the sea keeps its transparent
             // blend and alpha so underwater gameplay stays visible.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 1, 4, 3);
+            var spec = NewBuildSpec("Storm", 300f, 2, 150f, 1f, 4, 3);
             spec.WaterTint = new Color(0.12f, 0.22f, 0.3f, 1f);
             builder.BuildChunk(spec, 0f, 4);
             var mat = builder.WaterMaterial;
@@ -674,9 +672,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             // Cloud-realm layer: sky rings/coins/spires live above 55m,
             // clear of the water game below.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 3, 4, 0);
+            var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 4, 0);
             spec.SkyRingCount = 2;
-            spec.SkyCoinTrails = 1;
             spec.SkySpireCount = 2;
             builder.BuildChunk(spec, 0f, 7);
             int skyRings = 0;
@@ -704,10 +701,9 @@ namespace FlyingFishMomentum.Tests.EditMode
             for (int seed = 0; seed < 5; seed++)
             {
                 var builder = NewBuilder();
-                var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 3, 4, 0);
-                spec.SkyRingCount = 4;
-                spec.SkyCoinTrails = 2;
-                spec.SkySpireCount = 4;
+                var spec = NewBuildSpec("Sky", 400f, 2, 150f, 0.3f, 4, 0);
+            spec.SkyRingCount = 4;
+            spec.SkySpireCount = 4;
                 builder.BuildChunk(spec, 0f, seed);
                 foreach (var s in builder.Spires)
                 {
@@ -729,7 +725,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             // Decor fills the map visually but never touches gameplay: no
             // colliders, and parked off the prompt lanes.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 2, 4, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
             spec.DecorKind = "coral";
             spec.DecorCount = 6;
             builder.BuildChunk(spec, 0f, 9);
@@ -749,7 +745,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             // Gauntlet gates: pillar pairs with a lintel over swim ring
             // lines — steer through the middle, all blocking rock.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Gauntlet", 1000f, 2, 150f, 1f, 0, 0, 0);
+            var spec = NewBuildSpec("Gauntlet", 1000f, 2, 150f, 1f, 0, 0);
             spec.ArchCount = 2;
             builder.BuildChunk(spec, 0f, 11);
             int lintels = 0, pillars = 0;
@@ -775,7 +771,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void SpireHeightsVaryInRange()
         {
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Sky", 400f, 0, 150f, 0f, 0, 0, 0);
+            var spec = NewBuildSpec("Sky", 400f, 0, 150f, 0f, 0, 0);
             spec.SkySpireCount = 4;
             builder.BuildChunk(spec, 0f, 21);
             var heights = new System.Collections.Generic.HashSet<float>();
@@ -794,7 +790,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             // Coins were specks: gems must read at distance.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 0, 150f, 1f, 2, 4, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
             builder.BuildChunk(spec, 0f, 31);
             Assert.Greater(builder.Coins.Count, 0);
             foreach (var c in builder.Coins)
@@ -807,12 +803,66 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void CoinTrailLeadsIntoItsRing()
+        {
+            // Coins point somewhere: every ring gets one trail that ends
+            // at its mouth, same lane, approaching from -z — following
+            // coins flies you through rings.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
+            builder.BuildChunk(spec, 0f, 42);
+            Assert.AreEqual(3, builder.Rings.Count);
+            Assert.AreEqual(12, builder.Coins.Count);
+            for (int k = 0; k < 3; k++)
+            {
+                var ringPos = builder.Rings[k].transform.position;
+                for (int i = 0; i < 4; i++)
+                {
+                    var p = builder.Coins[k * 4 + i].transform.position;
+                    Assert.AreEqual(ringPos.y, p.y, 0.001f, "trail left its ring's lane");
+                    Assert.LessOrEqual(p.z, ringPos.z, "coin not approaching from -z");
+                }
+                var mouth = builder.Coins[k * 4 + 3].transform.position;
+                Assert.LessOrEqual(ringPos.z - mouth.z, 20f, "trail does not reach its ring");
+                Assert.LessOrEqual(Mathf.Abs(mouth.x - ringPos.x), 12f, "trail mouth off the ring");
+            }
+        }
+
+        [Test]
+        public void SkyCoinTrailLeadsIntoItsRing()
+        {
+            // Same coupling upstairs: sky trails end at sky ring mouths.
+            var builder = NewBuilder();
+            var spec = NewBuildSpec("Sky", 400f, 0, 150f, 0f, 4, 0);
+            spec.SkyRingCount = 2;
+            builder.BuildChunk(spec, 0f, 43);
+            int skyRings = 0;
+            foreach (var r in builder.Rings)
+                if (r.transform.position.y > 50f) skyRings++;
+            Assert.AreEqual(2, skyRings);
+            Assert.AreEqual(8, builder.Coins.Count);
+            for (int k = 0; k < 2; k++)
+            {
+                var ringPos = builder.Rings[k].transform.position;
+                Assert.Greater(ringPos.y, 50f);
+                for (int i = 0; i < 4; i++)
+                {
+                    var p = builder.Coins[k * 4 + i].transform.position;
+                    Assert.AreEqual(ringPos.y, p.y, 0.001f, "sky trail left its ring's lane");
+                    Assert.LessOrEqual(p.z, ringPos.z, "coin not approaching from -z");
+                }
+                var mouth = builder.Coins[k * 4 + 3].transform.position;
+                Assert.LessOrEqual(ringPos.z - mouth.z, 20f, "sky trail does not reach its ring");
+            }
+        }
+
+        [Test]
         public void CoinTrailsWeaveLanes()
         {
             // One straight lane is boring and unreadable at speed: trails
             // weave across x instead.
             var builder = NewBuilder();
-            var spec = NewBuildSpec("Lagoon", 500f, 0, 150f, 1f, 2, 4, 0);
+            var spec = NewBuildSpec("Lagoon", 500f, 3, 150f, 1f, 4, 0);
             builder.BuildChunk(spec, 0f, 32);
             for (int t = 0; t < 2; t++)
             {

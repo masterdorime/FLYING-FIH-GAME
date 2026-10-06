@@ -13,13 +13,11 @@ namespace FlyingFishMomentum.Run
         public int RingCount;
         public float RingSpacing = 150f;
         public float RingSwimFraction = 1f;
-        public int CoinTrails;
         public int CoinsPerTrail = 4;
         public int IslandPairs;
         // Cloud-realm layer (above 55m): per-chunk sky content so flight
         // has somewhere to go. Zero keeps a type water-only.
         public int SkyRingCount;
-        public int SkyCoinTrails;
         public int SkySpireCount;
         // Map dressing: one decor kind per chunk + count budget (tunable,
         // not hardcoded). Kinds: coral, rubble, crag, cloud. Decor never

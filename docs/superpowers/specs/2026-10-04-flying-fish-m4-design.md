@@ -140,6 +140,19 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   to 100–125m backdrop. Base sink retuned 2→0.5 so capped launches
   still fly   ~60s+. Structural band edges (like the pitch cone).
 
+## Change record — coin trails lead into rings (§34.1, approved)
+
+- **Old:** coin trails were placed on independent even-spread formulas;
+  coins pointed nowhere, giving no direction to follow.
+- **Why:** playtest: coins should guide the player — following coins
+  must fly you through rings.
+- **New:** one trail per ring (water trails per `RingCount`, sky trails
+  per `SkyRingCount`); each trail runs along -z into its ring mouth on
+  the ring's own lane, x converging with the usual weave. `CoinTrails`
+  / `SkyCoinTrails` fields removed (trail count *is* ring count);
+  zero-ring chunks get zero trails. Score values untouched (more coins
+  per chunk is accepted drift).
+
 ## Change record — sky layer per chunk + realm blend (§34.1, approved)
 
 - **Old:** chunks were water-only; flight had nowhere to go and the sky
@@ -148,8 +161,8 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   whole run (launch can happen at any z, so sky content can't live in
   zones).
 - **New:** each chunk builds a sky half from new spec fields
-  (`SkyRingCount/SkyCoinTrails/SkySpireCount`; Lagoon 0/1/0, Gauntlet
-  2/1/2, Storm 0/1/3, Sky 4/2/4): rings/coins above 55m through the
+  (`SkyRingCount/SkySpireCount`; Lagoon 0/0, Gauntlet 2/2, Storm 0/3,
+  Sky 4/4): rings/coins above 55m through the
   existing pools and spawner feed, spires as tall colliders under the
   same clearance rule (3D bounds). A cloud-sea deck fades in 40→60m
   (`RealmBlend`) and follows the fish; ocean below, clouds above, no

@@ -248,6 +248,7 @@ namespace FlyingFishMomentum.Run
 
             float spacing = Mathf.Max(spec.RingSpacing, MinRingSpacing);
             int swimRings = Mathf.RoundToInt(spec.RingCount * Mathf.Clamp01(spec.RingSwimFraction));
+            var waterRings = new System.Collections.Generic.List<UnityEngine.Vector3>();
             for (int k = 0; k < spec.RingCount; k++)
             {
                 var ring = TakeRing();
@@ -257,20 +258,25 @@ namespace FlyingFishMomentum.Run
                     k < swimRings ? SwimY : FlyY,
                     zStart + (k + 1) * spacing);
                 _rings.Add(ring);
+                waterRings.Add(ring.transform.position);
             }
 
-            int swimTrails = Mathf.RoundToInt(spec.CoinTrails * Mathf.Clamp01(spec.RingSwimFraction));
-            for (int t = 0; t < spec.CoinTrails; t++)
+            // Coin trails lead into rings: one trail per ring, coins running
+            // along -z into the ring mouth on the ring's own lane, x
+            // converging from a random start with the usual weave.
+            for (int k = 0; k < spec.RingCount; k++)
             {
-                float baseZ = zStart + spec.Length * (t + 1f) / (spec.CoinTrails + 1f);
-                float x = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
-                float y = t < swimTrails ? SwimY : FlyY;
+                Vector3 rp = waterRings[k];
+                float startX = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
                 for (int i = 0; i < spec.CoinsPerTrail; i++)
                 {
+                    float t = spec.CoinsPerTrail == 1 ? 1f : (float)i / (spec.CoinsPerTrail - 1);
                     var coin = TakeCoin();
                     coin.transform.SetParent(root.transform, false);
                     coin.transform.position = new Vector3(
-                        x + WeaveAmp * Mathf.Sin(i * WeaveFreq), y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
+                        Mathf.Lerp(startX, rp.x, t) + WeaveAmp * Mathf.Sin(i * WeaveFreq),
+                        rp.y,
+                        rp.z - (spec.CoinsPerTrail - 1 - i) * CoinSpacing);
                     _coins.Add(coin);
                 }
             }
@@ -303,6 +309,7 @@ namespace FlyingFishMomentum.Run
             // Cloud-realm layer: sky rings/coins/spires ride the same pools
             // and clearance as water content (spawner feeds them wholesale).
             float skySpacing = Mathf.Max(spec.RingSpacing, MinRingSpacing);
+            var skyRings = new System.Collections.Generic.List<UnityEngine.Vector3>();
             for (int k = 0; k < spec.SkyRingCount; k++)
             {
                 var ring = TakeRing();
@@ -312,18 +319,21 @@ namespace FlyingFishMomentum.Run
                     SkyBaseY + k * SkyStepY,
                     zStart + (k + 1) * skySpacing);
                 _rings.Add(ring);
+                skyRings.Add(ring.transform.position);
             }
-            for (int t = 0; t < spec.SkyCoinTrails; t++)
+            for (int k = 0; k < spec.SkyRingCount; k++)
             {
-                float baseZ = zStart + spec.Length * (t + 1f) / (spec.SkyCoinTrails + 1f);
-                float x = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
-                float y = SkyBaseY + 10f + t * 8f;
+                Vector3 rp = skyRings[k];
+                float startX = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
                 for (int i = 0; i < spec.CoinsPerTrail; i++)
                 {
+                    float t = spec.CoinsPerTrail == 1 ? 1f : (float)i / (spec.CoinsPerTrail - 1);
                     var coin = TakeCoin();
                     coin.transform.SetParent(root.transform, false);
                     coin.transform.position = new Vector3(
-                        x + WeaveAmp * Mathf.Sin(i * WeaveFreq), y, baseZ + (i - (spec.CoinsPerTrail - 1f) / 2f) * CoinSpacing);
+                        Mathf.Lerp(startX, rp.x, t) + WeaveAmp * Mathf.Sin(i * WeaveFreq),
+                        rp.y,
+                        rp.z - (spec.CoinsPerTrail - 1 - i) * CoinSpacing);
                     _coins.Add(coin);
                 }
             }

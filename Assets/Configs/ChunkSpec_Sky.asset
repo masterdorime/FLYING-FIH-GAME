@@ -16,11 +16,9 @@ MonoBehaviour:
   RingCount: 2
   RingSpacing: 150
   RingSwimFraction: 0.3
-  CoinTrails: 3
   CoinsPerTrail: 4
   IslandPairs: 0
   SkyRingCount: 4
-  SkyCoinTrails: 2
   SkySpireCount: 4
   DecorKind: cloud
   DecorCount: 6

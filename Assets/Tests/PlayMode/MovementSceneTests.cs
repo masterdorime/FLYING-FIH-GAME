@@ -1181,7 +1181,7 @@ namespace FlyingFishMomentum.Tests.PlayMode
             finally { Time.timeScale = 1f; }
         }
 
-        static ChunkSpec NewEndlessSpec(string id, int rings, int trails, int pairs)
+        static ChunkSpec NewEndlessSpec(string id, int rings, int pairs)
         {
             var s = ScriptableObject.CreateInstance<ChunkSpec>();
             s.ChunkId = id;
@@ -1189,7 +1189,6 @@ namespace FlyingFishMomentum.Tests.PlayMode
             s.RingCount = rings;
             s.RingSpacing = 150f;
             s.RingSwimFraction = id == "Sky" ? 0.3f : 1f;
-            s.CoinTrails = trails;
             s.CoinsPerTrail = 4;
             s.IslandPairs = pairs;
             return s;
@@ -1215,10 +1214,10 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var builder = builderGo.AddComponent<ChunkBuilder>();
             var specs = new[]
             {
-                NewEndlessSpec("Lagoon", 3, 2, 0),
-                NewEndlessSpec("Gauntlet", 6, 2, 0),
-                NewEndlessSpec("Storm", 2, 1, 3),
-                NewEndlessSpec("Sky", 2, 3, 0),
+                NewEndlessSpec("Lagoon", 3, 0),
+                NewEndlessSpec("Gauntlet", 6, 0),
+                NewEndlessSpec("Storm", 2, 3),
+                NewEndlessSpec("Sky", 2, 0),
             };
             float nextZ = 0f;
             int seed = 1;
