@@ -204,6 +204,7 @@ namespace FlyingFishMomentum
                         order[i] = (ChargeArrow)_rngCharge.Next(0, 4);
                     ChargeOrder = order;
                     Charge.Begin(order, now);
+                    if (_movement != null) _movement.SetChargeHold(true);
                     return;
                 }
             }
@@ -316,6 +317,7 @@ namespace FlyingFishMomentum
                     // Surviving all steps (clean or not) earns a firework.
                     // Timeouts abort early (StepIndex short) and earn nothing.
                     if (Charge.StepIndex >= Charge.StepCount) EarnRocket();
+                    if (_movement != null) _movement.SetChargeHold(false);
                 }
                 return;
             }

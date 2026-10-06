@@ -35,6 +35,14 @@ namespace FlyingFishMomentum
         float _airControl = 1f;
         float _vertVel;
         float _bank;
+        bool _chargeHold;
+
+        // Charge QTE owns the stick: while a charge is open, steering
+        // input holds (speed/physics continue, fish flies straight).
+        public void SetChargeHold(bool hold)
+        {
+            _chargeHold = hold;
+        }
 
         void Awake()
         {
@@ -116,6 +124,7 @@ namespace FlyingFishMomentum
 
         public void TickMove(Vector2 input, float dt)
         {
+            if (_chargeHold) input = Vector2.zero;
             bool swimming = StateMachine.Locomotion == PlayerLocomotionState.Swimming;
             var profile = StateMachine.ActiveProfile;
             float rate = swimming ? _turnRate : _turnRate * _airControl;

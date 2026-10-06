@@ -185,6 +185,15 @@ UI independent from gameplay state, events over coupling.
   spending, missions (ride M4 chunk cards), chaser (M5 obstacles),
   high-score persistence (M5 saves).
 
+## Change record — charge holds steering (§34.1, approved)
+
+- **Old:** QTE taps shared the stick with steering, so answering arrows
+  veered the fish off.
+- **Why:** playtest: taps must not move the fish mid-sequence.
+- **New:** opening a charge holds steering input (fish flies straight;
+  speed/physics continue); the hold releases when the charge resolves
+  or times out.
+
 ## Change record — ship swim + arrow glyphs (§34.1, 2026-09-30, approved)
 
 - **Old:** swim pitched freely (W/S) and could breach upward; charge

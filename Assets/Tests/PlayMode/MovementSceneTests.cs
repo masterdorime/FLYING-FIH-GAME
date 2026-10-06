@@ -1119,6 +1119,32 @@ namespace FlyingFishMomentum.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ChargeHoldsSteering()
+        {
+            // QTE taps must not steer: while a charge is open the fish
+            // flies straight (speed/physics continue, steering holds).
+            var sm = Object.FindFirstObjectByType<FlightStateMachine>();
+            var mover = sm.GetComponent<PlayerMovementController>();
+            var spawner = Object.FindFirstObjectByType<TimingPromptSpawner>();
+            sm.SetTier(FlightTier.Medium);
+            Object.FindFirstObjectByType<FlightGaugeSystem>().enabled = false;
+            mover.enabled = false; // single-step AFTER SetTier (see Setup note)
+            sm.Momentum.CurrentSpeed = 10f; sm.Momentum.TargetSpeed = 10f;
+            mover.transform.position = spawner.Rings[0].transform.position;
+            Physics.SyncTransforms();
+            try
+            {
+                int guard = 0;
+                while (!spawner.ChargeActive && guard++ < 600) yield return null;
+                Assert.IsTrue(spawner.ChargeActive, "ring did not trigger");
+                for (int i = 0; i < 10; i++) mover.TickMove(new Vector2(1f, 1f), 1f / 60f);
+                Assert.AreEqual(0f, mover.Yaw, 1f, "charge steered the fish");
+                Assert.AreEqual(0f, mover.Pitch, 0.5f, "charge pitched the fish");
+            }
+            finally { Time.timeScale = 1f; }
+        }
+
+        [UnityTest]
         public IEnumerator SwimLocksDepthAndPitch()
         {
             // Ship rules: underwater, W/S does nothing — depth holds near the
