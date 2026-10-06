@@ -790,10 +790,11 @@ namespace FlyingFishMomentum.Tests.PlayMode
         [UnityTest]
         public IEnumerator TargetPointerTracksObjective()
         {
-            // Hybrid pointer, positioned relative to the live camera so the
-            // verdict never depends on scene content layout: ring centered
-            // in frame shows the chevron, ring swung behind the camera
-            // swaps to the edge arrow.
+            // Fish-anchored guide arrow, positioned relative to the live
+            // camera so the verdict never depends on scene content layout:
+            // the arrow stays visible and its bearing follows the ring —
+            // east for a ring to the right, north for one above; consuming
+            // the ring hides it.
             var cam = Camera.main;
             Assert.IsNotNull(cam, "no main camera");
             Vector3 fwd = cam.transform.forward;
@@ -803,7 +804,9 @@ namespace FlyingFishMomentum.Tests.PlayMode
             var spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
             spawner.enabled = false; // query only; unconfigured Update would NRE on momentum
             var ringGo = new GameObject("pointerRing");
-            ringGo.transform.position = fishGo.transform.position + fwd * 5f;
+            // +fwd nudge: the objective filter is ahead-in-travel-z, so a
+            // ring dead-level with the fish would be skipped as passed.
+            ringGo.transform.position = fishGo.transform.position + cam.transform.right * 5f + fwd * 1f;
             var ring = ringGo.AddComponent<ChargeRing>();
             spawner.SetRings(new System.Collections.Generic.List<ChargeRing> { ring });
             var ptrGo = new GameObject("TargetPointerTest");
@@ -813,16 +816,17 @@ namespace FlyingFishMomentum.Tests.PlayMode
             {
                 yield return null;
                 yield return null;
-                Assert.IsTrue(ptr.ChevronVisible, "chevron hidden for on-screen ring");
-                Assert.IsFalse(ptr.EdgeVisible, "edge shown for on-screen ring");
-                // Behind the camera yet ahead in travel-z (fish drops back
-                // past it): the world-z filter must still select it.
-                fishGo.transform.position = cam.transform.position - fwd * 10f;
-                ringGo.transform.position = cam.transform.position - fwd * 5f;
+                Assert.IsTrue(ptr.ArrowVisible, "arrow hidden with a live objective");
+                Assert.AreEqual(0f, ptr.BearingDeg, 10f, "arrow does not point east at rightward ring");
+                ringGo.transform.position = fishGo.transform.position + cam.transform.up * 5f + fwd * 1f;
                 yield return null;
                 yield return null;
-                Assert.IsFalse(ptr.ChevronVisible, "chevron shown for behind-camera ring");
-                Assert.IsTrue(ptr.EdgeVisible, "edge hidden for behind-camera ring");
+                Assert.IsTrue(ptr.ArrowVisible, "arrow hidden with a live objective");
+                Assert.AreEqual(90f, ptr.BearingDeg, 10f, "arrow does not point north at upward ring");
+                ring.Consume();
+                yield return null;
+                yield return null;
+                Assert.IsFalse(ptr.ArrowVisible, "arrow stuck visible with no objective");
             }
             finally
             {

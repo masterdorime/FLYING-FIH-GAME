@@ -1029,27 +1029,27 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void PlaceEdgeKeepsOnScreenTargets()
+        public void GuideBearingPointsEastForRightwardTarget()
         {
-            var placement = TargetPointer.PlaceEdge(0.5f, 0.5f, false, 0.1f);
-            Assert.IsTrue(placement.OnScreen);
+            Assert.AreEqual(0f, TargetPointer.GuideBearingDeg(0.5f, 0.5f, 0.7f, 0.5f, false), 0.1f);
         }
 
         [Test]
-        public void PlaceEdgeClampsOffScreenTargets()
+        public void GuideBearingPointsNorthForUpwardTarget()
         {
-            // Far right of frame: clamped to the margin with an east bearing.
-            var placement = TargetPointer.PlaceEdge(1.5f, 0.5f, false, 0.1f);
-            Assert.IsFalse(placement.OnScreen);
-            Assert.AreEqual(0.9f, placement.Clamped.x, 0.001f);
-            Assert.AreEqual(0f, placement.BearingDeg, 0.1f);
+            Assert.AreEqual(90f, TargetPointer.GuideBearingDeg(0.5f, 0.5f, 0.5f, 0.7f, false), 0.1f);
         }
 
         [Test]
-        public void PlaceEdgeFlipsTargetsBehindCamera()
+        public void GuideBearingPointsDiagonal()
         {
-            var placement = TargetPointer.PlaceEdge(0.5f, 0.5f, true, 0.1f);
-            Assert.IsFalse(placement.OnScreen);
+            Assert.AreEqual(45f, TargetPointer.GuideBearingDeg(0.5f, 0.5f, 0.7f, 0.7f, false), 0.1f);
+        }
+
+        [Test]
+        public void GuideBearingFlipsTargetsBehindCamera()
+        {
+            Assert.AreEqual(180f, TargetPointer.GuideBearingDeg(0.5f, 0.5f, 0.7f, 0.5f, true), 0.1f);
         }
     }
 }

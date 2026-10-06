@@ -187,9 +187,10 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   past rings and coins with no indication where to turn.
 - **Why:** playtest: coins/rings get missed with no direction to follow.
 - **New:** spawner query picks nearest untriggered ring ahead, else
-  nearest uncollected coin ahead (ahead-only, never backward); hybrid
-  visual — billboarded chevron over on-screen targets (yellow ring /
-  white coin, distance-faded), screen-edge bearing arrow off-screen.
+  nearest uncollected coin ahead (ahead-only, never backward); one
+  MMO-style guide arrow floating above the fish, always rotated to the
+  screen-space bearing of the objective (yellow ring / white coin,
+  distance-faded, hidden with no objective or fish off-camera).
   Judging, gauge, scoring, and difficulty untouched. Full HUD reskin
   stays M5.
 
