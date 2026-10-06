@@ -140,6 +140,18 @@ high-score persistence (M5 saves), prefabs for chunks, multiplayer.
   to 100–125m backdrop. Base sink retuned 2→0.5 so capped launches
   still fly   ~60s+. Structural band edges (like the pitch cone).
 
+## Change record — coin vacuum + magnet at speed (§34.1, approved)
+
+- **Old:** flat 2m pickup disc at every speed; at 73u/s with wide air
+  turns, coins slipped past laterally uncatchable.
+- **Why:** playtest: coins impossible to collect on high speed.
+- **New:** pickup disc grows with speed (`CoinPickupBase` 2m +
+  `CoinMagnetPerSpeed` 0.05 × speed), plus a visible magnet —
+  uncollected coins inside `CoinMagnetRadius` (8m) drift to the fish at
+  `CoinMagnetSpeed` (20u/s) on the live path only (deterministic
+  evaluation untouched). Rings keep their fixed trigger. Score drift
+  accepted (more coins collected).
+
 ## Change record — coin trails lead into rings (§34.1, approved)
 
 - **Old:** coin trails were placed on independent even-spread formulas;

@@ -37,6 +37,13 @@ namespace FlyingFishMomentum
         // M4 tune lock (R3): reverted to spec 0.4x/1.2s (was 0.25/2 testing tune).
         public float ChargeSlowScale = 0.4f;
         public float ChargeSlowDuration = 1.2f;
+        // Coin vacuum + magnet (high-speed collectability): the pickup
+        // disc grows with speed, and nearby coins visibly drift toward
+        // the fish. Rings keep their fixed trigger (deliberate aim).
+        public float CoinPickupBase = 2f;
+        public float CoinMagnetPerSpeed = 0.05f;
+        public float CoinMagnetRadius = 8f;
+        public float CoinMagnetSpeed = 20f;
 
         public float DeltaFor(TimingResult r, FlightTier t)
         {

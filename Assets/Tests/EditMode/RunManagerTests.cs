@@ -876,5 +876,68 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.GreaterOrEqual(maxX - minX, 6f, "trail runs straight");
             }
         }
+
+        private static void NewPickupSetup(
+            out TimingPromptSpawner spawner,
+            out PlayerMomentumController momentum,
+            out Scoring.CoinPickup coin,
+            List<GameObject> spawned)
+        {
+            var spawnerGo = new GameObject("vacuumSpawner");
+            spawned.Add(spawnerGo);
+            spawner = spawnerGo.AddComponent<TimingPromptSpawner>();
+            var mgo = new GameObject("vacuumMomentum");
+            spawned.Add(mgo);
+            momentum = mgo.AddComponent<PlayerMomentumController>();
+            var mom = ScriptableObject.CreateInstance<MomentumSettings>();
+            mom.MinSpeed = 5f;
+            var timing = ScriptableObject.CreateInstance<TimingSettings>();
+            momentum.Configure(mom, timing);
+            momentum.SetLimits(100f, 120f);
+            spawner.Configure(null, momentum, null, timing, mom, null, null);
+            var cgo = new GameObject("vacuumCoin");
+            spawned.Add(cgo);
+            coin = cgo.AddComponent<Scoring.CoinPickup>();
+            coin.transform.position = new Vector3(0f, 0f, 5f);
+            spawner.SetCoins(new List<Scoring.CoinPickup> { coin });
+        }
+
+        [Test]
+        public void HighSpeedOffsetCollects()
+        {
+            // Coins are uncatchable at speed with a flat 2m disc: the
+            // pickup window must grow with speed. A segment passing 4m
+            // lateral collects at 73u/s, but not at 10u/s.
+            NewPickupSetup(out var spawner, out var momentum, out var coin, _spawned);
+            momentum.CurrentSpeed = 73f;
+            spawner.CheckCoinPickup(0f, new Vector3(4f, 0f, 0f));
+            spawner.CheckCoinPickup(0.1f, new Vector3(4f, 0f, 10f));
+            Assert.IsTrue(coin.Collected, "fast lateral pass missed the coin");
+            coin.Reset();
+            momentum.CurrentSpeed = 10f;
+            spawner.CheckCoinPickup(1f, new Vector3(4f, 0f, 0f));
+            spawner.CheckCoinPickup(1.1f, new Vector3(4f, 0f, 10f));
+            Assert.IsFalse(coin.Collected, "slow pass should not vacuum");
+        }
+
+        [Test]
+        public void MagnetPullsNearbyCoins()
+        {
+            // Visible magnet: uncollected coins inside the magnet radius
+            // drift toward the fish; collected and far coins stay put.
+            NewPickupSetup(out var spawner, out _, out var coin, _spawned);
+            var start = coin.transform.position;
+            spawner.AttractCoins(new Vector3(0f, 0f, 0f), 0.1f);
+            float after = Vector3.Distance(new Vector3(0f, 0f, 0f), coin.transform.position);
+            Assert.Less(after, Vector3.Distance(new Vector3(0f, 0f, 0f), start), "coin did not drift");
+            Assert.Greater(after, 0f, "coin snapped instead of drifting");
+            coin.transform.position = new Vector3(0f, 0f, 50f);
+            spawner.AttractCoins(new Vector3(0f, 0f, 0f), 1f);
+            Assert.AreEqual(50f, coin.transform.position.z, 0.001f, "far coin moved");
+            coin.Collect();
+            coin.transform.position = new Vector3(0f, 0f, 5f);
+            spawner.AttractCoins(new Vector3(0f, 0f, 0f), 1f);
+            Assert.AreEqual(5f, coin.transform.position.z, 0.001f, "collected coin moved");
+        }
     }
 }

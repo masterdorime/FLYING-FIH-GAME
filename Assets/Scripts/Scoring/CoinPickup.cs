@@ -20,6 +20,17 @@ namespace FlyingFishMomentum.Scoring
                 r.enabled = false;
         }
 
+        // Magnet pull (M4 coin vacuum): drift toward the fish without
+        // breaking the bob — the baseline follows so the visual stays
+        // coherent. Spawner-owned movement keeps taps deterministic.
+        public void MagnetTo(Vector3 target, float maxStep)
+        {
+            if (Collected || maxStep <= 0f) return;
+            transform.position = Vector3.MoveTowards(transform.position, target, maxStep);
+            _baseY = transform.position.y;
+            _armed = true;
+        }
+
         // Pooled reuse (M4 ChunkBuilder): clear the collected flag,
         // re-arm the bob from the new position, re-enable renderers.
         public void Reset()

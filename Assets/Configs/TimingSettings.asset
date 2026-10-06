@@ -47,3 +47,7 @@ MonoBehaviour:
   ChargeJackpot: 2
   ChargeSlowScale: 0.4
   ChargeSlowDuration: 1.2
+  CoinPickupBase: 2
+  CoinMagnetPerSpeed: 0.05
+  CoinMagnetRadius: 8
+  CoinMagnetSpeed: 20

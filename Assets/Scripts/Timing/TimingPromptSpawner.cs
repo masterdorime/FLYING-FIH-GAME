@@ -153,23 +153,41 @@ namespace FlyingFishMomentum
             _coins = coins ?? new List<CoinPickup>();
         }
 
-        // Coin trails: same swept-segment pattern as rings (generous 2m
-        // window for feel), own position history so ring/coin cadences
-        // never share a stale segment.
+        // Coin trails: swept-segment pickup whose disc grows with speed
+        // (vacuum), own position history so ring/coin cadences never
+        // share a stale segment.
         public void CheckCoinPickup(float now, Vector3 playerPos)
         {
             if (_coins == null) return;
+            float radius = 2f;
+            if (_timing != null && _momentum != null)
+                radius = _timing.CoinPickupBase + _timing.CoinMagnetPerSpeed * _momentum.CurrentSpeed;
             Vector3 prev = _hasCoinPos ? _lastCoinPos : playerPos;
             _lastCoinPos = playerPos;
             _hasCoinPos = true;
             foreach (var coin in _coins)
             {
                 if (coin == null || coin.Collected) continue;
-                if (SegmentPassesDisc(prev, playerPos, coin.transform.position, 2f))
+                if (SegmentPassesDisc(prev, playerPos, coin.transform.position, radius))
                 {
                     coin.Collect();
                     if (_score != null) _score.AddCoins(1);
                 }
+            }
+        }
+
+        // Visible magnet (live Update path only, never the deterministic
+        // pickup evaluation above): uncollected coins inside the magnet
+        // radius drift toward the fish so fast passes still pay.
+        public void AttractCoins(Vector3 playerPos, float dt)
+        {
+            if (_timing == null || _coins == null || dt <= 0f) return;
+            foreach (var coin in _coins)
+            {
+                if (coin == null || coin.Collected) continue;
+                float d = Vector3.Distance(playerPos, coin.transform.position);
+                if (d < _timing.CoinMagnetRadius && d > 0.001f)
+                    coin.MagnetTo(playerPos, _timing.CoinMagnetSpeed * dt);
             }
         }
 
@@ -280,6 +298,7 @@ namespace FlyingFishMomentum
                 _lastMoveVec = moveVec;
                 CheckRingTrigger(Time.time, _movement.transform.position);
                 CheckCoinPickup(Time.time, _movement.transform.position);
+                AttractCoins(_movement.transform.position, Time.deltaTime);
             }
             Tick(Time.time, Time.deltaTime,
                 _momentum.CurrentSpeed,
