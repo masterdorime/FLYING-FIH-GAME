@@ -217,9 +217,7 @@ namespace FlyingFishMomentum.Run
                 go.transform.localScale = new Vector3(80f, 40f, 30f);
                 var col = go.GetComponent<Collider>();
                 if (col != null) Object.DestroyImmediate(col);
-                var mat = new Material(Shader.Find("Standard"));
-                mat.color = new Color(0.16f, 0.2f, 0.3f);
-                go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                go.GetComponent<MeshRenderer>().sharedMaterial = SilhouetteMaterial;
                 _silhouettes.Add(go);
             }
         }
@@ -254,10 +252,16 @@ namespace FlyingFishMomentum.Run
             // would turn the sea opaque and hide underwater gameplay.
             var water = WaterMaterial.color;
             WaterMaterial.color = new Color(waterTint.r, waterTint.g, waterTint.b, water.a);
-            if (skin != null && _cloudMat != null)
+            if (skin != null)
             {
-                var cloud = _cloudMat.color;
-                _cloudMat.color = new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a);
+                RingMaterial.color = skin.RingTint;
+                CoinMaterial.color = skin.CoinTint;
+                SilhouetteMaterial.color = skin.SilhouetteColor;
+                if (_cloudMat != null)
+                {
+                    var cloud = _cloudMat.color;
+                    _cloudMat.color = new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a);
+                }
             }
         }
 
@@ -782,6 +786,23 @@ namespace FlyingFishMomentum.Run
                     _ringMat.renderQueue = 3000;
                 }
                 return _ringMat;
+            }
+        }
+
+        private Material _silhouetteMat;
+
+        // One shared slab material (was one instance per slab): skinned
+        // moods re-tint it, legacy keeps the default dusk blue.
+        private Material SilhouetteMaterial
+        {
+            get
+            {
+                if (_silhouetteMat == null)
+                {
+                    _silhouetteMat = new Material(Shader.Find("Standard"));
+                    _silhouetteMat.color = new Color(0.16f, 0.2f, 0.3f);
+                }
+                return _silhouetteMat;
             }
         }
 

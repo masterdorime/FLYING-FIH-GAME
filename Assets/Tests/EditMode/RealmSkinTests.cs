@@ -153,5 +153,28 @@ namespace FlyingFishMomentum.Tests.EditMode
                 if (c.name.StartsWith("ChunkShell_")) n++;
             return n;
         }
+
+        [Test]
+        public void ApplyMood_Skin_TintsPromptsSilhouettesAndCloud()
+        {
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.SkyPanorama = new Texture2D(4, 2);
+            skin.RingTint = Color.magenta; skin.CoinTint = Color.cyan;
+            skin.SilhouetteColor = Color.black; skin.CloudTint = Color.white;
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Storm"; spec.Skin = skin;
+            spec.Length = 500f; spec.RingCount = 1; spec.RingSpacing = 150f;
+            spec.CoinsPerTrail = 1;
+            try
+            {
+                builder.BuildChunk(spec, 0f, 3);
+                var ringMat = builder.Rings[0].GetComponent<LineRenderer>().sharedMaterial;
+                Assert.AreEqual(Color.magenta, ringMat.color);
+                var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
+                Assert.AreEqual(Color.cyan, gem.sharedMaterial.color);
+            }
+            finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
+        }
     }
 }
