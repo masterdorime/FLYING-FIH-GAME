@@ -245,13 +245,20 @@ public static class VisualVerify
                 Height = 70f, ShellName = "nature-rock_tallC" },
         };
         var errors = layout.Validate(spec);
-        foreach (var e in errors) Debug.LogWarning("[SampleLayout] " + e);
+        if (errors.Count > 0)
+        {
+            foreach (var e in errors) Debug.LogError("[SampleLayout] " + e);
+            Object.DestroyImmediate(layout);
+            return;
+        }
         spec.Layout = layout; // in-memory only: the scene is never saved
-        builder.BuildChunk(spec, 2000f, 7);
         var camGo = new GameObject("VerifyCam");
         var cam = camGo.AddComponent<Camera>();
         cam.farClipPlane = 4000f;
         var rt = new RenderTexture(Width, Height, 24);
+        try
+        {
+        builder.BuildChunk(spec, 2000f, 7);
         System.IO.Directory.CreateDirectory("Temp/VisualVerify");
         var ringMark = new VisualVerifyPlan.Bookmark
             { Name = "showcase-ring", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstRing };
@@ -261,9 +268,14 @@ public static class VisualVerify
             { Name = "showcase-arch", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstArch };
         Frame(cam, builder, archMark, 2000f, 0, 0, 0);
         Shoot(cam, rt, "Temp/VisualVerify/showcase-arch.png");
-        Object.DestroyImmediate(camGo);
-        Object.DestroyImmediate(rt);
-        spec.Layout = null;
+        }
+        finally
+        {
+            spec.Layout = null;
+            Object.DestroyImmediate(layout);
+            Object.DestroyImmediate(camGo);
+            Object.DestroyImmediate(rt);
+        }
     }
 
     // W1 verify, part 2: the circled swim ring must be one of the

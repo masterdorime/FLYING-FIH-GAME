@@ -142,6 +142,12 @@ namespace FlyingFishMomentum.Run
             foreach (var e in arches)
             {
                 CheckPos(e.Id, "arch", e.Anchor, spec, errors);
+                // The anchor is only the gate center: pillars land ±8x
+                // and the lintel +12y, so validate the built volumes —
+                // an in-bounds anchor can still stage cubes out of band.
+                CheckPos(e.Id + ".pillar", "arch", e.Anchor + new Vector3(-8f, 0f, 0f), spec, errors);
+                CheckPos(e.Id + ".pillar", "arch", e.Anchor + new Vector3(8f, 0f, 0f), spec, errors);
+                CheckPos(e.Id + ".lintel", "arch", e.Anchor + new Vector3(0f, 12f, 0f), spec, errors);
                 CheckShell(spec, ShellKind.Pillar, e.PillarShell, e.Id, errors);
                 CheckShell(spec, ShellKind.Lintel, e.LintelShell, e.Id, errors);
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' pillar",
@@ -185,7 +191,8 @@ namespace FlyingFishMomentum.Run
                 errors.Add("'" + id + "' shell '" + name + "' does not resolve in " + kind + " set");
         }
 
-        private static bool IsFinite(Vector3 v)
+        // Shared finite check (builder reuses it for its crash-guard subset).
+        public static bool IsFinite(Vector3 v)
         {
             return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)
                 || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));

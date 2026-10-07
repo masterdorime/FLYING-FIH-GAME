@@ -453,7 +453,11 @@ namespace FlyingFishMomentum.Run
         // Showcase chunk: hand-placed layout. Placement mirrors the
         // procedural order (arches, islands, spires) so list shapes match.
         // Derived content (coins, decor) runs on the layout-fixed seed:
-        // the same chunk streams identically every time.
+        // the same chunk streams identically every time. Runtime guards
+        // below are deliberately a crash-guard subset (finite values +
+        // resolvable shells): full policy (bounds, caps, clearance) is
+        // enforced by ChunkLayout.Validate, which the editor tool runs as
+        // the ship-gate before a layout can stream.
         private void BuildLayoutContent(ChunkSpec spec, ChunkLayout layout, GameObject root, float zStart)
         {
             var lrng = new System.Random(layout.Seed);
@@ -461,7 +465,7 @@ namespace FlyingFishMomentum.Run
             var rings = layout.Rings ?? new ChunkLayout.RingEntry[0];
             foreach (var e in rings)
             {
-                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position))
+                if (string.IsNullOrEmpty(e.Id) || !ChunkLayout.IsFinite(e.Position))
                 {
                     Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid ring.");
                     continue;
@@ -477,7 +481,7 @@ namespace FlyingFishMomentum.Run
             var arches = layout.Arches ?? new ChunkLayout.ArchEntry[0];
             foreach (var e in arches)
             {
-                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Anchor))
+                if (string.IsNullOrEmpty(e.Id) || !ChunkLayout.IsFinite(e.Anchor))
                 {
                     Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid arch.");
                     continue;
@@ -497,7 +501,7 @@ namespace FlyingFishMomentum.Run
             var islands = layout.Islands ?? new ChunkLayout.IslandEntry[0];
             foreach (var e in islands)
             {
-                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position) || !IsFinite(e.Scale)
+                if (string.IsNullOrEmpty(e.Id) || !ChunkLayout.IsFinite(e.Position) || !ChunkLayout.IsFinite(e.Scale)
                     || e.Scale.x < 0.1f || e.Scale.y < 0.1f || e.Scale.z < 0.1f)
                 {
                     Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid island '" + e.Id + "'.");
@@ -516,7 +520,7 @@ namespace FlyingFishMomentum.Run
             var spires = layout.Spires ?? new ChunkLayout.SpireEntry[0];
             foreach (var e in spires)
             {
-                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position) || !(e.Height >= 1f))
+                if (string.IsNullOrEmpty(e.Id) || !ChunkLayout.IsFinite(e.Position) || !(e.Height >= 1f))
                 {
                     Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid spire '" + e.Id + "'.");
                     continue;
@@ -532,12 +536,6 @@ namespace FlyingFishMomentum.Run
                     e.Height, prefab));
             }
             PlaceDecorSet(root, spec, zStart, lrng);
-        }
-
-        private static bool IsFinite(Vector3 v)
-        {
-            return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)
-                || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
         }
 
         // Realm blend 0..1: ocean below RealmLowY, cloud-sea above RealmHighY.
