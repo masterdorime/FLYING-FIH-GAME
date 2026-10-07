@@ -204,6 +204,68 @@ public static class VisualVerify
         }
     }
 
+    // Phase (i) proof: builds one showcase chunk from an in-memory
+    // layout (real Gauntlet skin + prefab names, no committed content)
+    // and shoots ring + arch frames. Run: unity run . --
+    // -executeMethod VisualVerify.CaptureSampleLayout
+    public static void CaptureSampleLayout()
+    {
+        EditorSceneManager.OpenScene(M1Scene);
+        var builder = Object.FindFirstObjectByType<ChunkBuilder>();
+        if (builder == null)
+        {
+            Debug.LogError("[VisualVerify] no ChunkBuilder in " + M1Scene);
+            return;
+        }
+        var spec = AssetDatabase.LoadAssetAtPath<ChunkSpec>("Assets/Configs/ChunkSpec_Gauntlet.asset");
+        if (spec == null) { Debug.LogError("[VisualVerify] missing Gauntlet spec"); return; }
+        var layout = ScriptableObject.CreateInstance<ChunkLayout>();
+        layout.LayoutId = "ShowcaseSample";
+        layout.Seed = 4;
+        layout.Rings = new ChunkLayout.RingEntry[]
+        {
+            new ChunkLayout.RingEntry { Id = "r1", Position = new Vector3(0f, -3f, 150f) },
+            new ChunkLayout.RingEntry { Id = "r2", Position = new Vector3(4f, -3f, 300f) },
+        };
+        layout.Arches = new ChunkLayout.ArchEntry[]
+        {
+            new ChunkLayout.ArchEntry { Id = "a1", Anchor = new Vector3(0f, -3f, 150f),
+                PillarShell = "tower-base", LintelShell = "castle-gate" },
+        };
+        layout.Islands = new ChunkLayout.IslandEntry[]
+        {
+            new ChunkLayout.IslandEntry { Id = "i1", Position = new Vector3(-15f, 5f, 450f),
+                Scale = new Vector3(10f, 25f, 10f), ShellName = "nature-cliff_rock" },
+            new ChunkLayout.IslandEntry { Id = "i2", Position = new Vector3(15f, 5f, 450f),
+                Scale = new Vector3(10f, 25f, 10f), ShellName = "nature-platform_grass" },
+        };
+        layout.Spires = new ChunkLayout.SpireEntry[]
+        {
+            new ChunkLayout.SpireEntry { Id = "s1", Position = new Vector3(13f, 55f, 600f),
+                Height = 70f, ShellName = "nature-rock_tallC" },
+        };
+        var errors = layout.Validate(spec);
+        foreach (var e in errors) Debug.LogWarning("[SampleLayout] " + e);
+        spec.Layout = layout; // in-memory only: the scene is never saved
+        builder.BuildChunk(spec, 2000f, 7);
+        var camGo = new GameObject("VerifyCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        var rt = new RenderTexture(Width, Height, 24);
+        System.IO.Directory.CreateDirectory("Temp/VisualVerify");
+        var ringMark = new VisualVerifyPlan.Bookmark
+            { Name = "showcase-ring", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstRing };
+        Frame(cam, builder, ringMark, 2000f, 0, 0, 0);
+        Shoot(cam, rt, "Temp/VisualVerify/showcase-ring.png");
+        var archMark = new VisualVerifyPlan.Bookmark
+            { Name = "showcase-arch", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstArch };
+        Frame(cam, builder, archMark, 2000f, 0, 0, 0);
+        Shoot(cam, rt, "Temp/VisualVerify/showcase-arch.png");
+        Object.DestroyImmediate(camGo);
+        Object.DestroyImmediate(rt);
+        spec.Layout = null;
+    }
+
     // W1 verify, part 2: the circled swim ring must be one of the
     // watercraft FBX but bounds alone can't tell which (buoy reads
     // tall, buoy-flag has a pole). Stage buoy / buoy-flag / gate side

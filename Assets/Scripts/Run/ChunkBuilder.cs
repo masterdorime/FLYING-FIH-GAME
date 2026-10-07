@@ -324,6 +324,18 @@ namespace FlyingFishMomentum.Run
             root.transform.SetParent(transform, false);
             _roots.Add(root);
 
+            // Showcase chunk: hand-placed layout instead of procedural
+            // dice. Same place functions, same colliders/judging; invalid
+            // entries are skipped with an error (the editor tool validates
+            // before shipping — runtime never crashes on bad data).
+            if (spec.Layout != null)
+            {
+                BuildLayoutContent(spec, spec.Layout, root, zStart);
+                Physics.SyncTransforms();
+                ResolvePromptClearance();
+                return;
+            }
+
             float spacing = Mathf.Max(spec.RingSpacing, MinRingSpacing);
             int swimRings = Mathf.RoundToInt(spec.RingCount * Mathf.Clamp01(spec.RingSwimFraction));
             var waterRings = new System.Collections.Generic.List<UnityEngine.Vector3>();
@@ -343,21 +355,7 @@ namespace FlyingFishMomentum.Run
             // along -z into the ring mouth on the ring's own lane, x
             // converging from a random start with the usual weave.
             for (int k = 0; k < spec.RingCount; k++)
-            {
-                Vector3 rp = waterRings[k];
-                float startX = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
-                for (int i = 0; i < spec.CoinsPerTrail; i++)
-                {
-                    float t = spec.CoinsPerTrail == 1 ? 1f : (float)i / (spec.CoinsPerTrail - 1);
-                    var coin = TakeCoin();
-                    coin.transform.SetParent(root.transform, false);
-                    coin.transform.position = new Vector3(
-                        Mathf.Lerp(startX, rp.x, t) + WeaveAmp * Mathf.Sin(i * WeaveFreq),
-                        rp.y,
-                        rp.z - (spec.CoinsPerTrail - 1 - i) * CoinSpacing);
-                    _coins.Add(coin);
-                }
-            }
+                PlaceCoinTrail(root, waterRings[k], spec, rng);
 
             // Gauntlet gates: rock arches anchored over swim ring lines —
             // pillars flank the ring, lintel clears it above. All blocking;
@@ -403,21 +401,7 @@ namespace FlyingFishMomentum.Run
                 skyRings.Add(ring.transform.position);
             }
             for (int k = 0; k < spec.SkyRingCount; k++)
-            {
-                Vector3 rp = skyRings[k];
-                float startX = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
-                for (int i = 0; i < spec.CoinsPerTrail; i++)
-                {
-                    float t = spec.CoinsPerTrail == 1 ? 1f : (float)i / (spec.CoinsPerTrail - 1);
-                    var coin = TakeCoin();
-                    coin.transform.SetParent(root.transform, false);
-                    coin.transform.position = new Vector3(
-                        Mathf.Lerp(startX, rp.x, t) + WeaveAmp * Mathf.Sin(i * WeaveFreq),
-                        rp.y,
-                        rp.z - (spec.CoinsPerTrail - 1 - i) * CoinSpacing);
-                    _coins.Add(coin);
-                }
-            }
+                PlaceCoinTrail(root, skyRings[k], spec, rng);
             for (int i = 0; i < spec.SkySpireCount; i++)
             {
                 float z = zStart + spec.Length * (i + 1f) / (spec.SkySpireCount + 1f)
@@ -430,17 +414,130 @@ namespace FlyingFishMomentum.Run
             // lanes (|x| >= 25 or sunk to the seabed) and never colliding,
             // so decor carries no safety burden. Not pooled — primitives
             // are cheap to rebuild at streaming cadence.
-            for (int i = 0; i < spec.DecorCount; i++)
-            {
-                float z = zStart + spec.Length * (i + 1f) / (spec.DecorCount + 1f);
-                _decor.Add(PlaceDecor(root, spec.DecorKind, z, rng));
-            }
+            PlaceDecorSet(root, spec, zStart, rng);
 
             // Fresh transforms leave collider bounds stale until the next
             // physics step (ledger precedent): sync so the clearance pass
             // below reads true island volumes in EditMode and on frame one.
             Physics.SyncTransforms();
             ResolvePromptClearance();
+        }
+
+        // One coin trail per ring, shared by procedural and layout chunks
+        // (extracted verbatim: same draws, same math, suite-guarded).
+        private void PlaceCoinTrail(GameObject root, Vector3 rp, ChunkSpec spec, System.Random rng)
+        {
+            float startX = Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble());
+            for (int i = 0; i < spec.CoinsPerTrail; i++)
+            {
+                float t = spec.CoinsPerTrail == 1 ? 1f : (float)i / (spec.CoinsPerTrail - 1);
+                var coin = TakeCoin();
+                coin.transform.SetParent(root.transform, false);
+                coin.transform.position = new Vector3(
+                    Mathf.Lerp(startX, rp.x, t) + WeaveAmp * Mathf.Sin(i * WeaveFreq),
+                    rp.y,
+                    rp.z - (spec.CoinsPerTrail - 1 - i) * CoinSpacing);
+                _coins.Add(coin);
+            }
+        }
+
+        private void PlaceDecorSet(GameObject root, ChunkSpec spec, float zStart, System.Random rng)
+        {
+            for (int i = 0; i < spec.DecorCount; i++)
+            {
+                float z = zStart + spec.Length * (i + 1f) / (spec.DecorCount + 1f);
+                _decor.Add(PlaceDecor(root, spec.DecorKind, z, rng));
+            }
+        }
+
+        // Showcase chunk: hand-placed layout. Placement mirrors the
+        // procedural order (arches, islands, spires) so list shapes match.
+        // Derived content (coins, decor) runs on the layout-fixed seed:
+        // the same chunk streams identically every time.
+        private void BuildLayoutContent(ChunkSpec spec, ChunkLayout layout, GameObject root, float zStart)
+        {
+            var lrng = new System.Random(layout.Seed);
+            var waterRings = new System.Collections.Generic.List<UnityEngine.Vector3>();
+            var rings = layout.Rings ?? new ChunkLayout.RingEntry[0];
+            foreach (var e in rings)
+            {
+                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position))
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid ring.");
+                    continue;
+                }
+                var ring = TakeRing();
+                ring.transform.SetParent(root.transform, false);
+                ring.transform.position = new Vector3(e.Position.x, e.Position.y, zStart + e.Position.z);
+                _rings.Add(ring);
+                waterRings.Add(ring.transform.position);
+            }
+            foreach (var rp in waterRings)
+                PlaceCoinTrail(root, rp, spec, lrng);
+            var arches = layout.Arches ?? new ChunkLayout.ArchEntry[0];
+            foreach (var e in arches)
+            {
+                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Anchor))
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid arch.");
+                    continue;
+                }
+                Vector3 anchor = new Vector3(e.Anchor.x, e.Anchor.y, zStart + e.Anchor.z);
+                GameObject pillarPrefab = ChunkLayout.ResolveShell(spec, ChunkLayout.ShellKind.Pillar, e.PillarShell);
+                GameObject lintelPrefab = ChunkLayout.ResolveShell(spec, ChunkLayout.ShellKind.Lintel, e.LintelShell);
+                if (pillarPrefab == null || lintelPrefab == null)
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' arch '" + e.Id + "' shell does not resolve.");
+                    continue;
+                }
+                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel", lintelPrefab));
+            }
+            var islands = layout.Islands ?? new ChunkLayout.IslandEntry[0];
+            foreach (var e in islands)
+            {
+                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position) || !IsFinite(e.Scale)
+                    || e.Scale.x < 0.1f || e.Scale.y < 0.1f || e.Scale.z < 0.1f)
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid island '" + e.Id + "'.");
+                    continue;
+                }
+                GameObject prefab = ChunkLayout.ResolveShell(spec, ChunkLayout.ShellKind.Island, e.ShellName);
+                if (prefab == null)
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' island '" + e.Id + "' shell does not resolve.");
+                    continue;
+                }
+                _islands.Add(PlaceRock(root,
+                    new Vector3(e.Position.x, e.Position.y, zStart + e.Position.z),
+                    e.Scale, "ChunkIsland", prefab));
+            }
+            var spires = layout.Spires ?? new ChunkLayout.SpireEntry[0];
+            foreach (var e in spires)
+            {
+                if (string.IsNullOrEmpty(e.Id) || !IsFinite(e.Position) || !(e.Height >= 1f))
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' skips invalid spire '" + e.Id + "'.");
+                    continue;
+                }
+                GameObject prefab = ChunkLayout.ResolveShell(spec, ChunkLayout.ShellKind.Spire, e.ShellName);
+                if (prefab == null)
+                {
+                    Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' spire '" + e.Id + "' shell does not resolve.");
+                    continue;
+                }
+                _spires.Add(PlaceSpire(root,
+                    new Vector3(e.Position.x, e.Position.y, zStart + e.Position.z),
+                    e.Height, prefab));
+            }
+            PlaceDecorSet(root, spec, zStart, lrng);
+        }
+
+        private static bool IsFinite(Vector3 v)
+        {
+            return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)
+                || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
         }
 
         // Realm blend 0..1: ocean below RealmLowY, cloud-sea above RealmHighY.

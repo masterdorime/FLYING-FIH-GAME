@@ -39,5 +39,6 @@ namespace FlyingFishMomentum.Run
         // Visual reconstruction: presentation skin for this type. Null
         // keeps the legacy primitive tint path (fallback pinned by tests).
         public RealmSkin Skin;
+        public ChunkLayout Layout; // optional: hand-placed showcase chunk (null = procedural)
     }
 }
