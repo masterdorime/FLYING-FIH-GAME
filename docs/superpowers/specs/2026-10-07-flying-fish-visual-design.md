@@ -54,6 +54,8 @@ public class RealmSkin : ScriptableObject {
     public Color WaterTint;             // RGB only (alpha stays 0.6)
     public Color CloudTint = new Color(0.95f, 0.97f, 1f);
     public Color SilhouetteColor = new Color(0.16f, 0.2f, 0.3f);
+    public Color RingTint = new Color(1f, 0.85f, 0.2f); // prompt palette
+    public Color CoinTint = new Color(1f, 0.75f, 0.15f);
     public GameObject[] DecorPrefabs;   // seeded pick, decor pool
     public GameObject[] IslandPrefabs;  // visual shells over island colliders
     public GameObject[] SpirePrefabs;   // visual shells over spire colliders
