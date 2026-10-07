@@ -40,6 +40,11 @@ namespace FlyingFishMomentum.Run
         public const float CloudY = 35f;
         public const float CloudSize = 1200f;
         public const float CloudMaxAlpha = 0.95f;
+        // Ring prompt radius: model openings are fitted to this disc and
+        // centered on the ring position. Must match the swept check in
+        // TimingPromptSpawner.CheckRingTrigger (SegmentPassesDisc radius);
+        // change both together or visuals and judging disagree.
+        public const float RingRadius = 3f;
 
         private readonly List<ChargeRing> _rings = new List<ChargeRing>();
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
@@ -54,6 +59,9 @@ namespace FlyingFishMomentum.Run
         private readonly Queue<GameObject> _islandPool = new Queue<GameObject>();
         [SerializeField] private List<GameObject> _waterSegs = new List<GameObject>();
         [SerializeField] private List<GameObject> _seabedSegs = new List<GameObject>();
+        // Ring model prefab (watercraft gate). Wired once at scene build
+        // via Configure; null keeps the legacy LineRenderer path so old
+        // scenes and bare test builders still work.
         private List<float> _waterHalf = new List<float>();
         private List<float> _seabedHalf = new List<float>();
         private Material _ringMat;
@@ -82,6 +90,7 @@ namespace FlyingFishMomentum.Run
         // revision kept these transient: the rebuilt scene loaded with
         // empty segment lists and static water past 4000m).
         [SerializeField] private Renderer _skyRenderer;
+        [SerializeField] private GameObject _ringPrefab;
         public Transform SkyAnchor => _skyRenderer != null ? _skyRenderer.transform : null;
 
         public float FurthestContentZ
@@ -107,11 +116,12 @@ namespace FlyingFishMomentum.Run
         // Stores refs only: shared mood instances are assigned in Start
         // (runtime), never at build — build-time assignment of unsaved
         // instances does not survive save/load.
-        public void Configure(List<GameObject> waterSegs, List<GameObject> seabedSegs, Renderer skyRenderer = null)
+        public void Configure(List<GameObject> waterSegs, List<GameObject> seabedSegs, Renderer skyRenderer = null, GameObject ringPrefab = null)
         {
             _waterSegs = waterSegs ?? new List<GameObject>();
             _seabedSegs = seabedSegs ?? new List<GameObject>();
             _skyRenderer = skyRenderer;
+            _ringPrefab = ringPrefab;
             _waterHalf = Halves(_waterSegs);
             _seabedHalf = Halves(_seabedSegs);
         }
@@ -254,7 +264,8 @@ namespace FlyingFishMomentum.Run
             WaterMaterial.color = new Color(waterTint.r, waterTint.g, waterTint.b, water.a);
             if (skin != null)
             {
-                RingMaterial.color = skin.RingTint;
+                // Rings keep game-asset colors (§34.1): never tinted here,
+                // so one shared watercraft material serves rings and shells.
                 CoinMaterial.color = skin.CoinTint;
                 SilhouetteMaterial.color = skin.SilhouetteColor;
                 if (_cloudMat != null)
@@ -267,8 +278,8 @@ namespace FlyingFishMomentum.Run
             {
                 // Legacy specs never owned prompt dressing: restore the
                 // shared defaults so a skin->legacy transition can't leak
-                // the previous realm's tints.
-                RingMaterial.color = DefaultRingTint;
+                // the previous realm's tints. Rings are exempt (asset
+                // colors, see above); the legacy line keeps its lazy gold.
                 CoinMaterial.color = DefaultCoinTint;
                 SilhouetteMaterial.color = DefaultSilhouetteColor;
                 if (_cloudMat != null)
@@ -595,7 +606,6 @@ namespace FlyingFishMomentum.Run
 
         // Shared-material defaults (match the lazy initializers below):
         // the legacy mood path restores these so realm tints can't leak.
-        private static readonly Color DefaultRingTint = new Color(1f, 0.85f, 0.2f);
         private static readonly Color DefaultCoinTint = new Color(1f, 0.75f, 0.15f);
         private static readonly Color DefaultSilhouetteColor = new Color(0.16f, 0.2f, 0.3f);
         private static readonly Color DefaultCloudTint = new Color(0.95f, 0.97f, 1f);
@@ -789,6 +799,42 @@ namespace FlyingFishMomentum.Run
         private ChargeRing CreateRing()
         {
             var go = new GameObject("ChunkRing");
+            // Explicit injection (tests, scene wiring) wins; otherwise
+            // load the pipeline prefab. Still null (asset missing) falls
+            // through to the legacy line — never a null ring.
+            if (_ringPrefab == null)
+                _ringPrefab = Resources.Load<GameObject>("Ring");
+            if (_ringPrefab != null)
+            {
+                var visual = Object.Instantiate(_ringPrefab);
+                visual.name = "RingVisual_" + _ringPrefab.name;
+                // Combined bounds across the full prefab hierarchy,
+                // measured before parenting at the prefab's own origin.
+                var renderers = visual.GetComponentsInChildren<MeshRenderer>();
+                Bounds bounds = new Bounds(visual.transform.position, Vector3.zero);
+                bool any = false;
+                foreach (var r in renderers)
+                {
+                    if (r == null) continue;
+                    if (!any) { bounds = r.bounds; any = true; }
+                    else bounds.Encapsulate(r.bounds);
+                }
+                if (any)
+                {
+                    // Fit the opening to the judging disc: uniform scale
+                    // maps the outer height onto the disc diameter, bounds
+                    // centered on the ring origin (BuildChunk positions it
+                    // after TakeRing). Pooling never refits: Reset only
+                    // re-enables renderers, position is set per build.
+                    float s = bounds.size.y > 0f ? (RingRadius * 2f) / bounds.size.y : 1f;
+                    Vector3 p0 = visual.transform.position;
+                    visual.transform.SetParent(go.transform, false);
+                    visual.transform.localScale = Vector3.one * s;
+                    visual.transform.localPosition = -(bounds.center - p0) * s;
+                    return go.AddComponent<ChargeRing>();
+                }
+                Object.DestroyImmediate(visual);
+            }
             var line = go.AddComponent<LineRenderer>();
             const int points = 49;
             const float radius = 3f;

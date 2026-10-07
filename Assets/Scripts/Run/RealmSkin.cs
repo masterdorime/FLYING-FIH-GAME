@@ -15,7 +15,7 @@ namespace FlyingFishMomentum.Run
         public Color WaterTint;             // RGB only (alpha stays 0.6)
         public Color CloudTint = new Color(0.95f, 0.97f, 1f);
         public Color SilhouetteColor = new Color(0.16f, 0.2f, 0.3f);
-        public Color RingTint = new Color(1f, 0.85f, 0.2f); // prompt palette
+        public Color RingTint = new Color(1f, 0.85f, 0.2f); // reserved: rings use asset colors (§34.1), kept so existing .asset files still load
         public Color CoinTint = new Color(1f, 0.75f, 0.15f);
         public GameObject[] DecorPrefabs;   // seeded pick, decor pool
         public GameObject[] IslandPrefabs;  // visual shells over island colliders

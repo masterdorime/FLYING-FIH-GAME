@@ -16,6 +16,8 @@ public static class VisualImport
     private const string NatureDir = "Assets/ArtVendor/KenneyNature/Models/FBX format";
     private const string DecorDir = "Assets/Prefabs/Decor";
     private const string MatDir = "Assets/Materials";
+    private const string WatercraftDir = "Assets/ArtVendor/Kenney/Models/FBX format";
+    private const string WatercraftTex = WatercraftDir + "/Textures/colormap.png";
 
     private static readonly string[] PirateModels = new string[]
     {
@@ -77,9 +79,9 @@ public static class VisualImport
         int prefabs = 0;
         var prefabByName = new Dictionary<string, GameObject>();
         foreach (var baseName in PirateModels)
-            prefabByName[baseName] = BuildPrefab(PirateDir + "/" + baseName + ".fbx", baseName, mats["V1Pirate"], ref prefabs);
+            prefabByName[baseName] = BuildPrefab(PirateDir + "/" + baseName + ".fbx", baseName, mats["V1Pirate"], DecorDir, ref prefabs);
         foreach (var kv in NatureModels)
-            prefabByName[kv.Key] = BuildPrefab(NatureDir + "/" + kv.Key + ".fbx", "nature-" + kv.Key, mats[kv.Value], ref prefabs);
+            prefabByName[kv.Key] = BuildPrefab(NatureDir + "/" + kv.Key + ".fbx", "nature-" + kv.Key, mats[kv.Value], DecorDir, ref prefabs);
 
         BuildSkin("Lagoon", "skybox-day.png",
             new string[] { "tree_palm", "tree_palmTall", "tree_palmShort", "tree_palmBend", "palm-bend", "palm-straight", "palm-detailed-bend", "palm-detailed-straight", "patch-sand", "patch-sand-foliage", "ship-wreck" },
@@ -109,6 +111,7 @@ public static class VisualImport
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[VisualImport] done: " + prefabs + " prefabs, 4 skins.");
+        BuildRing();
     }
 
     private static Material GetOrCreateMaterial(string name, Color color, Texture2D tex)
@@ -126,7 +129,7 @@ public static class VisualImport
         return mat;
     }
 
-    private static GameObject BuildPrefab(string fbxPath, string prefabName, Material mat, ref int count)
+    private static GameObject BuildPrefab(string fbxPath, string prefabName, Material mat, string outDir, ref int count)
     {
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
         if (model == null)
@@ -167,11 +170,30 @@ public static class VisualImport
             for (int i = 0; i < slots.Length; i++) slots[i] = mat;
             renderer.sharedMaterials = slots;
         }
-        string prefabPath = DecorDir + "/" + prefabName + ".prefab";
+        string prefabPath = outDir + "/" + prefabName + ".prefab";
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
         Object.DestroyImmediate(go);
         count++;
         return prefab;
+    }
+
+    // W1: the ring prompt is the watercraft gate arch (user-approved
+    // model, verified opening faces ±z). Builds V1Watercraft (white +
+    // colormap, same pattern as pirate) and Assets/Resources/Ring.prefab.
+    // Resources (not Prefabs) so ChunkBuilder loads it at runtime with
+    // no scene rebuild; explicit Configure injection still wins for tests.
+    // Non-destructive: never touches DecorDir, safe to re-run alone.
+    [MenuItem("FlyingFish/Import Ring Prefab")]
+    public static void BuildRing()
+    {
+        var mat = GetOrCreateMaterial("V1Watercraft", new Color(1f, 1f, 1f),
+            AssetDatabase.LoadAssetAtPath<Texture2D>(WatercraftTex));
+        int count = 0;
+        Directory.CreateDirectory("Assets/Resources");
+        BuildPrefab(WatercraftDir + "/gate.fbx", "Ring", mat, "Assets/Resources", ref count);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("[VisualImport] ring done.");
     }
 
     private static void BuildSkin(string realm, string panoramaFile,

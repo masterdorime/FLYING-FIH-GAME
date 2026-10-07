@@ -169,6 +169,118 @@ public static class VisualVerify
         pos = target + offset;
     }
 
+    // W1 verify: identify the circled swim-ring model among the
+    // watercraft set without opening the Editor. Logs local-space
+    // mesh bounds per FBX: a torus ring reads as roughly equal bounds
+    // on two axes with a thin third (its plane), e.g. gate frames read
+    // wide/flat. Run: unity run . -- -executeMethod VisualVerify.ProbeWatercraft
+    public static void ProbeWatercraft()
+    {
+        string dir = "Assets/ArtVendor/Kenney/Models/FBX format";
+        string[] models = new string[]
+        {
+            "arrow-standing", "arrow", "buoy-flag", "buoy",
+            "cargo-container-a", "cargo-container-b", "cargo-container-c",
+            "cargo-pile-a", "cargo-pile-b", "gate-finish", "gate",
+            "ramp-wide", "ramp", "ship-cargo-a", "ship-cargo-b",
+            "ship-cargo-c", "ship-large", "ship-ocean-liner-small",
+            "ship-small-ghost", "ship-small",
+        };
+        foreach (var baseName in models)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(dir + "/" + baseName + ".fbx");
+            if (model == null) { Debug.LogWarning("[Probe] missing FBX: " + baseName); continue; }
+            var filters = model.GetComponentsInChildren<MeshFilter>();
+            foreach (var f in filters)
+            {
+                if (f == null || f.sharedMesh == null) continue;
+                var b = f.sharedMesh.bounds;
+                var rend = f.GetComponent<MeshRenderer>();
+                int slots = rend != null && rend.sharedMaterials != null ? rend.sharedMaterials.Length : 0;
+                Debug.Log("[Probe] " + baseName + " mesh=" + f.sharedMesh.name
+                    + " size=" + b.size.ToString("F2") + " center=" + b.center.ToString("F2")
+                    + " tris=" + (f.sharedMesh.triangles.Length / 3) + " slots=" + slots);
+            }
+        }
+    }
+
+    // W1 verify, part 2: the circled swim ring must be one of the
+    // watercraft FBX but bounds alone can't tell which (buoy reads
+    // tall, buoy-flag has a pole). Stage buoy / buoy-flag / gate side
+    // by side on the water and shoot one frame for visual ID:
+    // unity run . -- -executeMethod VisualVerify.ProbeCandidates
+    public static void ProbeCandidates()
+    {
+        string dir = "Assets/ArtVendor/Kenney/Models/FBX format";
+        EditorSceneManager.OpenScene(M1Scene);
+        StageCandidate(dir, "buoy", new Vector3(-8f, 0f, 2052f));
+        StageCandidate(dir, "buoy-flag", new Vector3(0f, 0f, 2052f));
+        StageCandidate(dir, "gate", new Vector3(9f, 0f, 2052f));
+        var camGo = new GameObject("ProbeCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 4f, 2034f);
+        cam.transform.LookAt(new Vector3(1f, 1f, 2052f));
+        var rt = new RenderTexture(Width, Height, 24);
+        Directory.CreateDirectory("Temp/VisualVerify");
+        Shoot(cam, rt, "Temp/VisualVerify/candidates.png");
+        Object.DestroyImmediate(camGo);
+        Object.DestroyImmediate(rt);
+    }
+
+    private static void StageCandidate(string dir, string baseName, Vector3 pos)
+    {
+        StageCandidate(dir, baseName, pos, null);
+    }
+
+    // Colored variant: paint every renderer slot with the set's colormap
+    // (white base, like the V1Pirate pipeline material) so ID frames show
+    // true Kenney colors instead of flat FBX diffuse.
+    private static void StageCandidate(string dir, string baseName, Vector3 pos, Texture2D colormap)
+    {
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(dir + "/" + baseName + ".fbx");
+        if (model == null) { Debug.LogWarning("[Probe] missing FBX: " + baseName); return; }
+        var go = Object.Instantiate(model);
+        go.name = "Probe_" + baseName;
+        go.transform.position = pos;
+        if (colormap != null)
+        {
+            var mat = new Material(Shader.Find("Standard"));
+            mat.color = Color.white;
+            mat.SetTexture("_MainTex", colormap);
+            foreach (var r in go.GetComponentsInChildren<MeshRenderer>())
+            {
+                var slots = r.sharedMaterials;
+                for (int i = 0; i < slots.Length; i++) slots[i] = mat;
+                r.sharedMaterials = slots;
+            }
+        }
+        Debug.Log("[Probe] staged " + baseName + " at " + pos.ToString());
+    }
+
+    // W1 verify, part 3: gate vs gate-finish in TRUE colors (colormap
+    // on) to match the user's circled orange/white ring:
+    // unity run . -- -executeMethod VisualVerify.ProbeGates
+    public static void ProbeGates()
+    {
+        string dir = "Assets/ArtVendor/Kenney/Models/FBX format";
+        var colormap = AssetDatabase.LoadAssetAtPath<Texture2D>(dir + "/Textures/colormap.png");
+        if (colormap == null) { Debug.LogError("[Probe] missing watercraft colormap"); return; }
+        EditorSceneManager.OpenScene(M1Scene);
+        StageCandidate(dir, "gate", new Vector3(-5f, 0f, 2052f), colormap);
+        StageCandidate(dir, "gate-finish", new Vector3(5f, 0f, 2052f), colormap);
+        var camGo = new GameObject("ProbeCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 3.5f, 2038f);
+        cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
+        var rt = new RenderTexture(Width, Height, 24);
+        Directory.CreateDirectory("Temp/VisualVerify");
+        Shoot(cam, rt, "Temp/VisualVerify/gates.png");
+        Object.DestroyImmediate(camGo);
+        Object.DestroyImmediate(rt);
+    }
+
     private static void Shoot(Camera cam, RenderTexture rt, string path)
     {
         cam.targetTexture = rt;

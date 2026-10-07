@@ -178,7 +178,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void ApplyMood_Skin_TintsPromptsSilhouettesAndCloud()
+        public void ApplyMood_Skin_TintsCoinsSilhouettesAndCloudSkipsRings()
         {
             var builder = NewBuilder();
             var skin = ScriptableObject.CreateInstance<RealmSkin>();
@@ -192,8 +192,13 @@ namespace FlyingFishMomentum.Tests.EditMode
             try
             {
                 builder.BuildChunk(spec, 0f, 3);
-                var ringMat = builder.Rings[0].GetComponent<LineRenderer>().sharedMaterial;
-                Assert.AreEqual(Color.magenta, ringMat.color);
+                // Rings use game-asset colors (§34.1): the mood tint path
+                // must not touch them — the shared pipeline material stays.
+                var pipeMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(
+                    "Assets/Materials/V1Watercraft.mat");
+                var mesh = builder.Rings[0].GetComponentInChildren<MeshRenderer>();
+                Assert.IsNotNull(mesh, "ring model missing");
+                Assert.AreSame(pipeMat, mesh.sharedMaterial, "ring material swapped or copied by mood");
                 var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
                 Assert.AreEqual(Color.cyan, gem.sharedMaterial.color);
             }
@@ -259,7 +264,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void ApplyMood_LegacySpec_RestoresDefaultTints()
+        public void ApplyMood_LegacySpec_RestoresCoinSilhouetteCloudDefaults()
         {
             var builder = NewBuilder();
             var skin = ScriptableObject.CreateInstance<RealmSkin>();
@@ -277,8 +282,13 @@ namespace FlyingFishMomentum.Tests.EditMode
             {
                 builder.BuildChunk(skinned, 0f, 3);
                 builder.ApplyMood(legacy);
-                var ringMat = builder.Rings[0].GetComponent<LineRenderer>().sharedMaterial;
-                AssertColor(new Color(1f, 0.85f, 0.2f), ringMat.color);
+                // A null-skin mood restores coin/silhouette/cloud defaults
+                // but never touches rings: asset colors, not defaults.
+                var mesh = builder.Rings[0].GetComponentInChildren<MeshRenderer>();
+                Assert.IsNotNull(mesh, "ring model missing");
+                var pipeMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(
+                    "Assets/Materials/V1Watercraft.mat");
+                Assert.AreSame(pipeMat, mesh.sharedMaterial, "ring material touched by mood");
                 var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
                 AssertColor(new Color(1f, 0.75f, 0.15f), gem.sharedMaterial.color);
                 Assert.IsNull(RenderSettings.skybox);
