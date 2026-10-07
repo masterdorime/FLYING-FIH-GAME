@@ -62,5 +62,27 @@ namespace FlyingFishMomentum.Tests.EditMode
             }
             finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
         }
+
+        [Test]
+        public void SkinAssets_ExistWithPanoramaAndPrefabs()
+        {
+            string[] realms = { "Lagoon", "Gauntlet", "Storm", "Sky" };
+            foreach (var r in realms)
+            {
+                var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>(
+                    "Assets/Configs/RealmSkin_" + r + ".asset");
+                Assert.IsNotNull(skin, "missing skin asset for " + r);
+                Assert.IsNotNull(skin.SkyPanorama, r + " panorama");
+                Assert.AreEqual(skin.SkyPanorama.width, skin.SkyPanorama.height * 2,
+                    r + " panorama is not 2:1 equirect");
+                Assert.IsNotNull(skin.DecorPrefabs, r + " decor set");
+                Assert.Greater(skin.DecorPrefabs.Length, 0, r + " decor empty");
+                foreach (var p in skin.DecorPrefabs)
+                {
+                    Assert.IsNotNull(p, r + " null prefab ref");
+                    Assert.IsNull(p.GetComponentInChildren<Collider>(true), p.name + " carries a collider");
+                }
+            }
+        }
     }
 }

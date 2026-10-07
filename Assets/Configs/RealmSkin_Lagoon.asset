@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8bc56c46a0ffa941a516a5317070a50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlyingFishMomentum.Runtime::FlyingFishMomentum.Run.RealmSkin
+  SkyPanorama: {fileID: 2800000, guid: 1c1eb52c4edb1d1439587e316d68a80b, type: 3}
+  SkyTint: {r: 0.53, g: 0.81, b: 0.92, a: 1}
+  FogColor: {r: 0.75, g: 0.87, b: 0.93, a: 1}
+  FogDensity: 0.002
+  WaterTint: {r: 0.2, g: 0.6, b: 0.75, a: 1}
+  CloudTint: {r: 0.95, g: 0.97, b: 1, a: 1}
+  SilhouetteColor: {r: 0.16, g: 0.2, b: 0.3, a: 1}
+  RingTint: {r: 1, g: 0.85, b: 0.2, a: 1}
+  CoinTint: {r: 1, g: 0.75, b: 0.15, a: 1}
+  DecorPrefabs:
+  - {fileID: 4894804115112337558, guid: 5393ad003fc780246b019943e23534d6, type: 3}
+  - {fileID: 3047280181396771163, guid: 7a67840b8b5878544bfcfb34f97133dd, type: 3}
+  - {fileID: 9144017008932443696, guid: b4e615d8fe54af140a10f44444421ea9, type: 3}
+  - {fileID: 1423834983696596297, guid: 86da99d30a19a2c43b924bf5d42424d2, type: 3}
+  - {fileID: 4104824070577452651, guid: 115d4422884180a4693c44ba65f96723, type: 3}
+  - {fileID: 6080918524086208137, guid: c910c94bb624f2740bcbc6321c9236cc, type: 3}
+  - {fileID: 4904745937736344537, guid: 2e4df31bebeaa974aadb03e7bdada162, type: 3}
+  - {fileID: 8658702875974221886, guid: 3cccb4f2c2c91bf48a5995898187bad9, type: 3}
+  - {fileID: 5833423430023801103, guid: be99563b5fc373f42a1e6341caf84791, type: 3}
+  - {fileID: 2959231271934603460, guid: d4d28ae4a503e8e428cf2d20f497c713, type: 3}
+  - {fileID: 6652049476144274404, guid: 35fbcf3314cdc954e9f9e2d36f147fb3, type: 3}
+  IslandPrefabs:
+  - {fileID: 7007538040021627786, guid: 175473a409f4e56419b10a35a125704e, type: 3}
+  - {fileID: 1320046940744149995, guid: f99195507d51b27499f4bac51fe845ef, type: 3}
+  SpirePrefabs:
+  - {fileID: 903217736295523944, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
+  - {fileID: 6701935837531145685, guid: 8ac67692e535c81488661e3335601400, type: 3}
+  ArchPrefabs:
+  - {fileID: 4910011726890586421, guid: c8be39ed9dc8a7c4db4551832897fca8, type: 3}
+  - {fileID: 2793800002860356934, guid: 01b2fbd610f62114cb6b4093dd417035, type: 3}

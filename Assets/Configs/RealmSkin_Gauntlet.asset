@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8bc56c46a0ffa941a516a5317070a50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlyingFishMomentum.Runtime::FlyingFishMomentum.Run.RealmSkin
+  SkyPanorama: {fileID: 2800000, guid: 7a6c65918b46bc848986296072e73068, type: 3}
+  SkyTint: {r: 1, g: 0.75, b: 0.45, a: 1}
+  FogColor: {r: 0.95, g: 0.75, b: 0.55, a: 1}
+  FogDensity: 0.003
+  WaterTint: {r: 0.25, g: 0.5, b: 0.6, a: 1}
+  CloudTint: {r: 0.95, g: 0.97, b: 1, a: 1}
+  SilhouetteColor: {r: 0.16, g: 0.2, b: 0.3, a: 1}
+  RingTint: {r: 1, g: 0.85, b: 0.2, a: 1}
+  CoinTint: {r: 1, g: 0.75, b: 0.15, a: 1}
+  DecorPrefabs:
+  - {fileID: 5949589533468558232, guid: 8f6a710024d501048a460ae7bd0af719, type: 3}
+  - {fileID: 7293698989817312092, guid: 77e09b75eb4744a4592b3af654913684, type: 3}
+  - {fileID: 5962120545256464482, guid: 6041ed7e4c6a313408b248c01f837645, type: 3}
+  - {fileID: 6819723204500614561, guid: f7966d1aea00ef4499189d86f0dbf200, type: 3}
+  - {fileID: 860333295072568352, guid: da040affbb4ca124ba14d1c34a3f0428, type: 3}
+  - {fileID: 7075488935979797441, guid: 6e1d743ef1ccb9e4998053eaec6c66c3, type: 3}
+  - {fileID: 1842300391354878459, guid: 8abc3b87a410088409f89ec7695fb0ec, type: 3}
+  - {fileID: 6811694741289078547, guid: 16eaa7ce9b647a047978ebadb9c88ac2, type: 3}
+  IslandPrefabs:
+  - {fileID: 7621220766416878251, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
+  - {fileID: 2426793618543218437, guid: 2ade964723b64894ca2a763a8ea80993, type: 3}
+  SpirePrefabs:
+  - {fileID: 7075488935979797441, guid: 6e1d743ef1ccb9e4998053eaec6c66c3, type: 3}
+  - {fileID: 5871646319086712005, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
+  ArchPrefabs:
+  - {fileID: 5287852516017166672, guid: 4d659b7eb17e1f64099b4af4ef95fbba, type: 3}
+  - {fileID: 860333295072568352, guid: da040affbb4ca124ba14d1c34a3f0428, type: 3}
+  - {fileID: 5331738876891616760, guid: 357c72ba4e6063e43ac10c9f39dadd6e, type: 3}
