@@ -23,6 +23,13 @@ public static class VisualVerify
     {
         string outDir = "Temp/VisualVerify";
         Directory.CreateDirectory(outDir);
+        // Never trash the user's open work: opening the M1 scene drops
+        // the current one. Abort instead and let them save first.
+        if (EditorSceneManager.GetActiveScene().isDirty)
+        {
+            Debug.LogError("[VisualVerify] open scene has unsaved changes — save first, then re-run.");
+            return;
+        }
         EditorSceneManager.OpenScene(M1Scene);
         var builder = Object.FindFirstObjectByType<ChunkBuilder>();
         if (builder == null)
@@ -38,6 +45,8 @@ public static class VisualVerify
         var cam = camGo.AddComponent<Camera>();
         cam.farClipPlane = 4000f;
         var rt = new RenderTexture(Width, Height, 24);
+        try
+        {
         var done = new HashSet<string>();
         // Verification chunks live at z>=2000: the M1 scene bakes legacy
         // slalom islands at z=30..90 (Island_West/East_*) that would
@@ -77,9 +86,14 @@ public static class VisualVerify
                 Shoot(cam, rt, Path.Combine(outDir, f.Name + ".png"));
             }
         }
-        Object.DestroyImmediate(camGo);
-        Object.DestroyImmediate(rt);
         Debug.Log("[VisualVerify] done: " + VisualVerifyPlan.Bookmarks.Length + " frames in " + outDir);
+        Debug.LogWarning("[VisualVerify] scene holds verification chunks + VerifyCam — do NOT save the scene.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(camGo);
+            Object.DestroyImmediate(rt);
+        }
     }
 
     private static void Frame(Camera cam, ChunkBuilder builder,
