@@ -152,3 +152,72 @@ New `RealmSkin` SO type + one `ChunkSpec.Skin` field; presentation-only
 subsystem. No gameplay rules, timings, or judging change; no PRD mechanic
 added. Spec file is the §34.1 documentation for this divergence (visuals
 previously undefined beyond mood tints).
+
+### CR-2 (2026-10-07): rings are gate-arch models, never tinted
+
+Current Requirement: option A — rings keep LineRenderer geometry,
+re-tinted per realm (`RingTint`); option B (prefab replacement) rejected
+for readability and no in-hand model.
+
+Reason for Conflict: playtest showed re-tinting changed nothing — all
+four skins were authored with the legacy gold, so rings looked identical
+to programmer art. Owner directed rings to use game assets (watercraft
+swim-ring, identified in-editor as the `gate` arch).
+
+Proposed Change: `CreateRing` instantiates `Assets/Resources/Ring.prefab`
+(watercraft `gate` + `V1Watercraft` colormap, built by
+`VisualImport.BuildRing`), uniform-fits the outer height onto the
+judging disc (`TimingPromptSpawner.RingPromptRadius`, now the single
+source both sides reference), centers bounds on the ring position.
+`ApplyMood` no longer touches rings; `RealmSkin.RingTint` kept declared
+(asset compat) but unused. Legacy `LineRenderer` remains as last-resort
+fallback only. Judging, pooling, `Consume`/`Reset` untouched.
+
+Affected Systems: `ChunkBuilder.CreateRing`/`ApplyMood`/`Configure`
+(new optional `ringPrefab`, `Resources` fallback — no scene rebuild),
+`VisualImport` (watercraft support, `BuildRing`), `TimingPromptSpawner`
+(`RingPromptRadius` const), `RingModelTests` + 2 rewritten tint tests.
+
+New Behavior: every realm shows the orange/white gate arch facing
+travel, legs vanishing into the sea; coins stay gold spheres.
+
+Updated Acceptance Criteria: model bounds match judging disc (unit test
++ headless capture inspected); EditMode + PlayMode suites green; no
+`LineRenderer` in captures while `Ring.prefab` exists.
+
+### CR-3 (2026-10-07): stacked shells, matched arches, decor scale
+
+Current Requirement: one min-axis-fitted shell per collider cube,
+centered; random prefab per cube; skinned decor at natural FBX scale.
+
+Reason for Conflict: playtest screenshot (mismatched + floating
+pieces) plus headless captures: min-axis fit makes visuals far smaller
+than tall colliders (8-unit blob centered in a 70-unit spire column),
+per-cube random picks build incoherent arches, decor renders as ~2-unit
+dots vs 8-unit legacy blobs.
+
+Proposed Change: `AttachStackedShell` — one seeded pick per obstacle,
+min-axis fit, floor-fill count of bottom-aligned segments (tall visuals
+collapse to a single exact-fit segment, so lintels behave as before);
+arch loop draws one pillar prefab (both pillars match) + one lintel
+prefab from new optional `ArchPillarPrefabs`/`ArchLintelPrefabs` (empty
+falls back to `ArchPrefabs`); skinned decor uniform-fits legacy kind
+volumes (coral 2.5x3.5x2.5, cloud 8x4x6, crag 3x10x3, rubble 2.5 cubed)
+about the prefab pivot. Gauntlet pillar set = tall towers, lintel set =
+wide castle pieces; Sky spires drop `statue_ring` for three rock_talls.
+Collider cubes, positions, judging, RNG shape (one draw per obstacle)
+unchanged.
+
+Affected Systems: `ChunkBuilder` (shell composer, arch/island/spire
+call sites, `Draw` helper, `DecorFit` map), `RealmSkin` (2 optional
+fields), `VisualImport.BuildSkin` (pillar/lintel params, Sky spires),
+regenerated Decor prefabs + 4 skins, `ObstacleShellTests`, one
+rewritten shell-count expectation (single yields stacked).
+
+New Behavior: spires/islands read as stacked rock/tower columns rising
+from sea/clouds; arches read as matched gate + towers; decor carries
+legacy weight. Verified in headless captures per realm.
+
+Updated Acceptance Criteria: 1+ segments per cube, all inside collider
+bounds, matched names per arch, decor at kind size (unit tests); suites
+green; captures inspected (no gray cubes, no floating blobs).

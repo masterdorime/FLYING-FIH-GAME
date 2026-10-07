@@ -153,7 +153,19 @@ namespace FlyingFishMomentum.Tests.EditMode
                     var sb = skinned.Islands[i].GetComponent<Collider>().bounds;
                     Assert.AreEqual(lb.extents, sb.extents);
                     Assert.IsFalse(skinned.Islands[i].GetComponent<MeshRenderer>().enabled);
-                    Assert.AreEqual(1, CountShells(skinned.Islands[i]));
+                    // Stacked policy (visual W2): one or more
+                    // aspect-preserved segments filling the collider,
+                    // never poking out (single-cube stub has one renderer).
+                    int shells = 0;
+                    foreach (Transform c in skinned.Islands[i].transform)
+                    {
+                        if (!c.name.StartsWith("ChunkShell_")) continue;
+                        shells++;
+                        var rb = c.GetComponentInChildren<MeshRenderer>().bounds;
+                        Assert.IsTrue(sb.Contains(rb.min + Vector3.one * 0.05f)
+                            && sb.Contains(rb.max - Vector3.one * 0.05f), "segment pokes out");
+                    }
+                    Assert.Greater(shells, 0, "no shell attached");
                 }
             }
             finally { RenderSettings.skybox = null; }

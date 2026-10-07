@@ -88,24 +88,33 @@ public static class VisualImport
             new string[] { "platform_beach", "rock_largeA" },
             new string[] { "rock_tallA", "rock_tallB" },
             new string[] { "rocks-sand-a", "rocks-sand-b" },
+            new string[0], new string[0],
             prefabByName);
         BuildSkin("Gauntlet", "skybox-morning.png",
             new string[] { "flag", "flag-high", "flag-pennant", "chest", "castle-wall", "tower-complete-small", "structure-fence", "grass-patch" },
             new string[] { "platform_grass", "cliff_rock" },
             new string[] { "tower-complete-small", "rock_tallC" },
             new string[] { "castle-gate", "castle-wall", "tower-base" },
+            // Matched arch sets: tall towers read as pillars, wide castle
+            // pieces as lintels. One pick per arch keeps gates coherent.
+            new string[] { "tower-base", "tower-middle", "tower-complete-small" },
+            new string[] { "castle-wall", "castle-gate" },
             prefabByName);
         BuildSkin("Storm", "skybox-night.png",
             new string[] { "rocks-a", "rocks-b", "rocks-c", "tree_pineTallA", "tree_cone", "rock_smallA", "rock_smallB" },
             new string[] { "rock_largeB", "cliff_rock" },
             new string[] { "rock_tallA", "rock_tallC" },
             new string[] { "rocks-a", "rocks-b" },
+            new string[0], new string[0],
             prefabByName);
         BuildSkin("Sky", "skybox-alien.png",
             new string[] { "statue_ring", "platform_grass", "grass_large" },
             new string[] { "platform_grass", "statue_ring" },
-            new string[] { "rock_tallB", "statue_ring" },
+            // Statue dropped from spires (a ring stretched onto a 70m
+            // column reads wrong): tall rocks only, varied per obstacle.
+            new string[] { "rock_tallB", "rock_tallA", "rock_tallC" },
             new string[0],
+            new string[0], new string[0],
             prefabByName);
 
         AssetDatabase.SaveAssets();
@@ -203,6 +212,7 @@ public static class VisualImport
 
     private static void BuildSkin(string realm, string panoramaFile,
         string[] decor, string[] islands, string[] spires, string[] arches,
+        string[] pillars, string[] lintels,
         Dictionary<string, GameObject> prefabByName)
     {
         var mood = AssetDatabase.LoadAssetAtPath<ChunkSpec>("Assets/Configs/ChunkSpec_" + realm + ".asset");
@@ -222,6 +232,8 @@ public static class VisualImport
         skin.IslandPrefabs = Resolve(islands, prefabByName);
         skin.SpirePrefabs = Resolve(spires, prefabByName);
         skin.ArchPrefabs = Resolve(arches, prefabByName);
+        skin.ArchPillarPrefabs = Resolve(pillars, prefabByName);
+        skin.ArchLintelPrefabs = Resolve(lintels, prefabByName);
         string path = "Assets/Configs/RealmSkin_" + realm + ".asset";
         var existing = AssetDatabase.LoadAssetAtPath<RealmSkin>(path);
         RealmSkin skinRef;

@@ -71,6 +71,8 @@ namespace FlyingFishMomentum.Run
         private GameObject[] _islandPrefabs;
         private GameObject[] _spirePrefabs;
         private GameObject[] _archPrefabs;
+        private GameObject[] _pillarPrefabs;
+        private GameObject[] _lintelPrefabs;
 
         public IReadOnlyList<ChargeRing> Rings => _rings;
         public IReadOnlyList<CoinPickup> Coins => _coins;
@@ -311,6 +313,12 @@ namespace FlyingFishMomentum.Run
             _islandPrefabs = NonNull(skin != null ? skin.IslandPrefabs : null);
             _spirePrefabs = NonNull(skin != null ? skin.SpirePrefabs : null);
             _archPrefabs = NonNull(skin != null ? skin.ArchPrefabs : null);
+            // Matched arch sets are optional: empty falls back to the
+            // shared arch set (legacy behavior, random per cube).
+            _pillarPrefabs = NonNull(skin != null ? skin.ArchPillarPrefabs : null);
+            if (_pillarPrefabs == null || _pillarPrefabs.Length == 0) _pillarPrefabs = _archPrefabs;
+            _lintelPrefabs = NonNull(skin != null ? skin.ArchLintelPrefabs : null);
+            if (_lintelPrefabs == null || _lintelPrefabs.Length == 0) _lintelPrefabs = _archPrefabs;
             var rng = new System.Random(seed);
             var root = new GameObject(string.Format("Chunk_{0}_{1}_{2}", spec.ChunkId, zStart, seed));
             root.transform.SetParent(transform, false);
@@ -354,7 +362,8 @@ namespace FlyingFishMomentum.Run
             // Gauntlet gates: rock arches anchored over swim ring lines —
             // pillars flank the ring, lintel clears it above. All blocking;
             // steer through the middle. Falls back to lane center when the
-            // chunk has no swim rings of its own.
+            // chunk has no swim rings of its own. One pillar pick per arch
+            // (both pillars match) plus one lintel pick.
             int waterStart = _rings.Count - spec.RingCount;
             for (int a = 0; a < spec.ArchCount; a++)
             {
@@ -362,9 +371,11 @@ namespace FlyingFishMomentum.Run
                 if (spec.RingCount > 0 && waterStart >= 0 && waterStart + (a % spec.RingCount) < _rings.Count
                     && _rings[waterStart + (a % spec.RingCount)] != null)
                     anchor = _rings[waterStart + (a % spec.RingCount)].transform.position;
-                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", rng, _archPrefabs));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", rng, _archPrefabs));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel", rng, _archPrefabs));
+                GameObject pillarPrefab = Draw(_pillarPrefabs, rng);
+                GameObject lintelPrefab = Draw(_lintelPrefabs, rng);
+                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel", lintelPrefab));
             }
 
             float cx = GateHalfWidth + IslandHalfX;
@@ -372,8 +383,8 @@ namespace FlyingFishMomentum.Run
             {
                 float z = zStart + spec.Length * (i + 1f) / (spec.IslandPairs + 1f)
                     + ((float)rng.NextDouble() - 0.5f) * 20f;
-                _islands.Add(PlaceIsland(root, new Vector3(-cx, IslandCenterY, z), rng, _islandPrefabs));
-                _islands.Add(PlaceIsland(root, new Vector3(cx, IslandCenterY, z), rng, _islandPrefabs));
+                _islands.Add(PlaceIsland(root, new Vector3(-cx, IslandCenterY, z), Draw(_islandPrefabs, rng)));
+                _islands.Add(PlaceIsland(root, new Vector3(cx, IslandCenterY, z), Draw(_islandPrefabs, rng)));
             }
 
             // Cloud-realm layer: sky rings/coins/spires ride the same pools
@@ -412,7 +423,7 @@ namespace FlyingFishMomentum.Run
                 float z = zStart + spec.Length * (i + 1f) / (spec.SkySpireCount + 1f)
                     + ((float)rng.NextDouble() - 0.5f) * 20f;
                 float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (12f + (float)rng.NextDouble() * 6f);
-                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z), 50f + (float)rng.NextDouble() * 40f, rng, _spirePrefabs));
+                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z), 50f + (float)rng.NextDouble() * 40f, Draw(_spirePrefabs, rng)));
             }
 
             // Dressing: one decor kind per chunk, always off the prompt
@@ -594,9 +605,17 @@ namespace FlyingFishMomentum.Run
             return CreateCoin();
         }
 
-        private GameObject PlaceIsland(GameObject root, Vector3 center, System.Random rng, GameObject[] shells)
+        private GameObject PlaceIsland(GameObject root, Vector3 center, GameObject shellPrefab)
         {
-            return PlaceRock(root, center, new Vector3(10f, 25f, 10f), "ChunkIsland", rng, shells);
+            return PlaceRock(root, center, new Vector3(10f, 25f, 10f), "ChunkIsland", shellPrefab);
+        }
+
+        // One seeded pick from a set (null when the set is empty): the
+        // single rng draw per obstacle keeps streams deterministic.
+        private static GameObject Draw(GameObject[] set, System.Random rng)
+        {
+            if (set == null || set.Length == 0 || rng == null) return null;
+            return set[rng.Next(set.Length)];
         }
 
         // Shared-material defaults (match the lazy initializers below):
@@ -631,21 +650,26 @@ namespace FlyingFishMomentum.Run
         }
 
         // Visual shell over a collider cube: the cube (position, scale,
-        // collider) is gameplay and never changes; the FBX visual is a
-        // fitted child and the cube renderer goes dark. Strips a prior
-        // shell first so pooled cubes never stack visuals.
-        private static void AttachShell(GameObject cube, GameObject prefab)
+        // collider) is gameplay and never changes; the FBX visuals are
+        // fitted children and the cube renderer goes dark. Strips a prior
+        // shell first so pooled cubes never stack stale visuals.
+        // Stacked shell: one prefab pick per obstacle, repeated bottom-up
+        // to fill tall colliders (spires, islands, pillars) with
+        // aspect-preserved segments. Tall visuals collapse to a single
+        // exact-fit segment, so short lintels behave like the old
+        // single-shell path. Segments never poke out: min-axis fit per
+        // segment, floor-fill count, bottom-aligned base.
+        private static void AttachStackedShell(GameObject cube, GameObject prefab)
         {
             StripShells(cube);
             var rend = cube.GetComponent<MeshRenderer>();
             if (rend != null) rend.enabled = false;
-            var shell = Object.Instantiate(prefab);
-            shell.name = "ChunkShell_" + prefab.name;
-            // Combined bounds across the full prefab hierarchy (multi-mesh
-            // models included), measured before parenting so the cube's
-            // non-uniform scale can't pollute the fit.
-            var renderers = shell.GetComponentsInChildren<MeshRenderer>();
-            Bounds vis = new Bounds(shell.transform.position, Vector3.zero);
+            var first = Object.Instantiate(prefab);
+            first.name = "ChunkShell_" + prefab.name;
+            // Combined bounds across the full prefab hierarchy, measured
+            // before parenting so the cube's scale can't pollute the fit.
+            var renderers = first.GetComponentsInChildren<MeshRenderer>();
+            Bounds vis = new Bounds(first.transform.position, Vector3.zero);
             bool any = false;
             foreach (var r in renderers)
             {
@@ -653,23 +677,52 @@ namespace FlyingFishMomentum.Run
                 if (!any) { vis = r.bounds; any = true; }
                 else vis.Encapsulate(r.bounds);
             }
-            Vector3 visSize = any ? vis.size : Vector3.one;
-            Vector3 visCenter = any ? vis.center - shell.transform.position : Vector3.zero;
+            if (!any)
+            {
+                Object.DestroyImmediate(first);
+                return;
+            }
             Vector3 parentScale = cube.transform.localScale;
-            float s = FitScale(parentScale, visSize);
-            shell.transform.SetParent(cube.transform, false);
+            Vector3 cubePos = cube.transform.position;
+            float s = FitScale(parentScale, vis.size);
+            float segH = vis.size.y * s;
+            int count = segH > 0f ? Mathf.Max(1, Mathf.FloorToInt(parentScale.y / segH)) : 1;
+            float baseY = cubePos.y - parentScale.y / 2f;
+            // Preserve an authored prefab-root scale (usually identity):
+            // bounds were measured with it, so the fit multiplies on top.
+            Vector3 fitted = Vector3.Scale(first.transform.localScale, CounterScale(parentScale, s));
+            first.transform.SetParent(cube.transform, false);
+            first.transform.localScale = fitted;
+            PlaceSegment(first, cube, cubePos, parentScale, baseY + segH * 0.5f);
+            for (int i = 1; i < count; i++)
+            {
+                var seg = Object.Instantiate(first);
+                seg.name = first.name;
+                seg.transform.SetParent(cube.transform, false);
+                seg.transform.localScale = first.transform.localScale;
+                PlaceSegment(seg, cube, cubePos, parentScale, baseY + segH * (i + 0.5f));
+            }
+        }
+
+        private static Vector3 CounterScale(Vector3 parentScale, float s)
+        {
             // The parent cube is non-uniformly scaled, so counter-scale
             // per axis: world scale stays a uniform s.
-            shell.transform.localScale = new Vector3(
+            return new Vector3(
                 parentScale.x != 0f ? s / parentScale.x : s,
                 parentScale.y != 0f ? s / parentScale.y : s,
                 parentScale.z != 0f ? s / parentScale.z : s);
-            Vector3 worldOffset = -visCenter * s;
-            shell.transform.localPosition = new Vector3(
-                parentScale.x != 0f ? worldOffset.x / parentScale.x : worldOffset.x,
-                parentScale.y != 0f ? worldOffset.y / parentScale.y : worldOffset.y,
-                parentScale.z != 0f ? worldOffset.z / parentScale.z : worldOffset.z);
-            shell.transform.localRotation = Quaternion.identity;
+        }
+
+        private static void PlaceSegment(GameObject seg, GameObject cube, Vector3 cubePos, Vector3 parentScale, float worldY)
+        {
+            Vector3 world = new Vector3(cubePos.x, worldY, cubePos.z);
+            Vector3 offset = world - cubePos;
+            seg.transform.localPosition = new Vector3(
+                parentScale.x != 0f ? offset.x / parentScale.x : offset.x,
+                parentScale.y != 0f ? offset.y / parentScale.y : offset.y,
+                parentScale.z != 0f ? offset.z / parentScale.z : offset.z);
+            seg.transform.localRotation = Quaternion.identity;
         }
 
         private static void StripShells(GameObject cube)
@@ -687,7 +740,8 @@ namespace FlyingFishMomentum.Run
 
         // Rock obstacles share one pool: placement always resets scale,
         // name, and transform, so islands, spires, and arch stones mix.
-        private GameObject PlaceRock(GameObject root, Vector3 center, Vector3 scale, string name, System.Random rng, GameObject[] shells)
+        // A null shell prefab keeps the bare cube (legacy/empty sets).
+        private GameObject PlaceRock(GameObject root, Vector3 center, Vector3 scale, string name, GameObject shellPrefab)
         {
             GameObject go;
             if (_islandPool.Count > 0 && (go = _islandPool.Dequeue()) != null)
@@ -708,14 +762,14 @@ namespace FlyingFishMomentum.Run
             go.transform.localScale = scale;
             var meshRenderer = go.GetComponent<MeshRenderer>();
             if (meshRenderer != null) meshRenderer.enabled = true;
-            if (shells != null && shells.Length > 0 && rng != null)
-                AttachShell(go, shells[rng.Next(shells.Length)]);
+            if (shellPrefab != null)
+                AttachStackedShell(go, shellPrefab);
             return go;
         }
 
         // Sky spires: tall colliders centered on SpireCenterY, pooled and
         // reclaimed exactly like islands. Height varies per seed.
-        private GameObject PlaceSpire(GameObject root, Vector3 center, float height, System.Random rng, GameObject[] shells)
+        private GameObject PlaceSpire(GameObject root, Vector3 center, float height, GameObject shellPrefab)
         {
             GameObject go;
             if (_spirePool.Count > 0 && (go = _spirePool.Dequeue()) != null)
@@ -734,19 +788,32 @@ namespace FlyingFishMomentum.Run
             go.transform.localScale = new Vector3(4f, height, 4f);
             var meshRenderer = go.GetComponent<MeshRenderer>();
             if (meshRenderer != null) meshRenderer.enabled = true;
-            if (shells != null && shells.Length > 0 && rng != null)
-                AttachShell(go, shells[rng.Next(shells.Length)]);
+            if (shellPrefab != null)
+                AttachStackedShell(go, shellPrefab);
             return go;
         }
 
         // Dressing composer: kind selects the shape set, count is the
         // budget. Every piece parks off-lane with no collider.
+        // Legacy kind volumes (match the AddBlob clusters below): skinned
+        // prefabs fit these so dressing keeps its old visual weight.
+        private static readonly Dictionary<string, Vector3> DecorFit = new Dictionary<string, Vector3>
+        {
+            { "coral", new Vector3(2.5f, 3.5f, 2.5f) },
+            { "cloud", new Vector3(8f, 4f, 6f) },
+            { "crag", new Vector3(3f, 10f, 3f) },
+            { "rubble", new Vector3(2.5f, 2.5f, 2.5f) },
+        };
+
         private GameObject PlaceDecor(GameObject root, string kind, float z, System.Random rng)
         {
             float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (25f + (float)rng.NextDouble() * 35f);
             Vector3 pos = new Vector3(x, kind == "cloud" ? 95f : -10f, z);
             // Skinned dressing: one seeded prefab pick at the same lane
             // math. Prefabs carry no colliders (pinned by import tests).
+            // Scaled to the legacy kind volumes (below) about the prefab
+            // pivot, so base-planted models stay planted and clouds keep
+            // their old weight. Uniform fit, never distorts.
             if (_decorPrefabs != null && _decorPrefabs.Length > 0)
             {
                 var prefab = _decorPrefabs[rng.Next(_decorPrefabs.Length)];
@@ -754,6 +821,19 @@ namespace FlyingFishMomentum.Run
                 dressed.name = "ChunkDecor_" + prefab.name;
                 dressed.transform.SetParent(root.transform, false);
                 dressed.transform.position = pos;
+                Vector3 target;
+                if (!DecorFit.TryGetValue(kind ?? "rubble", out target)) target = DecorFit["rubble"];
+                var renderers = dressed.GetComponentsInChildren<MeshRenderer>();
+                Bounds vis = new Bounds(dressed.transform.position, Vector3.zero);
+                bool any = false;
+                foreach (var r in renderers)
+                {
+                    if (r == null) continue;
+                    if (!any) { vis = r.bounds; any = true; }
+                    else vis.Encapsulate(r.bounds);
+                }
+                if (any)
+                    dressed.transform.localScale = dressed.transform.localScale * FitScale(target, vis.size);
                 return dressed;
             }
             var go = new GameObject("ChunkDecor_" + (kind ?? "rubble"));

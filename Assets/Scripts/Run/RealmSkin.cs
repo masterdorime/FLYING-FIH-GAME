@@ -21,5 +21,9 @@ namespace FlyingFishMomentum.Run
         public GameObject[] IslandPrefabs;  // visual shells over island colliders
         public GameObject[] SpirePrefabs;   // visual shells over spire colliders
         public GameObject[] ArchPrefabs;    // pillar/lintel shells (Gauntlet)
+        // Matched arch sets (optional): one seeded pick per arch, both
+        // pillars share it. Empty/null falls back to ArchPrefabs.
+        public GameObject[] ArchPillarPrefabs; // tall pieces
+        public GameObject[] ArchLintelPrefabs; // wide pieces
     }
 }

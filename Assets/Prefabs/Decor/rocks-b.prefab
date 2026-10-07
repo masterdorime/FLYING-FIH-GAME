@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &875522157231254363
+--- !u!1 &3482779808588605252
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 154036271581162146}
-  - component: {fileID: 9030122150696617666}
-  - component: {fileID: 425889664400335233}
+  - component: {fileID: 7991374026890914919}
+  - component: {fileID: 5106076187669629733}
+  - component: {fileID: 293513081602780902}
   m_Layer: 0
   m_Name: rocks-b
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &154036271581162146
+--- !u!4 &7991374026890914919
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875522157231254363}
+  m_GameObject: {fileID: 3482779808588605252}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0, y: 0, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &9030122150696617666
+--- !u!33 &5106076187669629733
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875522157231254363}
+  m_GameObject: {fileID: 3482779808588605252}
   m_Mesh: {fileID: 8356469036910099472, guid: 0ce2a4da14e1613498d9069884886f7c, type: 3}
---- !u!23 &425889664400335233
+--- !u!23 &293513081602780902
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875522157231254363}
+  m_GameObject: {fileID: 3482779808588605252}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

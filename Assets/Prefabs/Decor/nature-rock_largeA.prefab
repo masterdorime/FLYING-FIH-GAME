@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1603110254941769937
+--- !u!1 &966831105616104943
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6693683390345653264}
-  - component: {fileID: 6740784130744942987}
-  - component: {fileID: 2149774576242404240}
+  - component: {fileID: 8526214405323821017}
+  - component: {fileID: 3993137501998984913}
+  - component: {fileID: 2763759461759012931}
   m_Layer: 0
   m_Name: nature-rock_largeA
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6693683390345653264
+--- !u!4 &8526214405323821017
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1603110254941769937}
+  m_GameObject: {fileID: 966831105616104943}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0, y: -0.049999997, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6740784130744942987
+--- !u!33 &3993137501998984913
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1603110254941769937}
+  m_GameObject: {fileID: 966831105616104943}
   m_Mesh: {fileID: -7705791283668964911, guid: 1a14b9fc8215eb948ad65e6f391c4a2b, type: 3}
---- !u!23 &2149774576242404240
+--- !u!23 &2763759461759012931
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1603110254941769937}
+  m_GameObject: {fileID: 966831105616104943}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
