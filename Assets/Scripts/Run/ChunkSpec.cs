@@ -36,5 +36,8 @@ namespace FlyingFishMomentum.Run
         public Color FogColor;
         public float FogDensity;
         public Color WaterTint;
+        // Visual reconstruction: presentation skin for this type. Null
+        // keeps the legacy primitive tint path (fallback pinned by tests).
+        public RealmSkin Skin;
     }
 }

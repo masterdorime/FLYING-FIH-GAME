@@ -225,16 +225,51 @@ namespace FlyingFishMomentum.Run
         {
             if (spec == null || spec.ChunkId == _appliedMoodId) return;
             _appliedMoodId = spec.ChunkId;
+            var skin = spec.Skin;
+            if (skin != null && skin.SkyPanorama != null)
+            {
+                RenderSettings.skybox = SkyboxMaterial(skin);
+            }
+            else
+            {
+                RenderSettings.skybox = null;
+            }
+            Color skyTint = skin != null ? skin.SkyTint : spec.SkyTint;
+            Color fogColor = skin != null ? skin.FogColor : spec.FogColor;
+            float fogDensity = skin != null ? skin.FogDensity : spec.FogDensity;
+            Color waterTint = skin != null ? skin.WaterTint : spec.WaterTint;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = spec.FogColor;
-            RenderSettings.fogDensity = spec.FogDensity;
-            RenderSettings.ambientLight = spec.SkyTint;
-            SkyMaterial.color = spec.SkyTint;
+            RenderSettings.fogColor = fogColor;
+            RenderSettings.fogDensity = fogDensity;
+            RenderSettings.ambientLight = skyTint;
+            SkyMaterial.color = skyTint;
             // Tint water RGB only: stamping the spec alpha (1 everywhere)
             // would turn the sea opaque and hide underwater gameplay.
             var water = WaterMaterial.color;
-            WaterMaterial.color = new Color(spec.WaterTint.r, spec.WaterTint.g, spec.WaterTint.b, water.a);
+            WaterMaterial.color = new Color(waterTint.r, waterTint.g, waterTint.b, water.a);
+            if (skin != null && _cloudMat != null)
+            {
+                var cloud = _cloudMat.color;
+                _cloudMat.color = new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a);
+            }
+        }
+
+        // One panoramic skybox material per skin, cached like the other
+        // shared mood instances.
+        private readonly Dictionary<RealmSkin, Material> _skyboxMats = new Dictionary<RealmSkin, Material>();
+
+        private Material SkyboxMaterial(RealmSkin skin)
+        {
+            Material mat;
+            if (!_skyboxMats.TryGetValue(skin, out mat) || mat == null)
+            {
+                mat = new Material(Shader.Find("Skybox/Panoramic"));
+                mat.SetTexture("_MainTex", skin.SkyPanorama);
+                _skyboxMats[skin] = mat;
+            }
+            mat.SetColor("_Tint", skin.SkyTint);
+            return mat;
         }
 
         public void BuildChunk(ChunkSpec spec, float zStart, int seed)
