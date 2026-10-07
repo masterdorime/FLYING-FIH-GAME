@@ -140,9 +140,33 @@ public static class VisualImport
             Debug.LogError("[VisualImport] no mesh in FBX: " + fbxPath);
             return null;
         }
-        var go = new GameObject(prefabName);
-        go.AddComponent<MeshFilter>().sharedMesh = srcFilter.sharedMesh;
-        go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+        // Pipeline telemetry: mesh fidelity evidence (multi-mesh truncation
+        // and vertex-color questions are review findings until this proves
+        // otherwise). Loud on anything but a single mesh.
+        var allFilters = model.GetComponentsInChildren<MeshFilter>();
+        var mesh = srcFilter.sharedMesh;
+        bool hasColors = mesh.colors != null && mesh.colors.Length > 0;
+        var srcRenderer = srcFilter.GetComponent<MeshRenderer>();
+        int slotCount = srcRenderer != null && srcRenderer.sharedMaterials != null
+            ? srcRenderer.sharedMaterials.Length : 0;
+        if (allFilters.Length > 1 || hasColors || slotCount > 1)
+            Debug.LogWarning("[VisualImport] rich FBX " + fbxPath + ": meshes=" + allFilters.Length
+                + " vertexColors=" + hasColors + " materialSlots=" + slotCount);
+        // Full-hierarchy clone: multi-mesh models (ship-wreck, chest)
+        // and multi-slot meshes (nature rocks/trees) keep ALL geometry.
+        // Every renderer slot gets the set's single shared material —
+        // probe evidence: no staged FBX carries vertex colors, so flat
+        // set tints are the cohesive palette (spec §3 amendment).
+        var go = Object.Instantiate(model);
+        go.name = prefabName;
+        foreach (var col in go.GetComponentsInChildren<Collider>(true))
+            Object.DestroyImmediate(col);
+        foreach (var renderer in go.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            var slots = renderer.sharedMaterials;
+            for (int i = 0; i < slots.Length; i++) slots[i] = mat;
+            renderer.sharedMaterials = slots;
+        }
         string prefabPath = DecorDir + "/" + prefabName + ".prefab";
         var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
         Object.DestroyImmediate(go);
@@ -173,14 +197,24 @@ public static class VisualImport
         skin.ArchPrefabs = Resolve(arches, prefabByName);
         string path = "Assets/Configs/RealmSkin_" + realm + ".asset";
         var existing = AssetDatabase.LoadAssetAtPath<RealmSkin>(path);
+        RealmSkin skinRef;
         if (existing != null)
         {
             EditorUtility.CopySerialized(skin, existing);
             Object.DestroyImmediate(skin);
+            skinRef = existing;
         }
         else
         {
             AssetDatabase.CreateAsset(skin, path);
+            skinRef = skin;
+        }
+        // Wire the skin into the chunk spec: without this the production
+        // BuildChunk path stays on legacy primitives (review finding).
+        if (mood.Skin != skinRef)
+        {
+            mood.Skin = skinRef;
+            EditorUtility.SetDirty(mood);
         }
     }
 

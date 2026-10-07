@@ -3,7 +3,7 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_CorrespondentSource: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -11,6 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f9d94e9bd0bac34bbb008703b896138, type: 3}
   m_Name: ChunkSpec_Storm
+  m_EditorClassIdentifier: 
   ChunkId: Storm
   Length: 400
   RingCount: 2
@@ -32,3 +33,4 @@ MonoBehaviour:
   FogColor: {r: 0.25, g: 0.28, b: 0.33, a: 1}
   FogDensity: 0.015
   WaterTint: {r: 0.12, g: 0.22, b: 0.3, a: 1}
+  Skin: {fileID: 11400000, guid: 0191f98f4f91b974192a4eb1dd01a342, type: 2}

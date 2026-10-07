@@ -263,6 +263,20 @@ namespace FlyingFishMomentum.Run
                     _cloudMat.color = new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a);
                 }
             }
+            else
+            {
+                // Legacy specs never owned prompt dressing: restore the
+                // shared defaults so a skin->legacy transition can't leak
+                // the previous realm's tints.
+                RingMaterial.color = DefaultRingTint;
+                CoinMaterial.color = DefaultCoinTint;
+                SilhouetteMaterial.color = DefaultSilhouetteColor;
+                if (_cloudMat != null)
+                {
+                    var cloud = _cloudMat.color;
+                    _cloudMat.color = new Color(DefaultCloudTint.r, DefaultCloudTint.g, DefaultCloudTint.b, cloud.a);
+                }
+            }
         }
 
         // One panoramic skybox material per skin, cached like the other
@@ -287,10 +301,10 @@ namespace FlyingFishMomentum.Run
             if (spec == null) return;
             ApplyMood(spec);
             var skin = spec.Skin;
-            _decorPrefabs = skin != null ? skin.DecorPrefabs : null;
-            _islandPrefabs = skin != null ? skin.IslandPrefabs : null;
-            _spirePrefabs = skin != null ? skin.SpirePrefabs : null;
-            _archPrefabs = skin != null ? skin.ArchPrefabs : null;
+            _decorPrefabs = NonNull(skin != null ? skin.DecorPrefabs : null);
+            _islandPrefabs = NonNull(skin != null ? skin.IslandPrefabs : null);
+            _spirePrefabs = NonNull(skin != null ? skin.SpirePrefabs : null);
+            _archPrefabs = NonNull(skin != null ? skin.ArchPrefabs : null);
             var rng = new System.Random(seed);
             var root = new GameObject(string.Format("Chunk_{0}_{1}_{2}", spec.ChunkId, zStart, seed));
             root.transform.SetParent(transform, false);
@@ -579,6 +593,25 @@ namespace FlyingFishMomentum.Run
             return PlaceRock(root, center, new Vector3(10f, 25f, 10f), "ChunkIsland", rng, shells);
         }
 
+        // Shared-material defaults (match the lazy initializers below):
+        // the legacy mood path restores these so realm tints can't leak.
+        private static readonly Color DefaultRingTint = new Color(1f, 0.85f, 0.2f);
+        private static readonly Color DefaultCoinTint = new Color(1f, 0.75f, 0.15f);
+        private static readonly Color DefaultSilhouetteColor = new Color(0.16f, 0.2f, 0.3f);
+        private static readonly Color DefaultCloudTint = new Color(0.95f, 0.97f, 1f);
+
+        // Hand-edited skins may hold null entries: drop them once at
+        // cache time so placement never throws mid-BuildChunk and the
+        // rng sequence stays deterministic.
+        private static GameObject[] NonNull(GameObject[] prefabs)
+        {
+            if (prefabs == null) return null;
+            var kept = new List<GameObject>(prefabs.Length);
+            foreach (var p in prefabs)
+                if (p != null) kept.Add(p);
+            return kept.ToArray();
+        }
+
         // Uniform fit of a visual into a shell volume: scale by the
         // tightest axis so the visual never pokes out. Zero extents
         // (empty bounds) fall back to 1.
@@ -603,14 +636,20 @@ namespace FlyingFishMomentum.Run
             if (rend != null) rend.enabled = false;
             var shell = Object.Instantiate(prefab);
             shell.name = "ChunkShell_" + prefab.name;
-            var meshFilter = shell.GetComponentInChildren<MeshFilter>();
-            Vector3 visSize = Vector3.one;
-            Vector3 visCenter = Vector3.zero;
-            if (meshFilter != null && meshFilter.sharedMesh != null)
+            // Combined bounds across the full prefab hierarchy (multi-mesh
+            // models included), measured before parenting so the cube's
+            // non-uniform scale can't pollute the fit.
+            var renderers = shell.GetComponentsInChildren<MeshRenderer>();
+            Bounds vis = new Bounds(shell.transform.position, Vector3.zero);
+            bool any = false;
+            foreach (var r in renderers)
             {
-                visSize = meshFilter.sharedMesh.bounds.size;
-                visCenter = meshFilter.sharedMesh.bounds.center;
+                if (r == null) continue;
+                if (!any) { vis = r.bounds; any = true; }
+                else vis.Encapsulate(r.bounds);
             }
+            Vector3 visSize = any ? vis.size : Vector3.one;
+            Vector3 visCenter = any ? vis.center - shell.transform.position : Vector3.zero;
             Vector3 parentScale = cube.transform.localScale;
             float s = FitScale(parentScale, visSize);
             shell.transform.SetParent(cube.transform, false);
@@ -649,6 +688,9 @@ namespace FlyingFishMomentum.Run
             if (_islandPool.Count > 0 && (go = _islandPool.Dequeue()) != null)
             {
                 go.SetActive(true);
+                // Pooled cubes may carry a prior chunk's shell: strip
+                // always, so legacy/empty reuse never shows stale visuals.
+                StripShells(go);
             }
             else
             {
@@ -674,6 +716,7 @@ namespace FlyingFishMomentum.Run
             if (_spirePool.Count > 0 && (go = _spirePool.Dequeue()) != null)
             {
                 go.SetActive(true);
+                StripShells(go);
             }
             else
             {

@@ -14,6 +14,8 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             foreach (var go in _spawned) Object.DestroyImmediate(go);
             _spawned.Clear();
+            RenderSettings.skybox = null;
+            RenderSettings.fog = false;
         }
 
         private ChunkBuilder NewBuilder()
@@ -77,10 +79,21 @@ namespace FlyingFishMomentum.Tests.EditMode
                     r + " panorama is not 2:1 equirect");
                 Assert.IsNotNull(skin.DecorPrefabs, r + " decor set");
                 Assert.Greater(skin.DecorPrefabs.Length, 0, r + " decor empty");
-                foreach (var p in skin.DecorPrefabs)
+                var sets = new System.Collections.Generic.Dictionary<string, GameObject[]>
                 {
-                    Assert.IsNotNull(p, r + " null prefab ref");
-                    Assert.IsNull(p.GetComponentInChildren<Collider>(true), p.name + " carries a collider");
+                    { "decor", skin.DecorPrefabs },
+                    { "island", skin.IslandPrefabs },
+                    { "spire", skin.SpirePrefabs },
+                    { "arch", skin.ArchPrefabs },
+                };
+                foreach (var kv in sets)
+                {
+                    if (kv.Value == null) continue;
+                    foreach (var p in kv.Value)
+                    {
+                        Assert.IsNotNull(p, r + " " + kv.Key + " null prefab ref");
+                        Assert.IsNull(p.GetComponentInChildren<Collider>(true), p.name + " carries a collider");
+                    }
                 }
             }
         }
@@ -154,6 +167,16 @@ namespace FlyingFishMomentum.Tests.EditMode
             return n;
         }
 
+        // House style is tolerance comparison (exact Color equality trips
+        // on sub-1e3 material round-trips).
+        private static void AssertColor(Color expected, Color actual)
+        {
+            Assert.AreEqual(expected.r, actual.r, 0.001f, "r");
+            Assert.AreEqual(expected.g, actual.g, 0.001f, "g");
+            Assert.AreEqual(expected.b, actual.b, 0.001f, "b");
+            Assert.AreEqual(expected.a, actual.a, 0.001f, "a");
+        }
+
         [Test]
         public void ApplyMood_Skin_TintsPromptsSilhouettesAndCloud()
         {
@@ -173,6 +196,92 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.AreEqual(Color.magenta, ringMat.color);
                 var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
                 Assert.AreEqual(Color.cyan, gem.sharedMaterial.color);
+            }
+            finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
+        }
+
+        [Test]
+        public void ChunkSpecAssets_HaveSkinsWired()
+        {
+            string[] realms = { "Lagoon", "Gauntlet", "Storm", "Sky" };
+            foreach (var r in realms)
+            {
+                var spec = UnityEditor.AssetDatabase.LoadAssetAtPath<ChunkSpec>(
+                    "Assets/Configs/ChunkSpec_" + r + ".asset");
+                Assert.IsNotNull(spec, "missing ChunkSpec for " + r);
+                Assert.IsNotNull(spec.Skin, r + " ChunkSpec has no RealmSkin wired");
+                Assert.IsNotNull(spec.Skin.SkyPanorama, r + " skin panorama");
+                Assert.Greater(spec.Skin.DecorPrefabs.Length, 0, r + " skin decor empty");
+            }
+        }
+
+        [Test]
+        public void BuildChunk_LegacyReuse_StripsStaleShells()
+        {
+            var builder = NewBuilder();
+            var shellPrefab = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _spawned.Add(shellPrefab);
+            Object.DestroyImmediate(shellPrefab.GetComponent<Collider>());
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.IslandPrefabs = new GameObject[] { shellPrefab };
+            var skinned = ScriptableObject.CreateInstance<ChunkSpec>();
+            skinned.ChunkId = "Skinned"; skinned.Skin = skin;
+            skinned.Length = 500f; skinned.IslandPairs = 1;
+            var legacy = ScriptableObject.CreateInstance<ChunkSpec>();
+            legacy.ChunkId = "Legacy"; legacy.Skin = null;
+            legacy.Length = 500f; legacy.IslandPairs = 1;
+            builder.BuildChunk(skinned, 0f, 9);
+            Assert.Greater(CountShells(builder.Islands[0]), 0);
+            builder.ReclaimBefore(100000f);
+            builder.BuildChunk(legacy, 0f, 9);
+            foreach (var island in builder.Islands)
+            {
+                Assert.AreEqual(0, CountShells(island));
+                Assert.IsTrue(island.GetComponent<MeshRenderer>().enabled);
+            }
+        }
+
+        [Test]
+        public void BuildChunk_NullPrefabEntries_Skipped()
+        {
+            var builder = NewBuilder();
+            var realPrefab = new GameObject("RealDecor");
+            _spawned.Add(realPrefab);
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.DecorPrefabs = new GameObject[] { null, realPrefab };
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Lagoon"; spec.Skin = skin;
+            spec.Length = 500f; spec.DecorKind = "rubble"; spec.DecorCount = 2;
+            builder.BuildChunk(spec, 0f, 5);
+            Assert.AreEqual(2, builder.Decor.Count);
+            foreach (var d in builder.Decor)
+                Assert.AreEqual("ChunkDecor_RealDecor", d.name);
+        }
+
+        [Test]
+        public void ApplyMood_LegacySpec_RestoresDefaultTints()
+        {
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.SkyPanorama = new Texture2D(4, 2);
+            skin.RingTint = Color.magenta; skin.CoinTint = Color.cyan;
+            var skinned = ScriptableObject.CreateInstance<ChunkSpec>();
+            skinned.ChunkId = "Storm"; skinned.Skin = skin;
+            skinned.Length = 500f; skinned.RingCount = 1; skinned.RingSpacing = 150f;
+            skinned.CoinsPerTrail = 1;
+            var legacy = ScriptableObject.CreateInstance<ChunkSpec>();
+            legacy.ChunkId = "Legacy"; legacy.Skin = null;
+            legacy.FogColor = Color.red; legacy.FogDensity = 0.01f;
+            legacy.SkyTint = Color.blue; legacy.WaterTint = Color.green;
+            try
+            {
+                builder.BuildChunk(skinned, 0f, 3);
+                builder.ApplyMood(legacy);
+                var ringMat = builder.Rings[0].GetComponent<LineRenderer>().sharedMaterial;
+                AssertColor(new Color(1f, 0.85f, 0.2f), ringMat.color);
+                var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
+                AssertColor(new Color(1f, 0.75f, 0.15f), gem.sharedMaterial.color);
+                Assert.IsNull(RenderSettings.skybox);
             }
             finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
         }

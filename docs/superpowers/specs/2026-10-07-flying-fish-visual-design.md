@@ -84,10 +84,14 @@ skin when non-null, else leaves current behavior.
 ### 3. Prefab sets (Phase 0 import — materials + prefabs, no code)
 
 - Materials: pirate `colormap.png` → one shared Standard material;
-  nature FBX are vertex-colored → one vertex-color material; ring/coin
+  nature sets → prefix-tinted shared Standard materials (amended
+  2026-10-07 per import probe: NO staged FBX carries vertex colors, so
+  the vertex-color material is dropped; nature models use multi-slot
+  FBX materials, all slots remapped to the set tint). Ring/coin
   materials re-tinted to shared palette (geometry unchanged).
 - Prefabs under `Assets/Prefabs/Decor/` (vendor folder stays untouched):
-  per-model prefabs with `MeshFilter/MeshRenderer` + shared materials,
+  per-model prefabs cloning the FULL FBX hierarchy (multi-mesh models
+  like ship-wreck keep all parts) with remapped shared materials,
   NO colliders on decor; island/spire/arch prefabs are VISUAL ONLY.
 - Collider-shell pattern: `PlaceIsland`/`PlaceSpire`/arch code keeps
   exact positions/scales/colliders; the visible cube renderer is disabled

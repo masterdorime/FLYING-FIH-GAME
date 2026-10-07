@@ -3,7 +3,7 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_CorrespondentSource: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -11,6 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f9d94e9bd0bac34bbb008703b896138, type: 3}
   m_Name: ChunkSpec_Gauntlet
+  m_EditorClassIdentifier: 
   ChunkId: Gauntlet
   Length: 1000
   RingCount: 6
@@ -32,3 +33,4 @@ MonoBehaviour:
   FogColor: {r: 0.95, g: 0.75, b: 0.55, a: 1}
   FogDensity: 0.003
   WaterTint: {r: 0.25, g: 0.5, b: 0.6, a: 1}
+  Skin: {fileID: 11400000, guid: f5e041a9fa7475640a4d9616e54074cc, type: 2}

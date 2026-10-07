@@ -209,7 +209,7 @@ git commit -m "feat: headless visual import with skin assets (visual task 2)"
         [Test]
         public void FitScale_FitsLargestAxisUniformly()
         {
-            Assert.AreEqual(2f, ChunkBuilder.FitScale(new Vector3(4f, 20f, 4f), new Vector3(1f, 2f, 1f)), 0.001f);
+            Assert.AreEqual(4f, ChunkBuilder.FitScale(new Vector3(4f, 20f, 4f), new Vector3(1f, 2f, 1f)), 0.001f);
             Assert.AreEqual(1f, ChunkBuilder.FitScale(Vector3.zero, Vector3.one), 0.001f);
         }
 
