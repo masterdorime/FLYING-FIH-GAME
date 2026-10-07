@@ -236,6 +236,11 @@ namespace FlyingFishMomentum
             }
         }
 
+        // Ring prompt radius: the swept pass-through disc AND the visual
+        // openings ChunkBuilder fits to it. Single source: change here and
+        // both judging and visuals follow together.
+        public const float RingPromptRadius = 3f;
+
         public void CheckRingTrigger(float now, Vector3 playerPos)
         {
             if (Charge.IsActive || _rings == null) return;
@@ -248,7 +253,7 @@ namespace FlyingFishMomentum
             foreach (var ring in _rings)
             {
                 if (ring == null || ring.Consumed) continue;
-                if (SegmentPassesDisc(prev, playerPos, ring.transform.position, 3f))
+                if (SegmentPassesDisc(prev, playerPos, ring.transform.position, RingPromptRadius))
                 {
                     ring.Consume();
                     // Never overlap: an open beat prompt closes silently

@@ -40,11 +40,6 @@ namespace FlyingFishMomentum.Run
         public const float CloudY = 35f;
         public const float CloudSize = 1200f;
         public const float CloudMaxAlpha = 0.95f;
-        // Ring prompt radius: model openings are fitted to this disc and
-        // centered on the ring position. Must match the swept check in
-        // TimingPromptSpawner.CheckRingTrigger (SegmentPassesDisc radius);
-        // change both together or visuals and judging disagree.
-        public const float RingRadius = 3f;
 
         private readonly List<ChargeRing> _rings = new List<ChargeRing>();
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
@@ -826,7 +821,9 @@ namespace FlyingFishMomentum.Run
                     // centered on the ring origin (BuildChunk positions it
                     // after TakeRing). Pooling never refits: Reset only
                     // re-enables renderers, position is set per build.
-                    float s = bounds.size.y > 0f ? (RingRadius * 2f) / bounds.size.y : 1f;
+                    float s = bounds.size.y > 0f
+                        ? (TimingPromptSpawner.RingPromptRadius * 2f) / bounds.size.y
+                        : 1f;
                     Vector3 p0 = visual.transform.position;
                     visual.transform.SetParent(go.transform, false);
                     visual.transform.localScale = Vector3.one * s;
@@ -837,7 +834,7 @@ namespace FlyingFishMomentum.Run
             }
             var line = go.AddComponent<LineRenderer>();
             const int points = 49;
-            const float radius = 3f;
+            float radius = TimingPromptSpawner.RingPromptRadius;
             line.positionCount = points;
             line.useWorldSpace = false;
             line.startWidth = 0.25f;

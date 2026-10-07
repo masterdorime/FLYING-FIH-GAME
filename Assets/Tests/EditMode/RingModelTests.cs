@@ -61,7 +61,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             var mesh = ring.GetComponentInChildren<MeshRenderer>();
             Assert.IsNotNull(mesh, "no model child");
             var bounds = mesh.bounds;
-            Assert.AreEqual(6f, bounds.size.y, 0.01f, "opening height != judging disc diameter");
+            float disc = FlyingFishMomentum.TimingPromptSpawner.RingPromptRadius * 2f;
+            Assert.AreEqual(disc, bounds.size.y, 0.01f, "opening height != judging disc diameter");
             Assert.AreEqual(0f, Vector3.Distance(bounds.center, ring.transform.position), 0.01f,
                 "model not centered on ring position");
             Assert.Less(bounds.size.z, bounds.size.y, "model not thin along travel (z)");
@@ -81,6 +82,29 @@ namespace FlyingFishMomentum.Tests.EditMode
             var mesh = ring.GetComponentInChildren<MeshRenderer>();
             Assert.IsNotNull(mesh, "pipeline ring model not loaded");
             Assert.AreEqual("RingVisual_Ring", ring.transform.GetChild(0).name);
+        }
+
+        [Test]
+        public void CreateRing_RendererlessPrefab_FallsBackToLine()
+        {
+            // Last-resort branch: configured prefab with no renderers
+            // destroys the empty visual and builds the legacy line.
+            var builder = NewBuilder();
+            var empty = new GameObject("NoMesh");
+            _spawned.Add(empty);
+            builder.Configure(null, null, null, empty);
+            builder.BuildChunk(RingSpec(), 0f, 3);
+            Assert.IsNotNull(builder.Rings[0].GetComponent<LineRenderer>(), "no fallback line");
+        }
+
+        [Test]
+        public void PipelineRing_ResolvesAtRuntimePath()
+        {
+            // Production (and bare test builders) load Ring.prefab from
+            // Resources: fail fast here if the artifact goes missing.
+            var prefab = Resources.Load<GameObject>("Ring");
+            Assert.IsNotNull(prefab, "Assets/Resources/Ring.prefab missing — re-run VisualImport.BuildRing");
+            Assert.IsNotNull(prefab.GetComponentInChildren<MeshRenderer>(), "Ring.prefab has no mesh");
         }
 
         [Test]

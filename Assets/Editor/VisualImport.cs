@@ -190,7 +190,12 @@ public static class VisualImport
             AssetDatabase.LoadAssetAtPath<Texture2D>(WatercraftTex));
         int count = 0;
         Directory.CreateDirectory("Assets/Resources");
-        BuildPrefab(WatercraftDir + "/gate.fbx", "Ring", mat, "Assets/Resources", ref count);
+        var ring = BuildPrefab(WatercraftDir + "/gate.fbx", "Ring", mat, "Assets/Resources", ref count);
+        // CreateRing fits/counters by uniform scale on an identity root:
+        // fail the import (not the game) if the model ever violates it.
+        if (ring != null && (ring.transform.localScale != Vector3.one
+            || ring.transform.localRotation != Quaternion.identity))
+            Debug.LogError("[VisualImport] Ring prefab root must be identity scale/rotation.");
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[VisualImport] ring done.");
