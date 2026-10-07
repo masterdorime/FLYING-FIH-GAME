@@ -162,6 +162,27 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void RendererlessPrefab_LeavesVisibleCube()
+        {
+            // Degenerate shell must not leave an invisible collidable box.
+            var builder = NewBuilder();
+            var empty = new GameObject("NoMesh");
+            _spawned.Add(empty);
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.IslandPrefabs = new GameObject[] { empty };
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Degenerate"; spec.Skin = skin;
+            spec.Length = 500f; spec.IslandPairs = 1;
+            builder.BuildChunk(spec, 0f, 9);
+            Assert.AreEqual(2, builder.Islands.Count);
+            foreach (var island in builder.Islands)
+            {
+                Assert.AreEqual(0, Shells(island).Count);
+                Assert.IsTrue(island.GetComponent<MeshRenderer>().enabled);
+            }
+        }
+
+        [Test]
         public void SkySpireSet_HasNoStatueRing()
         {
             var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>(

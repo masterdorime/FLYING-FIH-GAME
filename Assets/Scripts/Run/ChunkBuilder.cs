@@ -658,7 +658,8 @@ namespace FlyingFishMomentum.Run
         // aspect-preserved segments. Tall visuals collapse to a single
         // exact-fit segment, so short lintels behave like the old
         // single-shell path. Segments never poke out: min-axis fit per
-        // segment, floor-fill count, bottom-aligned base.
+        // segment, floor-fill count (top gap under one segment, accepted),
+        // bottom-aligned base.
         private static void AttachStackedShell(GameObject cube, GameObject prefab)
         {
             StripShells(cube);
@@ -679,7 +680,10 @@ namespace FlyingFishMomentum.Run
             }
             if (!any)
             {
+                // Renderer-less prefab: restore the cube instead of
+                // leaving an invisible-but-collidable box.
                 Object.DestroyImmediate(first);
+                if (rend != null) rend.enabled = true;
                 return;
             }
             Vector3 parentScale = cube.transform.localScale;
@@ -795,8 +799,8 @@ namespace FlyingFishMomentum.Run
 
         // Dressing composer: kind selects the shape set, count is the
         // budget. Every piece parks off-lane with no collider.
-        // Legacy kind volumes (match the AddBlob clusters below): skinned
-        // prefabs fit these so dressing keeps its old visual weight.
+        // Legacy kind volumes (combined AddBlob cluster bounds below):
+        // skinned prefabs fit these so dressing keeps its old weight.
         private static readonly Dictionary<string, Vector3> DecorFit = new Dictionary<string, Vector3>
         {
             { "coral", new Vector3(2.5f, 3.5f, 2.5f) },
