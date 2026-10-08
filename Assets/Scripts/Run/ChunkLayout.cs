@@ -147,7 +147,7 @@ namespace FlyingFishMomentum.Run
                 // an in-bounds anchor can still stage cubes out of band.
                 CheckPos(e.Id + ".pillar", "arch", e.Anchor + new Vector3(-8f, 0f, 0f), spec, errors);
                 CheckPos(e.Id + ".pillar", "arch", e.Anchor + new Vector3(8f, 0f, 0f), spec, errors);
-                CheckPos(e.Id + ".lintel", "arch", e.Anchor + new Vector3(0f, 12f, 0f), spec, errors);
+                CheckPos(e.Id + ".lintel", "arch", e.Anchor + new Vector3(0f, 11.5f, 0f), spec, errors);
                 CheckShell(spec, ShellKind.Pillar, e.PillarShell, e.Id, errors);
                 CheckShell(spec, ShellKind.Lintel, e.LintelShell, e.Id, errors);
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' pillar",

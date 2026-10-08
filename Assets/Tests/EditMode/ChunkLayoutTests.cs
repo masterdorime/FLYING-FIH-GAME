@@ -139,7 +139,9 @@ namespace FlyingFishMomentum.Tests.EditMode
         public void Validate_RejectsSealedRing()
         {
             var spec = LayoutSpec();
-            // Island volume (10,25,10) centered on the ring swallows it.
+            // Authored 10³ test volume moved onto the ring swallows it
+            // (explicit Scale, not the bible default — the seal math is
+            // what matters, not the numbers).
             spec.Layout.Islands[0].Position = new Vector3(5f, -3f, 100f);
             var errors = spec.Layout.Validate(spec);
             Assert.Greater(errors.Count, 0);

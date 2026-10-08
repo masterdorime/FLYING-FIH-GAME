@@ -94,3 +94,69 @@ Each phase independently verifiable; thrash contained by phase.
 - Fixed-count decor rise costs draw calls: trivial meshes, accepted.
 - Big-bang mixes feel + look: phase commits + per-realm captures keep
   attribution possible; any phase can be reverted independently.
+
+## 8. §34.1 change records (implementation divergences)
+
+### CR-O1: no per-segment draws, no jitter
+
+Current Requirement: §2 specified per-segment seeded prefab picks and
+±15° yaw jitter for stacked variety.
+
+Reason for Conflict: per-segment draws change the rng stream shape
+(exact-sequence breakage); any yaw on exact-width fits pokes out of
+the collider (verified against the inside-bounds invariant).
+
+Proposed Change: one seeded pick per obstacle (W2 stream shape
+preserved, zero draw-count change); taper + cap-8 alone fix the
+skewer silhouette. Obstacles still vary across each other by pick.
+
+Affected Systems: `AttachStackedShell`, `ObstacleShellTests` (taper +
+cap pins, no variety assertion).
+
+New Behavior: stacked columns share one prefab per cube, narrowing
+upward, max 8 levels.
+
+Updated Acceptance Criteria: taper scales strictly decrease, count
+caps at 8, all levels inside bounds (unit tests); captures inspected.
+
+### CR-O2: Gauntlet decor kind + composition
+
+Current Requirement: §3 re-theme sets; §4 density counts.
+
+Reason for Conflict: buoys placed under kind `rubble` sink to −10
+(the buoy test proved it); pole flags and grass do not float.
+
+Proposed Change: Gauntlet `DecorKind` rubble→buoy (y≈0 surface
+flotsam field); decor set trimmed to buoy, buoy-flag, cargo ×2,
+chest; pipeline source updated identically so regens converge.
+`IslandHalfDepth` 5→6.5 added alongside `IslandHalfX` (z-half of the
+13-wide island, same reclaim-margin reasoning).
+
+Affected Systems: `PlaceDecor`, `DecorFit`, `ChunkSpec_Gauntlet`
+(kind, count), `RealmSkin_Gauntlet` (5-entry decor set),
+`VisualImport` Gauntlet decor list.
+
+New Behavior: buoys/markers/cargo bob on the surface off-lane;
+Gauntlet decor count 10.
+
+Updated Acceptance Criteria: buoy float + scale + lanes test;
+Gauntlet no-castles test; suites green.
+
+### CR-O3: lintel meets pillar tops
+
+Current Requirement: bible lintel offset +12 (spec §1 carried the old
+value against shorter 18-tall pillars).
+
+Reason for Conflict: headless capture showed a 0.5m sky slit between
+pillar tops (9.0) and lintel bottom (10.0).
+
+Proposed Change: lintel offset +12→+11.5 in both build paths and the
+layout validator (exact touch at 9.0).
+
+Affected Systems: `ChunkBuilder` arch sites, `ChunkLayout`
+validation volumes, layout arch test.
+
+New Behavior: lintel bottom touches pillar tops; gate reads continuous.
+
+Updated Acceptance Criteria: arch position unit tests; capture
+inspected.
