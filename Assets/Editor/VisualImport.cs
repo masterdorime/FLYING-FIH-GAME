@@ -103,7 +103,9 @@ public static class VisualImport
             new string[0], new string[0],
             prefabByName);
         BuildSkin("Gauntlet", "skybox-morning.png",
-            new string[] { "buoy", "buoy-flag", "cargo-container-a", "cargo-pile-a", "chest", "flag", "flag-pennant", "grass-patch" },
+            // Floating set (kind buoy): buoys, floating cargo, a bobbing
+            // chest. Pole flags and grass don't float — excluded.
+            new string[] { "buoy", "buoy-flag", "cargo-container-a", "cargo-pile-a", "chest" },
             new string[] { "ship-small", "ship-cargo-a", "cliff_rock" },
             new string[] { "rock_tallA", "rock_tallC", "cliff_large_rock" },
             new string[] { "rock_tallA", "cliff_rock" },

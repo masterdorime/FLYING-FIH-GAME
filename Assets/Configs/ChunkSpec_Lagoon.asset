@@ -22,7 +22,7 @@ MonoBehaviour:
   SkyRingCount: 0
   SkySpireCount: 0
   DecorKind: coral
-  DecorCount: 8
+  DecorCount: 12
   ArchCount: 0
   MinDifficulty: 0
   MaxDifficulty: 0.6

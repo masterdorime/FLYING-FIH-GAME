@@ -21,8 +21,8 @@ MonoBehaviour:
   IslandPairs: 0
   SkyRingCount: 2
   SkySpireCount: 2
-  DecorKind: rubble
-  DecorCount: 6
+  DecorKind: buoy
+  DecorCount: 10
   ArchCount: 3
   MinDifficulty: 0.1
   MaxDifficulty: 1

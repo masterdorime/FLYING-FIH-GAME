@@ -22,7 +22,7 @@ MonoBehaviour:
   SkyRingCount: 4
   SkySpireCount: 4
   DecorKind: cloud
-  DecorCount: 6
+  DecorCount: 8
   ArchCount: 0
   MinDifficulty: 0.2
   MaxDifficulty: 1

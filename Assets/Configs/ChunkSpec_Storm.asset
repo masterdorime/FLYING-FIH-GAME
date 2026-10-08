@@ -22,7 +22,7 @@ MonoBehaviour:
   SkyRingCount: 0
   SkySpireCount: 3
   DecorKind: crag
-  DecorCount: 8
+  DecorCount: 12
   ArchCount: 0
   MinDifficulty: 0.35
   MaxDifficulty: 1

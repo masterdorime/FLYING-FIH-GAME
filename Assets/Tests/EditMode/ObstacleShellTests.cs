@@ -217,6 +217,26 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void BuoyDecor_FloatsAtSurfaceScaled()
+        {
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            var buoy = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Decor/buoy.prefab");
+            Assert.IsNotNull(buoy, "buoy prefab missing — Task 3 must land first");
+            skin.DecorPrefabs = new GameObject[] { buoy };
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Buoy"; spec.Skin = skin;
+            spec.Length = 500f; spec.DecorKind = "buoy"; spec.DecorCount = 2;
+            builder.BuildChunk(spec, 0f, 5);
+            Assert.AreEqual(2, builder.Decor.Count);
+            foreach (var d in builder.Decor)
+            {
+                Assert.AreEqual(0f, d.transform.position.y, 0.01f, "buoy not at the surface");
+                Assert.GreaterOrEqual(Mathf.Abs(d.transform.position.x), 25f, "buoy inside lanes");
+            }
+        }
+
+        [Test]
         public void GauntletSets_HaveNoCastles()
         {
             var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>("Assets/Configs/RealmSkin_Gauntlet.asset");

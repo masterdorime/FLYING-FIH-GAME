@@ -948,12 +948,15 @@ namespace FlyingFishMomentum.Run
             { "cloud", new Vector3(8f, 4f, 6f) },
             { "crag", new Vector3(3f, 10f, 3f) },
             { "rubble", new Vector3(2.5f, 2.5f, 2.5f) },
+            { "buoy", new Vector3(2f, 3f, 2f) },
         };
 
         private GameObject PlaceDecor(GameObject root, string kind, float z, System.Random rng)
         {
             float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (25f + (float)rng.NextDouble() * 35f);
-            Vector3 pos = new Vector3(x, kind == "cloud" ? 95f : -10f, z);
+            // Buoys are race markers: they float (surface flotsam reads
+            // with the surface rings); everything else sinks or flies.
+            Vector3 pos = new Vector3(x, kind == "cloud" ? 95f : kind == "buoy" ? 0f : -10f, z);
             // Skinned dressing: one seeded prefab pick at the same lane
             // math. Prefabs carry no colliders (pinned by import tests).
             // Scaled to the legacy kind volumes (below) about the prefab
