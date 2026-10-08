@@ -95,6 +95,9 @@ namespace FlyingFishMomentum.Run
         {
             _builder = builder;
             _momentum = momentum;
+            // Wake ribbon dressing on the fish (no scene rebuild needed).
+            if (momentum != null && momentum.GetComponent<FishWake>() == null)
+                momentum.gameObject.AddComponent<FishWake>();
         }
 
         public void SetSeed(int seed)
