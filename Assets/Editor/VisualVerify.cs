@@ -319,9 +319,9 @@ public static class VisualVerify
         go.transform.position = pos;
         if (colormap != null)
         {
-            var mat = new Material(Shader.Find("Standard"));
-            mat.color = Color.white;
-            mat.SetTexture("_MainTex", colormap);
+            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            mat.SetColor("_BaseColor", Color.white);
+            mat.SetTexture("_BaseMap", colormap);
             foreach (var r in go.GetComponentsInChildren<MeshRenderer>())
             {
                 var slots = r.sharedMaterials;

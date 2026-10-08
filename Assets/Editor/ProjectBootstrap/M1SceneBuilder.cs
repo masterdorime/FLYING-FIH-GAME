@@ -37,33 +37,35 @@ namespace ProjectBootstrap
             var stormSpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Storm.asset");
             var skySpec = Load<ChunkSpec>("Assets/Configs/ChunkSpec_Sky.asset");
 
-            var fishMat = new Material(Shader.Find("Standard"));
-            fishMat.color = new Color(1f, 0.45f, 0.1f);
+            var fishMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            fishMat.SetColor("_BaseColor", new Color(1f, 0.45f, 0.1f));
             AssetDatabase.CreateAsset(fishMat, "Assets/Materials/M1Fish.mat");
 
-            var waterMat = new Material(Shader.Find("Standard"));
-            waterMat.color = new Color(0.1f, 0.4f, 0.8f, 0.6f);
-            waterMat.SetFloat("_Mode", 3f);
+            var waterMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            waterMat.SetColor("_BaseColor", new Color(0.1f, 0.4f, 0.8f, 0.6f));
+            waterMat.SetFloat("_Surface", 1f);
+            waterMat.SetFloat("_Blend", 1f);
             waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             waterMat.SetInt("_ZWrite", 0);
             waterMat.DisableKeyword("_ALPHATEST_ON");
+            waterMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
             waterMat.SetOverrideTag("RenderType", "Transparent");
             waterMat.renderQueue = 3000;
             AssetDatabase.CreateAsset(waterMat, "Assets/Materials/M1Water.mat");
 
-            var sandMat = new Material(Shader.Find("Standard"));
-            sandMat.color = new Color(0.85f, 0.75f, 0.5f);
+            var sandMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            sandMat.SetColor("_BaseColor", new Color(0.85f, 0.75f, 0.5f));
             AssetDatabase.CreateAsset(sandMat, "Assets/Materials/M1Sand.mat");
 
-            var rockMat = new Material(Shader.Find("Standard"));
-            rockMat.color = new Color(0.4f, 0.42f, 0.45f);
+            var rockMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            rockMat.SetColor("_BaseColor", new Color(0.4f, 0.42f, 0.45f));
 
-            var coinMat = new Material(Shader.Find("Standard"));
-            coinMat.color = new Color(1f, 0.75f, 0.15f);
+            var coinMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            coinMat.SetColor("_BaseColor", new Color(1f, 0.75f, 0.15f));
             coinMat.SetFloat("_Metallic", 0.85f);
-            coinMat.SetFloat("_Glossiness", 0.55f);
+            coinMat.SetFloat("_Smoothness", 0.55f);
             AssetDatabase.CreateAsset(coinMat, "Assets/Materials/M1Coin.mat");
             AssetDatabase.CreateAsset(rockMat, "Assets/Materials/M1Rock.mat");
 
@@ -71,8 +73,8 @@ namespace ProjectBootstrap
             // shared M1Water.mat instance above). ChunkBuilder re-tints
             // these per chunk type at runtime; Task 7 wires the scene.
             // Front faces culled: the sky shell is viewed from inside.
-            var skyMat = new Material(Shader.Find("Standard"));
-            skyMat.color = new Color(0.53f, 0.81f, 0.92f); // Lagoon starter
+            var skyMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            skyMat.SetColor("_BaseColor", new Color(0.53f, 0.81f, 0.92f)); // Lagoon starter
             skyMat.SetInt("_Cull", 1);
             AssetDatabase.CreateAsset(skyMat, "Assets/Materials/M1Sky.mat");
 

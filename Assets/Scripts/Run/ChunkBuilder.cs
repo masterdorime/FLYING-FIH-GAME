@@ -160,17 +160,22 @@ namespace FlyingFishMomentum.Run
         private Material _cloudMat;
         private Transform _fish;
 
+        // URP: runtime materials use Lit (_BaseColor); sprite/panoramic
+        // shaders keep _Color and are untouched.
+        private const string LitShader = "Universal Render Pipeline/Lit";
+
         private void EnsureCloudSea()
         {
             if (_cloudSea != null) return;
-            _cloudMat = new Material(Shader.Find("Standard"));
-            _cloudMat.color = new Color(0.95f, 0.97f, 1f, 0f);
-            _cloudMat.SetFloat("_Mode", 3f);
+            _cloudMat = new Material(Shader.Find(LitShader));
+            _cloudMat.SetColor("_BaseColor", new Color(0.95f, 0.97f, 1f, 0f));
+            _cloudMat.SetFloat("_Surface", 1f);
+            _cloudMat.SetFloat("_Blend", 0f);
             _cloudMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             _cloudMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             _cloudMat.SetInt("_ZWrite", 0);
             _cloudMat.DisableKeyword("_ALPHATEST_ON");
-            _cloudMat.EnableKeyword("_ALPHABLEND_ON");
+            _cloudMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             _cloudMat.SetOverrideTag("RenderType", "Transparent");
             _cloudMat.renderQueue = 3000;
             _cloudSea = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -199,9 +204,9 @@ namespace FlyingFishMomentum.Run
                 p.z = _fish.position.z;
                 p.y = CloudY;
                 _cloudSea.transform.position = p;
-                var c = _cloudMat.color;
+                var c = _cloudMat.GetColor("_BaseColor");
                 c.a = RealmBlend(_fish.position.y) * CloudMaxAlpha;
-                _cloudMat.color = c;
+                _cloudMat.SetColor("_BaseColor", c);
             }
             EnsureSilhouettes();
             for (int i = 0; i < _silhouettes.Count; i++)
@@ -274,21 +279,21 @@ namespace FlyingFishMomentum.Run
             RenderSettings.fogColor = fogColor;
             RenderSettings.fogDensity = fogDensity;
             RenderSettings.ambientLight = skyTint;
-            SkyMaterial.color = skyTint;
+            SkyMaterial.SetColor("_BaseColor", skyTint);
             // Tint water RGB only: stamping the spec alpha (1 everywhere)
             // would turn the sea opaque and hide underwater gameplay.
-            var water = WaterMaterial.color;
-            WaterMaterial.color = new Color(waterTint.r, waterTint.g, waterTint.b, water.a);
+            var water = WaterMaterial.GetColor("_BaseColor");
+            WaterMaterial.SetColor("_BaseColor", new Color(waterTint.r, waterTint.g, waterTint.b, water.a));
             if (skin != null)
             {
                 // Rings keep game-asset colors (§34.1): never tinted here,
                 // so one shared watercraft material serves rings and shells.
-                CoinMaterial.color = skin.CoinTint;
-                SilhouetteMaterial.color = skin.SilhouetteColor;
+                CoinMaterial.SetColor("_BaseColor", skin.CoinTint);
+                SilhouetteMaterial.SetColor("_BaseColor", skin.SilhouetteColor);
                 if (_cloudMat != null)
                 {
-                    var cloud = _cloudMat.color;
-                    _cloudMat.color = new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a);
+                    var cloud = _cloudMat.GetColor("_BaseColor");
+                    _cloudMat.SetColor("_BaseColor", new Color(skin.CloudTint.r, skin.CloudTint.g, skin.CloudTint.b, cloud.a));
                 }
             }
             else
@@ -297,12 +302,12 @@ namespace FlyingFishMomentum.Run
                 // shared defaults so a skin->legacy transition can't leak
                 // the previous realm's tints. Rings are exempt (asset
                 // colors, see above); the legacy line keeps its lazy gold.
-                CoinMaterial.color = DefaultCoinTint;
-                SilhouetteMaterial.color = DefaultSilhouetteColor;
+                CoinMaterial.SetColor("_BaseColor", DefaultCoinTint);
+                SilhouetteMaterial.SetColor("_BaseColor", DefaultSilhouetteColor);
                 if (_cloudMat != null)
                 {
-                    var cloud = _cloudMat.color;
-                    _cloudMat.color = new Color(DefaultCloudTint.r, DefaultCloudTint.g, DefaultCloudTint.b, cloud.a);
+                    var cloud = _cloudMat.GetColor("_BaseColor");
+                    _cloudMat.SetColor("_BaseColor", new Color(DefaultCloudTint.r, DefaultCloudTint.g, DefaultCloudTint.b, cloud.a));
                 }
             }
         }
@@ -1074,8 +1079,8 @@ namespace FlyingFishMomentum.Run
             {
                 if (_silhouetteMat == null)
                 {
-                    _silhouetteMat = new Material(Shader.Find("Standard"));
-                    _silhouetteMat.color = new Color(0.16f, 0.2f, 0.3f);
+                    _silhouetteMat = new Material(Shader.Find(LitShader));
+                    _silhouetteMat.SetColor("_BaseColor", new Color(0.16f, 0.2f, 0.3f));
                 }
                 return _silhouetteMat;
             }
@@ -1087,10 +1092,10 @@ namespace FlyingFishMomentum.Run
             {
                 if (_coinMat == null)
                 {
-                    _coinMat = new Material(Shader.Find("Standard"));
-                    _coinMat.color = new Color(1f, 0.75f, 0.15f);
+                    _coinMat = new Material(Shader.Find(LitShader));
+                    _coinMat.SetColor("_BaseColor", new Color(1f, 0.75f, 0.15f));
                     _coinMat.SetFloat("_Metallic", 0.85f);
-                    _coinMat.SetFloat("_Glossiness", 0.55f);
+                    _coinMat.SetFloat("_Smoothness", 0.55f);
                 }
                 return _coinMat;
             }
@@ -1102,8 +1107,8 @@ namespace FlyingFishMomentum.Run
             {
                 if (_rockMat == null)
                 {
-                    _rockMat = new Material(Shader.Find("Standard"));
-                    _rockMat.color = new Color(0.4f, 0.42f, 0.45f);
+                    _rockMat = new Material(Shader.Find(LitShader));
+                    _rockMat.SetColor("_BaseColor", new Color(0.4f, 0.42f, 0.45f));
                 }
                 return _rockMat;
             }
@@ -1122,22 +1127,22 @@ namespace FlyingFishMomentum.Run
                 case "cloud":
                     if (_puffMat == null)
                     {
-                        _puffMat = new Material(Shader.Find("Standard"));
-                        _puffMat.color = new Color(0.96f, 0.97f, 1f);
+                        _puffMat = new Material(Shader.Find(LitShader));
+                        _puffMat.SetColor("_BaseColor", new Color(0.96f, 0.97f, 1f));
                     }
                     return _puffMat;
                 case "coral":
                     if (_coralMat == null)
                     {
-                        _coralMat = new Material(Shader.Find("Standard"));
-                        _coralMat.color = new Color(0.95f, 0.45f, 0.55f);
+                        _coralMat = new Material(Shader.Find(LitShader));
+                        _coralMat.SetColor("_BaseColor", new Color(0.95f, 0.45f, 0.55f));
                     }
                     return _coralMat;
                 default:
                     if (_sandMat == null)
                     {
-                        _sandMat = new Material(Shader.Find("Standard"));
-                        _sandMat.color = new Color(0.8f, 0.7f, 0.5f);
+                        _sandMat = new Material(Shader.Find(LitShader));
+                        _sandMat.SetColor("_BaseColor", new Color(0.8f, 0.7f, 0.5f));
                     }
                     return _sandMat;
             }
@@ -1153,13 +1158,15 @@ namespace FlyingFishMomentum.Run
             {
                 if (_waterMat == null)
                 {
-                    _waterMat = new Material(Shader.Find("Standard"));
-                    _waterMat.color = new Color(0.08f, 0.32f, 0.85f, 0.6f);
-                    _waterMat.SetFloat("_Mode", 3f);
+                    _waterMat = new Material(Shader.Find(LitShader));
+                    _waterMat.SetColor("_BaseColor", new Color(0.08f, 0.32f, 0.85f, 0.6f));
+                    _waterMat.SetFloat("_Surface", 1f);
+                    _waterMat.SetFloat("_Blend", 1f);
                     _waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                     _waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     _waterMat.SetInt("_ZWrite", 0);
                     _waterMat.DisableKeyword("_ALPHATEST_ON");
+                    _waterMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
                     _waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
                     _waterMat.SetOverrideTag("RenderType", "Transparent");
                     _waterMat.renderQueue = 3000;
@@ -1188,8 +1195,8 @@ namespace FlyingFishMomentum.Run
             {
                 if (_skyMat == null)
                 {
-                    _skyMat = new Material(Shader.Find("Standard"));
-                    _skyMat.color = new Color(0.53f, 0.81f, 0.92f);
+                    _skyMat = new Material(Shader.Find(LitShader));
+                    _skyMat.SetColor("_BaseColor", new Color(0.53f, 0.81f, 0.92f));
                 }
                 return _skyMat;
             }

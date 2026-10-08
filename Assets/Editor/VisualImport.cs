@@ -144,11 +144,11 @@ public static class VisualImport
         var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (mat == null)
         {
-            mat = new Material(Shader.Find("Standard"));
+            mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             AssetDatabase.CreateAsset(mat, path);
         }
-        mat.color = color;
-        mat.SetTexture("_MainTex", tex);
+        mat.SetColor("_BaseColor", color);
+        mat.SetTexture("_BaseMap", tex);
         EditorUtility.SetDirty(mat);
         return mat;
     }
