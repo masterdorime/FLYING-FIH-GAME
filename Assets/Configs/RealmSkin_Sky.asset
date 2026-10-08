@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FlyingFishMomentum.Runtime::FlyingFishMomentum.Run.RealmSkin
   SkyPanorama: {fileID: 2800000, guid: df051a6c95ea262468fdbaa0d1888ab8, type: 3}
-  SkyTint: {r: 0.95, g: 0.5, b: 0.55, a: 1}
-  FogColor: {r: 0.9, g: 0.6, b: 0.6, a: 1}
+  SkyTint: {r: 0.6, g: 0.78, b: 0.95, a: 1}
+  FogColor: {r: 0.7, g: 0.82, b: 0.92, a: 1}
   FogDensity: 0.004
   WaterTint: {r: 0.3, g: 0.4, b: 0.6, a: 1}
   CloudTint: {r: 0.95, g: 0.97, b: 1, a: 1}
@@ -29,9 +29,8 @@ MonoBehaviour:
   - {fileID: 5308993263284525848, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
   - {fileID: 5973339853036387218, guid: 2d92ce47769f71440bc4af6c640eef17, type: 3}
   SpirePrefabs:
-  - {fileID: 7071217239493133794, guid: 8ac67692e535c81488661e3335601400, type: 3}
-  - {fileID: 3169763624730825097, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
-  - {fileID: 7901147083986901784, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
+  - {fileID: 7232720019416753870, guid: 0ba2b415430909a4e87bd54e3bd10eb3, type: 3}
+  - {fileID: 3021922211820765425, guid: 8feaa71ce28973c4baad1f25580d3050, type: 3}
   ArchPrefabs: []
   ArchPillarPrefabs: []
   ArchLintelPrefabs: []

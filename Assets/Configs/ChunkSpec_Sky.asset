@@ -29,8 +29,8 @@ MonoBehaviour:
   Weight: 0.7
   MissionText: stay airborne 20s
   MissionTarget: 20
-  SkyTint: {r: 0.95, g: 0.5, b: 0.55, a: 1}
-  FogColor: {r: 0.9, g: 0.6, b: 0.6, a: 1}
+  SkyTint: {r: 0.6, g: 0.78, b: 0.95, a: 1}
+  FogColor: {r: 0.7, g: 0.82, b: 0.92, a: 1}
   FogDensity: 0.004
   WaterTint: {r: 0.3, g: 0.4, b: 0.6, a: 1}
   Skin: {fileID: 11400000, guid: bdbb3923e373fc4429ec341c80c5e3d3, type: 2}

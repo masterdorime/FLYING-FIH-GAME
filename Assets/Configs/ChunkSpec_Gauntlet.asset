@@ -18,9 +18,9 @@ MonoBehaviour:
   RingSpacing: 150
   RingSwimFraction: 1
   CoinsPerTrail: 4
-  IslandPairs: 0
-  SkyRingCount: 2
-  SkySpireCount: 2
+  IslandPairs: 2
+  SkyRingCount: 0
+  SkySpireCount: 0
   DecorKind: buoy
   DecorCount: 10
   ArchCount: 3

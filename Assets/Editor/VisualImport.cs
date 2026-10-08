@@ -104,30 +104,30 @@ public static class VisualImport
             prefabByName);
         BuildSkin("Gauntlet", "skybox-morning.png",
             // Floating set (kind buoy): buoys, floating cargo, a bobbing
-            // chest. Pole flags and grass don't float — excluded.
+            // chest. Pole flags and grass don't float - excluded.
             new string[] { "buoy", "buoy-flag", "cargo-container-a", "cargo-pile-a", "chest" },
-            new string[] { "ship-small", "ship-cargo-a", "cliff_rock" },
+            // Model-derived volumes: boulder islands, buoy slalom pillars,
+            // no lintels (empty = slalom), empty arch fallback.
+            new string[] { "rocks-sand-a", "rocks-sand-b", "rocks-sand-c" },
             new string[] { "rock_tallA", "rock_tallC", "cliff_large_rock" },
-            new string[] { "rock_tallA", "cliff_rock" },
-            // Matched arch sets, all cliff rock (Durdle Door gates): tall
-            // rocks read as pillars, wide slabs as lintels. Medieval
-            // castle/tower pieces are purged from every Gauntlet array.
-            new string[] { "rock_tallA", "rock_tallB", "rock_tallC" },
-            new string[] { "cliff_rock", "cliff_large_rock" },
+            new string[0],
+            new string[] { "buoy", "buoy-flag" },
+            new string[0],
             prefabByName);
         BuildSkin("Storm", "skybox-night.png",
             new string[] { "rocks-a", "rocks-b", "rocks-c", "tree_pineTallA", "tree_cone", "rock_smallA", "rock_smallB" },
-            new string[] { "rock_largeB", "cliff_rock" },
-            new string[] { "rock_tallA", "rock_tallC" },
+            // Model-derived volumes: chunky boulder islands, pine-needle
+            // sky columns (storm-tossed debris read).
+            new string[] { "rocks-a", "rocks-b", "rocks-c" },
+            new string[] { "tree_pineTallA", "tree_cone" },
             new string[] { "rocks-a", "rocks-b" },
             new string[0], new string[0],
             prefabByName);
         BuildSkin("Sky", "skybox-alien.png",
             new string[] { "statue_ring", "platform_grass", "grass_large" },
             new string[] { "platform_grass", "statue_ring" },
-            // Statue dropped from spires (a ring stretched onto a 70m
-            // column reads wrong): tall rocks only, varied per obstacle.
-            new string[] { "rock_tallB", "rock_tallA", "rock_tallC" },
+            // Floating garden pines (single fitted needles, no stacking).
+            new string[] { "tree_pineTallA", "tree_simple" },
             new string[0],
             new string[0], new string[0],
             prefabByName);

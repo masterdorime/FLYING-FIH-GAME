@@ -218,6 +218,18 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void SkyMood_IsCoolNotPink()
+        {
+            // The Sky realm washed pink (rose tint x alien panorama x rose
+            // fog): cool blue-dominant multipliers, panorama keeps identity.
+            var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>(
+                "Assets/Configs/RealmSkin_Sky.asset");
+            Assert.IsNotNull(skin, "missing Sky skin");
+            Assert.Greater(skin.SkyTint.b, skin.SkyTint.r, "SkyTint still pink");
+            Assert.Greater(skin.FogColor.b, skin.FogColor.r, "FogColor still pink");
+        }
+
+        [Test]
         public void ChunkSpecAssets_HaveSkinsWired()
         {
             string[] realms = { "Lagoon", "Gauntlet", "Storm", "Sky" };

@@ -780,10 +780,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var s in builder.Spires)
             {
                 float h = s.transform.localScale.y;
-                // Overhaul bible: needles are 8 wide, 30-45 tall.
-                Assert.GreaterOrEqual(h, 30f);
-                Assert.LessOrEqual(h, 45f);
-                Assert.AreEqual(8f, s.transform.localScale.x, 0.001f);
+                // Model-derived bible: slim columns 8-12 tall, 4 wide.
+                Assert.GreaterOrEqual(h, 8f);
+                Assert.LessOrEqual(h, 12f);
+                Assert.AreEqual(4f, s.transform.localScale.x, 0.001f);
                 heights.Add(h);
             }
             Assert.Greater(heights.Count, 1, "spires are uniform");

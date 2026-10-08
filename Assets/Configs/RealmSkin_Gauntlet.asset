@@ -28,20 +28,15 @@ MonoBehaviour:
   - {fileID: 5283034274761778730, guid: 7879d23aec8b73044a9f68e1c79d75b2, type: 3}
   - {fileID: 3646393292159287918, guid: f7966d1aea00ef4499189d86f0dbf200, type: 3}
   IslandPrefabs:
-  - {fileID: 6277263522518248972, guid: 218768f445252494f8f504ddbee3e118, type: 3}
-  - {fileID: 2831571223609990806, guid: d33234dfcf2ebd44a87464f393ab5a28, type: 3}
-  - {fileID: 188703688768404989, guid: 2ade964723b64894ca2a763a8ea80993, type: 3}
+  - {fileID: 4319781525228799218, guid: c8be39ed9dc8a7c4db4551832897fca8, type: 3}
+  - {fileID: 6445652887947157780, guid: 01b2fbd610f62114cb6b4093dd417035, type: 3}
+  - {fileID: 3018027220093233561, guid: bb15fa5da383d8d4ca323e5f4ac903db, type: 3}
   SpirePrefabs:
   - {fileID: 3169763624730825097, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
   - {fileID: 7901147083986901784, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
   - {fileID: 6737095680776994338, guid: 33c8ed75b6fe18647ac83d400f3195a7, type: 3}
-  ArchPrefabs:
-  - {fileID: 3169763624730825097, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
-  - {fileID: 188703688768404989, guid: 2ade964723b64894ca2a763a8ea80993, type: 3}
+  ArchPrefabs: []
   ArchPillarPrefabs:
-  - {fileID: 3169763624730825097, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
-  - {fileID: 7071217239493133794, guid: 8ac67692e535c81488661e3335601400, type: 3}
-  - {fileID: 7901147083986901784, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
-  ArchLintelPrefabs:
-  - {fileID: 188703688768404989, guid: 2ade964723b64894ca2a763a8ea80993, type: 3}
-  - {fileID: 6737095680776994338, guid: 33c8ed75b6fe18647ac83d400f3195a7, type: 3}
+  - {fileID: 4910380151361520660, guid: 280f8c20ece0f4749b0f484fb8c3a467, type: 3}
+  - {fileID: 2208240085040142180, guid: 2b32c8449eb33094b9f65ecfa477867b, type: 3}
+  ArchLintelPrefabs: []

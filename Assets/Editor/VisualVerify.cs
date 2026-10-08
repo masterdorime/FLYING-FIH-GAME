@@ -355,6 +355,73 @@ public static class VisualVerify
         Object.DestroyImmediate(rt);
     }
 
+    // Unstack program: measure every obstacle candidate's true bounds
+    // so sets are matched by aspect to colliders with data, not guesses:
+    // unity run . -- -executeMethod VisualVerify.ProbeObstacleBounds
+    // Pass 2 models add the rest (towers, ships, platforms, flora).
+    public static void ProbeObstacleBounds()
+    {
+        string pirate = "Assets/ArtVendor/KenneyPirate/Models/FBX format";
+        string nature = "Assets/ArtVendor/KenneyNature/Models/FBX format";
+        string wc = "Assets/ArtVendor/Kenney/Models/FBX format";
+        string[][] models = new string[][]
+        {
+            new string[] { pirate, "tower-complete-large" },
+            new string[] { pirate, "tower-middle-windows" },
+            new string[] { pirate, "tower-roof" },
+            new string[] { pirate, "tower-top" },
+            new string[] { pirate, "tower-watch" },
+            new string[] { pirate, "castle-door" },
+            new string[] { pirate, "castle-window" },
+            new string[] { pirate, "rocks-b" },
+            new string[] { pirate, "rocks-c" },
+            new string[] { pirate, "rocks-sand-a" },
+            new string[] { pirate, "rocks-sand-b" },
+            new string[] { pirate, "rocks-sand-c" },
+            new string[] { pirate, "palm-straight" },
+            new string[] { pirate, "structure-platform" },
+            new string[] { pirate, "flag" },
+            new string[] { pirate, "grass" },
+            new string[] { nature, "tree_palm" },
+            new string[] { nature, "tree_palmTall" },
+            new string[] { nature, "tree_simple" },
+            new string[] { nature, "plant_bush" },
+            new string[] { nature, "grass_large" },
+            new string[] { wc, "ship-small" },
+            new string[] { wc, "ship-cargo-b" },
+            new string[] { wc, "ship-cargo-c" },
+            new string[] { wc, "ship-ocean-liner-small" },
+            new string[] { wc, "cargo-pile-b" },
+            new string[] { wc, "ramp" },
+            new string[] { wc, "ramp-wide" },
+            new string[] { wc, "arrow" },
+        };
+        foreach (var m in models)
+        {
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(m[0] + "/" + m[1] + ".fbx");
+            if (model == null) { Debug.LogWarning("[Probe] missing FBX: " + m[1]); continue; }
+            // Instantiate like the pipeline does: world bounds include
+            // node offsets and import scale, exactly what the fit sees.
+            var go = Object.Instantiate(model);
+            var renderers = go.GetComponentsInChildren<MeshRenderer>();
+            var bounds = new Bounds(go.transform.position, Vector3.zero);
+            bool any = false;
+            int tris = 0;
+            foreach (var r in renderers)
+            {
+                if (r == null) continue;
+                if (!any) { bounds = r.bounds; any = true; }
+                else bounds.Encapsulate(r.bounds);
+                var mf = r.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null) tris += mf.sharedMesh.triangles.Length / 3;
+            }
+            Object.DestroyImmediate(go);
+            if (!any) { Debug.LogWarning("[Probe] no mesh: " + m[1]); continue; }
+            Debug.Log("[Probe] " + m[1] + " size=" + bounds.size.ToString("F2")
+                + " tris=" + tris);
+        }
+    }
+
     private static void Shoot(Camera cam, RenderTexture rt, string path)
     {
         cam.targetTexture = rt;

@@ -74,51 +74,43 @@ namespace FlyingFishMomentum.Tests.EditMode
             return bounds;
         }
 
-        private static void AssertStackedFromBaseInside(GameObject cube)
+        // Unstacked policy: exactly one fitted visual per cube, centered,
+        // covering at least 60% on every axis (aspect-matched sets make
+        // this hold; under-fill means the wrong model for the volume).
+        private static void AssertSingleFittedShell(GameObject cube)
         {
             var shells = Shells(cube);
-            Assert.Greater(shells.Count, 1, cube.name + " has no stacked segments");
-            var names = new HashSet<string>();
+            Assert.AreEqual(1, shells.Count, cube.name + " does not have exactly one shell");
             var cb = cube.GetComponent<Collider>().bounds;
-            float top = float.NegativeInfinity, bottom = float.PositiveInfinity;
-            foreach (var s in shells)
-            {
-                names.Add(s.name);
-                var sb = Combined(s);
-                Assert.IsTrue(cb.Contains(sb.min + Vector3.one * 0.05f)
-                    && cb.Contains(sb.max - Vector3.one * 0.05f),
-                    s.name + " pokes out of its collider");
-                top = Mathf.Max(top, sb.max.y);
-                bottom = Mathf.Min(bottom, sb.min.y);
-            }
-            Assert.AreEqual(1, names.Count, "segments of one obstacle use different prefabs");
-            Assert.Less(bottom - cb.min.y, 1f, "stack does not start at the collider base");
-            // Tapered stacks leave a top gap by construction: bound it to
-            // under 1.5 average levels (the 8-vs-70 class sins leave 30+).
-            float filled = top - bottom;
-            Assert.Less(cb.max.y - top, 1.5f * filled / shells.Count + 0.5f, "stack does not fill the collider height");
+            var sb = Combined(shells[0]);
+            Assert.IsTrue(cb.Contains(sb.min + Vector3.one * 0.05f)
+                && cb.Contains(sb.max - Vector3.one * 0.05f),
+                shells[0].name + " pokes out of its collider");
+            Vector3 cs = cb.size, vs = sb.size;
+            float coverage = Mathf.Min(vs.x / cs.x, vs.y / cs.y, vs.z / cs.z);
+            Assert.GreaterOrEqual(coverage, 0.6f, shells[0].name + " under-fills its collider");
         }
 
         [Test]
-        public void Spires_StackSegmentsFromBaseInsideCollider()
+        public void Spires_SingleFittedShell()
         {
             var builder = NewBuilder();
             builder.BuildChunk(StormLike(BoxStub("Iso", new Vector3(4f, 3f, 4f)),
-                BoxStub("Spire", new Vector3(3f, 4f, 3f))), 0f, 11);
+                BoxStub("Spire", new Vector3(2f, 5f, 2f))), 0f, 11);
             Assert.AreEqual(2, builder.Spires.Count);
             foreach (var spire in builder.Spires)
-                AssertStackedFromBaseInside(spire);
+                AssertSingleFittedShell(spire);
         }
 
         [Test]
-        public void Islands_StackSegmentsFromBaseInsideCollider()
+        public void Islands_SingleFittedShell()
         {
             var builder = NewBuilder();
             builder.BuildChunk(StormLike(BoxStub("Iso", new Vector3(4f, 3f, 4f)),
-                BoxStub("Spire", new Vector3(3f, 4f, 3f))), 0f, 11);
+                BoxStub("Spire", new Vector3(2f, 5f, 2f))), 0f, 11);
             Assert.AreEqual(4, builder.Islands.Count);
             foreach (var island in builder.Islands)
-                AssertStackedFromBaseInside(island);
+                AssertSingleFittedShell(island);
         }
 
         [Test]
@@ -127,8 +119,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             var builder = NewBuilder();
             var skin = ScriptableObject.CreateInstance<RealmSkin>();
             skin.ArchPillarPrefabs = new GameObject[]
-                { BoxStub("PillarA", Vector3.one), BoxStub("PillarB", Vector3.one) };
-            skin.ArchLintelPrefabs = new GameObject[] { BoxStub("Lintel", Vector3.one * 2f) };
+                { BoxStub("PillarA", new Vector3(2f, 4f, 2f)), BoxStub("PillarB", new Vector3(2f, 4f, 2f)) };
+            skin.ArchLintelPrefabs = new GameObject[] { BoxStub("Lintel", new Vector3(8f, 2f, 2f)) };
             var spec = ScriptableObject.CreateInstance<ChunkSpec>();
             spec.ChunkId = "GauntletLike"; spec.Skin = skin;
             spec.Length = 500f; spec.ArchCount = 2;
@@ -143,6 +135,8 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.IsTrue(left.Contains("Pillar"), "pillar not from pillar set: " + left);
                 var lintel = Shells(builder.Islands[a * 3 + 2])[0].name;
                 Assert.IsTrue(lintel.Contains("Lintel"), "lintel not from lintel set: " + lintel);
+                AssertSingleFittedShell(builder.Islands[a * 3]);
+                AssertSingleFittedShell(builder.Islands[a * 3 + 2]);
             }
         }
 
@@ -162,37 +156,6 @@ namespace FlyingFishMomentum.Tests.EditMode
                 var size = Combined(d).size;
                 Assert.AreEqual(2.5f, size.x, 0.1f, "coral decor not scaled to legacy size");
             }
-        }
-
-        [Test]
-        public void Segments_TaperAndCapInsideCollider()
-        {
-            // Micro-slab stub (4,1,4): uncapped this wants 15+ repeats;
-            // the cap binds at MaxShellSegments for every legal height,
-            // taper shrinks each level, all stay inside the collider.
-            var builder = NewBuilder();
-            var skin = ScriptableObject.CreateInstance<RealmSkin>();
-            skin.SpirePrefabs = new GameObject[] { BoxStub("Slab", new Vector3(4f, 1f, 4f)) };
-            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
-            spec.ChunkId = "Slabs"; spec.Skin = skin;
-            spec.Length = 500f; spec.SkySpireCount = 1;
-            builder.BuildChunk(spec, 0f, 11);
-            Assert.AreEqual(1, builder.Spires.Count);
-            var shells = Shells(builder.Spires[0]);
-            Assert.AreEqual(ChunkBuilder.MaxShellSegments, shells.Count);
-            var cb = builder.Spires[0].GetComponent<Collider>().bounds;
-            float prev = float.PositiveInfinity;
-            var names = new HashSet<string>();
-            foreach (var s in shells)
-            {
-                names.Add(s.name);
-                var b = Combined(s);
-                Assert.IsTrue(cb.Contains(b.min + Vector3.one * 0.05f) && cb.Contains(b.max - Vector3.one * 0.05f), "segment pokes out");
-                float w = s.transform.localScale.x;
-                Assert.Less(w, prev, "taper does not narrow upward");
-                prev = w;
-            }
-            Assert.AreEqual(1, names.Count, "one pick per obstacle");
         }
 
         [Test]
@@ -249,10 +212,16 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var p in all)
                 foreach (var b in banned)
                     Assert.IsFalse(p.name.Contains(b), "medieval remnant in Gauntlet: " + p.name);
-            bool hull = false, buoy = false;
-            foreach (var p in all) { if (p.name.Contains("ship")) hull = true; if (p.name.Contains("buoy")) buoy = true; }
-            Assert.IsTrue(hull, "no hulls in Gauntlet");
+            bool boulders = false, buoy = false;
+            foreach (var p in all) { if (p.name.Contains("rocks-sand")) boulders = true; if (p.name.Contains("buoy")) buoy = true; }
+            Assert.IsTrue(boulders, "no boulder islands in Gauntlet");
             Assert.IsTrue(buoy, "no buoys in Gauntlet");
+            // Slalom pillars are buoys; lintels are empty (twin pillars).
+            Assert.IsNotNull(skin.ArchPillarPrefabs, "no pillar set");
+            foreach (var p in skin.ArchPillarPrefabs)
+                Assert.IsTrue(p.name.Contains("buoy"), "non-buoy pillar: " + p.name);
+            Assert.IsTrue(skin.ArchLintelPrefabs == null || skin.ArchLintelPrefabs.Length == 0,
+                "lintel set must stay empty for slalom gates");
         }
 
         [Test]
