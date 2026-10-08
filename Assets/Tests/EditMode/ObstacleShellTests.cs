@@ -93,7 +93,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             }
             Assert.AreEqual(1, names.Count, "segments of one obstacle use different prefabs");
             Assert.Less(bottom - cb.min.y, 1f, "stack does not start at the collider base");
-            Assert.Less(cb.max.y - top, 9f, "stack does not fill the collider height");
+            // Tapered stacks leave a top gap by construction: bound it to
+            // under 1.5 average levels (the 8-vs-70 class sins leave 30+).
+            float filled = top - bottom;
+            Assert.Less(cb.max.y - top, 1.5f * filled / shells.Count + 0.5f, "stack does not fill the collider height");
         }
 
         [Test]
@@ -101,7 +104,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var builder = NewBuilder();
             builder.BuildChunk(StormLike(BoxStub("Iso", new Vector3(4f, 3f, 4f)),
-                BoxStub("Spire", new Vector3(2f, 4f, 1f))), 0f, 11);
+                BoxStub("Spire", new Vector3(3f, 4f, 3f))), 0f, 11);
             Assert.AreEqual(2, builder.Spires.Count);
             foreach (var spire in builder.Spires)
                 AssertStackedFromBaseInside(spire);
@@ -112,7 +115,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             var builder = NewBuilder();
             builder.BuildChunk(StormLike(BoxStub("Iso", new Vector3(4f, 3f, 4f)),
-                BoxStub("Spire", new Vector3(2f, 4f, 1f))), 0f, 11);
+                BoxStub("Spire", new Vector3(3f, 4f, 3f))), 0f, 11);
             Assert.AreEqual(4, builder.Islands.Count);
             foreach (var island in builder.Islands)
                 AssertStackedFromBaseInside(island);
@@ -159,6 +162,37 @@ namespace FlyingFishMomentum.Tests.EditMode
                 var size = Combined(d).size;
                 Assert.AreEqual(2.5f, size.x, 0.1f, "coral decor not scaled to legacy size");
             }
+        }
+
+        [Test]
+        public void Segments_TaperAndCapInsideCollider()
+        {
+            // Micro-slab stub (4,1,4): uncapped this wants 15+ repeats;
+            // the cap binds at MaxShellSegments for every legal height,
+            // taper shrinks each level, all stay inside the collider.
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.SpirePrefabs = new GameObject[] { BoxStub("Slab", new Vector3(4f, 1f, 4f)) };
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Slabs"; spec.Skin = skin;
+            spec.Length = 500f; spec.SkySpireCount = 1;
+            builder.BuildChunk(spec, 0f, 11);
+            Assert.AreEqual(1, builder.Spires.Count);
+            var shells = Shells(builder.Spires[0]);
+            Assert.AreEqual(ChunkBuilder.MaxShellSegments, shells.Count);
+            var cb = builder.Spires[0].GetComponent<Collider>().bounds;
+            float prev = float.PositiveInfinity;
+            var names = new HashSet<string>();
+            foreach (var s in shells)
+            {
+                names.Add(s.name);
+                var b = Combined(s);
+                Assert.IsTrue(cb.Contains(b.min + Vector3.one * 0.05f) && cb.Contains(b.max - Vector3.one * 0.05f), "segment pokes out");
+                float w = s.transform.localScale.x;
+                Assert.Less(w, prev, "taper does not narrow upward");
+                prev = w;
+            }
+            Assert.AreEqual(1, names.Count, "one pick per obstacle");
         }
 
         [Test]

@@ -42,6 +42,11 @@ namespace FlyingFishMomentum.Run
         // Overhaul bible: spires are 8-wide needles (half depth feeds
         // reclaim margins and furthest-content).
         public const float SpireHalfDepth = 4f;
+        // Stacked-shell shaping (presentation only, deterministic): cap
+        // repeats so tall colliders read as chunked rock, taper narrows
+        // upward like real sea stacks.
+        public const int MaxShellSegments = 8;
+        private const float ShellTaperPerLevel = 0.05f;
         public const float RealmLowY = 40f;
         public const float RealmHighY = 60f;
         public const float CloudY = 35f;
@@ -767,12 +772,11 @@ namespace FlyingFishMomentum.Run
             StripShells(cube);
             var rend = cube.GetComponent<MeshRenderer>();
             if (rend != null) rend.enabled = false;
-            var first = Object.Instantiate(prefab);
-            first.name = "ChunkShell_" + prefab.name;
+            var probe = Object.Instantiate(prefab);
             // Combined bounds across the full prefab hierarchy, measured
             // before parenting so the cube's scale can't pollute the fit.
-            var renderers = first.GetComponentsInChildren<MeshRenderer>();
-            Bounds vis = new Bounds(first.transform.position, Vector3.zero);
+            var renderers = probe.GetComponentsInChildren<MeshRenderer>();
+            Bounds vis = new Bounds(probe.transform.position, Vector3.zero);
             bool any = false;
             foreach (var r in renderers)
             {
@@ -780,33 +784,68 @@ namespace FlyingFishMomentum.Run
                 if (!any) { vis = r.bounds; any = true; }
                 else vis.Encapsulate(r.bounds);
             }
+            Vector3 rootScale = probe.transform.localScale;
+            Vector3 probePos = probe.transform.position;
+            Object.DestroyImmediate(probe);
             if (!any)
             {
                 // Renderer-less prefab: restore the cube instead of
                 // leaving an invisible-but-collidable box.
-                Object.DestroyImmediate(first);
                 if (rend != null) rend.enabled = true;
                 return;
             }
             Vector3 parentScale = cube.transform.localScale;
             Vector3 cubePos = cube.transform.position;
+            Vector3 visCenter = vis.center - probePos;
             float s = FitScale(parentScale, vis.size);
             float segH = vis.size.y * s;
             int count = segH > 0f ? Mathf.Max(1, Mathf.FloorToInt(parentScale.y / segH)) : 1;
-            float baseY = cubePos.y - parentScale.y / 2f;
+            if (count > MaxShellSegments) count = MaxShellSegments;
+            if (count == 1)
+            {
+                // Single shell: classic vertically-centered fit, unchanged
+                // look (lintels, towers, exact-fit rocks all land here).
+                var shell = Object.Instantiate(prefab);
+                shell.name = "ChunkShell_" + prefab.name;
+                shell.transform.SetParent(cube.transform, false);
+                shell.transform.localScale = Vector3.Scale(rootScale, CounterScale(parentScale, s));
+                Vector3 worldOffset = -visCenter * s;
+                shell.transform.localPosition = new Vector3(
+                    parentScale.x != 0f ? worldOffset.x / parentScale.x : worldOffset.x,
+                    parentScale.y != 0f ? worldOffset.y / parentScale.y : worldOffset.y,
+                    parentScale.z != 0f ? worldOffset.z / parentScale.z : worldOffset.z);
+                shell.transform.localRotation = Quaternion.identity;
+                return;
+            }
+            // Stacked fill: refit so the tapered levels exactly fill the
+            // height unless width binds (then the top gap is accepted,
+            // never a poke-out). Cumulative placement: each level rests on
+            // the previous one's actual tapered top, so nothing floats.
+            // One prefab per obstacle (seeded pick upstream); taper breaks
+            // the uniform-repeat skewer look while staying deterministic.
+            float taperSum = 0f;
+            for (int t = 0; t < count; t++) taperSum += 1f - ShellTaperPerLevel * t;
+            if (vis.size.y > 0f && taperSum > 0f)
+            {
+                s = parentScale.y / (vis.size.y * taperSum);
+                if (vis.size.x > 0f) s = Mathf.Min(s, parentScale.x / vis.size.x);
+                if (vis.size.z > 0f) s = Mathf.Min(s, parentScale.z / vis.size.z);
+                segH = vis.size.y * s;
+            }
             // Preserve an authored prefab-root scale (usually identity):
             // bounds were measured with it, so the fit multiplies on top.
-            Vector3 fitted = Vector3.Scale(first.transform.localScale, CounterScale(parentScale, s));
-            first.transform.SetParent(cube.transform, false);
-            first.transform.localScale = fitted;
-            PlaceSegment(first, cube, cubePos, parentScale, baseY + segH * 0.5f);
-            for (int i = 1; i < count; i++)
+            Vector3 fitted = Vector3.Scale(rootScale, CounterScale(parentScale, s));
+            float cursor = cubePos.y - parentScale.y / 2f;
+            for (int i = 0; i < count; i++)
             {
-                var seg = Object.Instantiate(first);
-                seg.name = first.name;
+                var seg = Object.Instantiate(prefab);
+                seg.name = "ChunkShell_" + prefab.name;
                 seg.transform.SetParent(cube.transform, false);
-                seg.transform.localScale = first.transform.localScale;
-                PlaceSegment(seg, cube, cubePos, parentScale, baseY + segH * (i + 0.5f));
+                float taper = 1f - ShellTaperPerLevel * i;
+                seg.transform.localScale = fitted * taper;
+                float h = segH * taper;
+                PlaceSegment(seg, cube, cubePos, parentScale, cursor + h * 0.5f);
+                cursor += h;
             }
         }
 
