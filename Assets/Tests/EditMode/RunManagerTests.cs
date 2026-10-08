@@ -637,11 +637,11 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.AreEqual(spec.FogColor, RenderSettings.fogColor);
                 Assert.AreEqual(spec.FogDensity, RenderSettings.fogDensity, 0.0001f);
                 AssertColorsEqual(spec.WaterTint, new Color(
-                    builder.WaterMaterial.color.r,
-                    builder.WaterMaterial.color.g,
-                    builder.WaterMaterial.color.b, 1f));
-                Assert.AreEqual(0.6f, builder.WaterMaterial.color.a, 0.001f);
-                AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.color);
+                    builder.WaterMaterial.GetColor("_BaseColor").r,
+                    builder.WaterMaterial.GetColor("_BaseColor").g,
+                    builder.WaterMaterial.GetColor("_BaseColor").b, 1f));
+                Assert.AreEqual(0.6f, builder.WaterMaterial.GetColor("_BaseColor").a, 0.001f);
+                AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.GetColor("_BaseColor"));
             }
             finally
             {
@@ -665,7 +665,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             builder.BuildChunk(spec, 0f, 4);
             var mat = builder.WaterMaterial;
             Assert.AreEqual("Transparent", mat.GetTag("RenderType", false, ""));
-            Assert.Less(mat.color.a, 1f, "mood made the sea opaque");
+            Assert.Less(mat.GetColor("_BaseColor").a, 1f, "mood made the sea opaque");
         }
 
         [Test]

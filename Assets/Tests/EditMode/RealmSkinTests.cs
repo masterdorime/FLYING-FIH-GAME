@@ -58,7 +58,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.IsNotNull(RenderSettings.skybox);
                 Assert.AreEqual(Color.gray, RenderSettings.fogColor);
                 Assert.AreEqual(0.02f, RenderSettings.fogDensity, 0.0001f);
-                var water = builder.WaterMaterial.color;
+                var water = builder.WaterMaterial.GetColor("_BaseColor");
                 Assert.AreEqual(0.1f, water.r, 0.001f);
                 Assert.AreEqual(0.6f, water.a, 0.001f); // alpha never stamped
             }
@@ -212,7 +212,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.IsNotNull(mesh, "ring model missing");
                 Assert.AreSame(pipeMat, mesh.sharedMaterial, "ring material swapped or copied by mood");
                 var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
-                Assert.AreEqual(Color.cyan, gem.sharedMaterial.color);
+                Assert.AreEqual(Color.cyan, gem.sharedMaterial.GetColor("_BaseColor"));
             }
             finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
         }
@@ -314,7 +314,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                     "Assets/Materials/V1Watercraft.mat");
                 Assert.AreSame(pipeMat, mesh.sharedMaterial, "ring material touched by mood");
                 var gem = builder.Coins[0].transform.Find("Gem").GetComponent<MeshRenderer>();
-                AssertColor(new Color(1f, 0.75f, 0.15f), gem.sharedMaterial.color);
+                AssertColor(new Color(1f, 0.75f, 0.15f), gem.sharedMaterial.GetColor("_BaseColor"));
                 Assert.IsNull(RenderSettings.skybox);
             }
             finally { RenderSettings.skybox = null; Object.DestroyImmediate(skin.SkyPanorama); }
