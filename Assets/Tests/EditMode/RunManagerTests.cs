@@ -149,7 +149,8 @@ namespace FlyingFishMomentum.Tests.EditMode
                 var p = ring.transform.position;
                 Assert.GreaterOrEqual(p.z, 0f);
                 Assert.LessOrEqual(p.z, 500f);
-                Assert.AreEqual(-3f, p.y, 0.001f);
+                // Overhaul bible: swim rings ride the surface lane.
+                Assert.AreEqual(ChunkBuilder.SurfaceRingY, p.y, 0.001f);
                 Assert.GreaterOrEqual(p.x, -15f);
                 Assert.LessOrEqual(p.x, 15f);
             }
@@ -158,7 +159,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 var p = coin.transform.position;
                 Assert.GreaterOrEqual(p.z, 0f);
                 Assert.LessOrEqual(p.z, 500f);
-                Assert.AreEqual(-3f, p.y, 0.001f);
+                Assert.AreEqual(ChunkBuilder.SurfaceRingY, p.y, 0.001f);
             }
         }
 
@@ -172,7 +173,8 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var ring in builder.Rings)
             {
                 float y = ring.transform.position.y;
-                if (Mathf.Abs(y + 3f) < 0.001f) swim++;
+                // Overhaul bible: the swim lane broke the surface.
+                if (Mathf.Abs(y - ChunkBuilder.SurfaceRingY) < 0.001f) swim++;
                 else if (Mathf.Abs(y - 10f) < 0.001f) fly++;
                 else Assert.Fail("ring off both lanes: " + ring.transform.position);
             }
@@ -182,7 +184,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var coin in builder.Coins)
             {
                 float y = coin.transform.position.y;
-                if (Mathf.Abs(y + 3f) < 0.5f) swimCoins++;
+                if (Mathf.Abs(y - ChunkBuilder.SurfaceRingY) < 0.5f) swimCoins++;
                 else if (Mathf.Abs(y - 10f) < 0.5f) flyCoins++;
             }
             Assert.AreEqual(6, swimCoins);
@@ -778,8 +780,10 @@ namespace FlyingFishMomentum.Tests.EditMode
             foreach (var s in builder.Spires)
             {
                 float h = s.transform.localScale.y;
-                Assert.GreaterOrEqual(h, 50f);
-                Assert.LessOrEqual(h, 90f);
+                // Overhaul bible: needles are 8 wide, 30-45 tall.
+                Assert.GreaterOrEqual(h, 30f);
+                Assert.LessOrEqual(h, 45f);
+                Assert.AreEqual(8f, s.transform.localScale.x, 0.001f);
                 heights.Add(h);
             }
             Assert.Greater(heights.Count, 1, "spires are uniform");

@@ -94,7 +94,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             Assert.AreEqual(new Vector3(10f, 25f, 10f), island.transform.localScale);
             Assert.AreEqual(1, builder.Spires.Count);
             Assert.AreEqual(new Vector3(-12f, 55f, 1300f), builder.Spires[0].transform.position);
-            Assert.AreEqual(new Vector3(4f, 70f, 4f), builder.Spires[0].transform.localScale);
+            Assert.AreEqual(new Vector3(8f, 70f, 8f), builder.Spires[0].transform.localScale);
             // Arch: pillars flank the anchor, lintel clears above.
             Assert.AreEqual(new Vector3(-8f, -3f, 1400f), builder.Islands[0].transform.position);
             Assert.AreEqual(new Vector3(8f, -3f, 1400f), builder.Islands[1].transform.position);

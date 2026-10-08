@@ -22,19 +22,26 @@ namespace FlyingFishMomentum.Run
         public const float LaneX = 15f;
         public const float SwimY = -3f;
         public const float FlyY = 10f;
+        // Overhaul bible: swim rings break the surface (arch legs in the
+        // water, opening above); the fish swims at SwimY and breaches up.
+        public const float SurfaceRingY = 0.5f;
         public const float CoinSpacing = 15f;
         // Trail weave: coins snake across x instead of one straight lane.
         public const float WeaveAmp = 6f;
         public const float WeaveFreq = 1.2f;
-        public const float IslandHalfX = 5f;
-        public const float IslandHalfDepth = 5f;
+        // Overhaul bible: islands are 13-wide sea mounds (half extents
+        // feed lane placement, reclaim margins, and furthest-content).
+        public const float IslandHalfX = 6.5f;
+        public const float IslandHalfDepth = 6.5f;
         public const float IslandCenterY = 5f;
         // Cloud-realm layer: sky content lives above 55m; the cloud sea
         // fades in 40→60m (RealmBlend). Spires are tall colliders.
         public const float SkyBaseY = 60f;
         public const float SkyStepY = 12f;
         public const float SpireCenterY = 55f;
-        public const float SpireHalfDepth = 2f;
+        // Overhaul bible: spires are 8-wide needles (half depth feeds
+        // reclaim margins and furthest-content).
+        public const float SpireHalfDepth = 4f;
         public const float RealmLowY = 40f;
         public const float RealmHighY = 60f;
         public const float CloudY = 35f;
@@ -345,7 +352,7 @@ namespace FlyingFishMomentum.Run
                 ring.transform.SetParent(root.transform, false);
                 ring.transform.position = new Vector3(
                     Mathf.Lerp(-LaneX, LaneX, (float)rng.NextDouble()),
-                    k < swimRings ? SwimY : FlyY,
+                    k < swimRings ? SurfaceRingY : FlyY,
                     zStart + (k + 1) * spacing);
                 _rings.Add(ring);
                 waterRings.Add(ring.transform.position);
@@ -371,9 +378,9 @@ namespace FlyingFishMomentum.Run
                     anchor = _rings[waterStart + (a % spec.RingCount)].transform.position;
                 GameObject pillarPrefab = Draw(_pillarPrefabs, rng);
                 GameObject lintelPrefab = Draw(_lintelPrefabs, rng);
-                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel", lintelPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
             }
 
             float cx = GateHalfWidth + IslandHalfX;
@@ -407,7 +414,7 @@ namespace FlyingFishMomentum.Run
                 float z = zStart + spec.Length * (i + 1f) / (spec.SkySpireCount + 1f)
                     + ((float)rng.NextDouble() - 0.5f) * 20f;
                 float x = (rng.NextDouble() < 0.5f ? -1f : 1f) * (12f + (float)rng.NextDouble() * 6f);
-                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z), 50f + (float)rng.NextDouble() * 40f, Draw(_spirePrefabs, rng)));
+                _spires.Add(PlaceSpire(root, new Vector3(x, SpireCenterY, z), 30f + (float)rng.NextDouble() * 15f, Draw(_spirePrefabs, rng)));
             }
 
             // Dressing: one decor kind per chunk, always off the prompt
@@ -494,9 +501,9 @@ namespace FlyingFishMomentum.Run
                     Debug.LogError("[ChunkBuilder] layout '" + layout.LayoutId + "' arch '" + e.Id + "' shell does not resolve.");
                     continue;
                 }
-                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f), "ChunkArchLintel", lintelPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
             }
             var islands = layout.Islands ?? new ChunkLayout.IslandEntry[0];
             foreach (var e in islands)
@@ -702,7 +709,7 @@ namespace FlyingFishMomentum.Run
 
         private GameObject PlaceIsland(GameObject root, Vector3 center, GameObject shellPrefab)
         {
-            return PlaceRock(root, center, new Vector3(10f, 25f, 10f), "ChunkIsland", shellPrefab);
+            return PlaceRock(root, center, new Vector3(13f, 20f, 13f), "ChunkIsland", shellPrefab);
         }
 
         // One seeded pick from a set (null when the set is empty): the
@@ -884,7 +891,7 @@ namespace FlyingFishMomentum.Run
             go.name = "ChunkSpire";
             go.transform.SetParent(root.transform, false);
             go.transform.position = center;
-            go.transform.localScale = new Vector3(4f, height, 4f);
+            go.transform.localScale = new Vector3(8f, height, 8f);
             var meshRenderer = go.GetComponent<MeshRenderer>();
             if (meshRenderer != null) meshRenderer.enabled = true;
             if (shellPrefab != null)

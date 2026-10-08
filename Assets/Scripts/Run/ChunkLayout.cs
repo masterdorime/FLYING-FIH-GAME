@@ -137,7 +137,7 @@ namespace FlyingFishMomentum.Run
                     errors.Add("spire '" + e.Id + "' height out of range: " + e.Height);
                 CheckShell(spec, ShellKind.Spire, e.ShellName, e.Id, errors);
                 rocks.Add(new KeyValuePair<string, Bounds>("spire '" + e.Id + "'",
-                    new Bounds(e.Position, new Vector3(4f, e.Height, 4f))));
+                    new Bounds(e.Position, new Vector3(8f, e.Height, 8f))));
             }
             foreach (var e in arches)
             {
@@ -151,11 +151,11 @@ namespace FlyingFishMomentum.Run
                 CheckShell(spec, ShellKind.Pillar, e.PillarShell, e.Id, errors);
                 CheckShell(spec, ShellKind.Lintel, e.LintelShell, e.Id, errors);
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' pillar",
-                    new Bounds(e.Anchor + new Vector3(-8f, 0f, 0f), new Vector3(4f, 20f, 4f))));
+                    new Bounds(e.Anchor + new Vector3(-8f, 0f, 0f), new Vector3(6f, 18f, 6f))));
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' pillar",
-                    new Bounds(e.Anchor + new Vector3(8f, 0f, 0f), new Vector3(4f, 20f, 4f))));
+                    new Bounds(e.Anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f))));
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' lintel",
-                    new Bounds(e.Anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 4f, 4f))));
+                    new Bounds(e.Anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f))));
             }
             foreach (var r in rings)
                 foreach (var rock in rocks)
