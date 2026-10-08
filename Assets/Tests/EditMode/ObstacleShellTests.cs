@@ -141,6 +141,28 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void SlalomGates_SkipLintelProcedural()
+        {
+            // Skin with pillar shells but no lintel shells at all builds
+            // twin pillars per arch and no lintel cube.
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.ArchPillarPrefabs = new GameObject[] { BoxStub("Buoy", new Vector3(2f, 4f, 2f)) };
+            skin.ArchLintelPrefabs = new GameObject[0];
+            skin.ArchPrefabs = new GameObject[0];
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Slalom"; spec.Skin = skin;
+            spec.Length = 500f; spec.ArchCount = 1;
+            builder.BuildChunk(spec, 0f, 7);
+            Assert.AreEqual(2, builder.Islands.Count);
+            foreach (var pillar in builder.Islands)
+            {
+                Assert.IsTrue(pillar.name.Contains("ChunkArchPillar"));
+                AssertSingleFittedShell(pillar);
+            }
+        }
+
+        [Test]
         public void Decor_ScalesToKindSize()
         {
             var builder = NewBuilder();

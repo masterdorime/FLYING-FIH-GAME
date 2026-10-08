@@ -116,6 +116,32 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void LayoutBranch_SlalomEntrySkipsLintel()
+        {
+            // Empty LintelShell = authored slalom: twin pillars, no lintel.
+            var builder = NewBuilder();
+            var skin = ScriptableObject.CreateInstance<RealmSkin>();
+            skin.ArchPillarPrefabs = new GameObject[]
+            {
+                BoxStub("SlalomPillar"),
+            };
+            var layout = ScriptableObject.CreateInstance<ChunkLayout>();
+            layout.LayoutId = "Slalom";
+            layout.Arches = new ChunkLayout.ArchEntry[]
+            {
+                new ChunkLayout.ArchEntry { Id = "a1", Anchor = new Vector3(0f, -3f, 100f),
+                    PillarShell = "SlalomPillar", LintelShell = "" },
+            };
+            var spec = ScriptableObject.CreateInstance<ChunkSpec>();
+            spec.ChunkId = "Slalom"; spec.Skin = skin; spec.Layout = layout;
+            spec.Length = 500f;
+            builder.BuildChunk(spec, 0f, 7);
+            Assert.AreEqual(2, builder.Islands.Count);
+            var errors = layout.Validate(spec);
+            Assert.AreEqual(0, errors.Count);
+        }
+
+        [Test]
         public void LayoutBranch_SkipsBadEntries()
         {
             var builder = NewBuilder();

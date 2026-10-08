@@ -364,6 +364,10 @@ public static class VisualVerify
         string pirate = "Assets/ArtVendor/KenneyPirate/Models/FBX format";
         string nature = "Assets/ArtVendor/KenneyNature/Models/FBX format";
         string wc = "Assets/ArtVendor/Kenney/Models/FBX format";
+        // STAGED, not purged: hulls (ship-*, gate) are too big for compact
+        // obstacle boxes — kept for future barge-class islands or phase-ii
+        // watercraft gameplay. Do NOT rewire them into island/spire sets
+        // without rechecking the 0.6 coverage rule per model.
         string[][] models = new string[][]
         {
             new string[] { pirate, "tower-complete-large" },

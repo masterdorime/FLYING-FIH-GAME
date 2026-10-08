@@ -94,6 +94,10 @@ Each phase independently verifiable; thrash contained by phase.
 - Fixed-count decor rise costs draw calls: trivial meshes, accepted.
 - Big-bang mixes feel + look: phase commits + per-realm captures keep
   attribution possible; any phase can be reverted independently.
+- KNOWN GAP (accepted): the 0.6 coverage rule still hides up to 40% air
+  on the binding axis. Timing windows should assume ~1–2m of forgiveness
+  around rock visuals (M2). The pink source was panorama hue × rose
+  multipliers (fixed by cooling the multipliers; panorama kept).
 
 ## 8. §34.1 change records (implementation divergences)
 
