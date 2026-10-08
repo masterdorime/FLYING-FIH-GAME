@@ -42,5 +42,46 @@ namespace FlyingFishMomentum.Tests.EditMode
             _fish.AddComponent<FishWake>();
             Assert.AreEqual(1, _fish.GetComponents<TrailRenderer>().Length, "doubled the trail");
         }
+
+        [Test]
+        public void Splash_FiresEightOnUpwardCrossingOnly()
+        {
+            _fish = new GameObject("Fish");
+            var wake = _fish.AddComponent<FishWake>();
+            _fish.transform.position = new Vector3(0f, -1f, 0f);
+            wake.TickSurface();
+            _fish.transform.position = new Vector3(0f, 1f, 0f);
+            wake.TickSurface();
+            Assert.AreEqual(8, wake.ActivePuffs, "breach did not fire the full pattern");
+            _fish.transform.position = new Vector3(0f, 2f, 0f);
+            wake.TickSurface();
+            Assert.AreEqual(8, wake.ActivePuffs, "refired without re-entry");
+        }
+
+        [Test]
+        public void Splash_PoolRecyclesAfterLifetime()
+        {
+            _fish = new GameObject("Fish");
+            var wake = _fish.AddComponent<FishWake>();
+            _fish.transform.position = new Vector3(0f, -1f, 0f);
+            wake.TickSurface();
+            _fish.transform.position = new Vector3(0f, 1f, 0f);
+            wake.TickSurface();
+            Assert.AreEqual(8, wake.ActivePuffs);
+            wake.TickPuffs(10f);
+            Assert.AreEqual(0, wake.ActivePuffs, "pool did not recycle");
+        }
+
+        [Test]
+        public void Splash_NoFireWithoutCrossing()
+        {
+            _fish = new GameObject("Fish");
+            var wake = _fish.AddComponent<FishWake>();
+            _fish.transform.position = new Vector3(0f, 1f, 0f);
+            wake.TickSurface();
+            _fish.transform.position = new Vector3(0f, 2f, 0f);
+            wake.TickSurface();
+            Assert.AreEqual(0, wake.ActivePuffs, "fired without crossing");
+        }
     }
 }
