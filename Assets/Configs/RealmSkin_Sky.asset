@@ -22,16 +22,16 @@ MonoBehaviour:
   RingTint: {r: 1, g: 0.85, b: 0.2, a: 1}
   CoinTint: {r: 1, g: 0.75, b: 0.15, a: 1}
   DecorPrefabs:
-  - {fileID: 9012278259516780241, guid: 2d92ce47769f71440bc4af6c640eef17, type: 3}
-  - {fileID: 8171020798752980619, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
-  - {fileID: 6766165272060135082, guid: 3cfd6d4ef6d9b3c419970ad4cae1b680, type: 3}
+  - {fileID: 5973339853036387218, guid: 2d92ce47769f71440bc4af6c640eef17, type: 3}
+  - {fileID: 5308993263284525848, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
+  - {fileID: 113157824132666602, guid: 3cfd6d4ef6d9b3c419970ad4cae1b680, type: 3}
   IslandPrefabs:
-  - {fileID: 8171020798752980619, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
-  - {fileID: 9012278259516780241, guid: 2d92ce47769f71440bc4af6c640eef17, type: 3}
+  - {fileID: 5308993263284525848, guid: 64351ae7933e04941bbeacf92a0602fb, type: 3}
+  - {fileID: 5973339853036387218, guid: 2d92ce47769f71440bc4af6c640eef17, type: 3}
   SpirePrefabs:
-  - {fileID: 8619899241627960117, guid: 8ac67692e535c81488661e3335601400, type: 3}
-  - {fileID: 6654532031440098304, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
-  - {fileID: 5630305673727287591, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
+  - {fileID: 7071217239493133794, guid: 8ac67692e535c81488661e3335601400, type: 3}
+  - {fileID: 3169763624730825097, guid: 0b4af48ca4d159c41920844bcd57a7ed, type: 3}
+  - {fileID: 7901147083986901784, guid: 72b345e10318b3b42bb9c3d5e5f0aa37, type: 3}
   ArchPrefabs: []
   ArchPillarPrefabs: []
   ArchLintelPrefabs: []

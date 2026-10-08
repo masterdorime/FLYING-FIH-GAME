@@ -217,6 +217,25 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
+        public void GauntletSets_HaveNoCastles()
+        {
+            var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>("Assets/Configs/RealmSkin_Gauntlet.asset");
+            Assert.IsNotNull(skin, "missing Gauntlet skin");
+            var all = new List<GameObject>();
+            foreach (var set in new GameObject[][] { skin.DecorPrefabs, skin.IslandPrefabs, skin.SpirePrefabs, skin.ArchPrefabs, skin.ArchPillarPrefabs, skin.ArchLintelPrefabs })
+                if (set != null) all.AddRange(set);
+            Assert.Greater(all.Count, 0, "Gauntlet sets empty");
+            string[] banned = { "castle", "tower", "structure", "platform" };
+            foreach (var p in all)
+                foreach (var b in banned)
+                    Assert.IsFalse(p.name.Contains(b), "medieval remnant in Gauntlet: " + p.name);
+            bool hull = false, buoy = false;
+            foreach (var p in all) { if (p.name.Contains("ship")) hull = true; if (p.name.Contains("buoy")) buoy = true; }
+            Assert.IsTrue(hull, "no hulls in Gauntlet");
+            Assert.IsTrue(buoy, "no buoys in Gauntlet");
+        }
+
+        [Test]
         public void SkySpireSet_HasNoStatueRing()
         {
             var skin = UnityEditor.AssetDatabase.LoadAssetAtPath<RealmSkin>(

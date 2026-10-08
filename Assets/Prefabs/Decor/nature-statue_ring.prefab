@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &9012278259516780241
+--- !u!1 &5973339853036387218
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2892043374853031449}
-  - component: {fileID: 2019534567143340298}
-  - component: {fileID: 1908422843214256878}
+  - component: {fileID: 4546564298890153862}
+  - component: {fileID: 7047692025328648014}
+  - component: {fileID: 8273838111515151375}
   m_Layer: 0
   m_Name: nature-statue_ring
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2892043374853031449
+--- !u!4 &4546564298890153862
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9012278259516780241}
+  m_GameObject: {fileID: 5973339853036387218}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0, y: -0.049999997, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2019534567143340298
+--- !u!33 &7047692025328648014
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9012278259516780241}
+  m_GameObject: {fileID: 5973339853036387218}
   m_Mesh: {fileID: 6855248621505188759, guid: c722dc0c9a46ae34691d78430c1b32d6, type: 3}
---- !u!23 &1908422843214256878
+--- !u!23 &8273838111515151375
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9012278259516780241}
+  m_GameObject: {fileID: 5973339853036387218}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

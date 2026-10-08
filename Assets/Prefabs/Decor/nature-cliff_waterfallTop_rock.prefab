@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2811296962528615565
+--- !u!1 &6112318400930928147
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8719512281201728896}
-  - component: {fileID: 9028495659161452711}
-  - component: {fileID: 8827001661064072876}
+  - component: {fileID: 8618491929667529661}
+  - component: {fileID: 140721732582509896}
+  - component: {fileID: 4409922747597955015}
   m_Layer: 0
   m_Name: nature-cliff_waterfallTop_rock
   m_TagString: Untagged
@@ -18,13 +18,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8719512281201728896
+--- !u!4 &8618491929667529661
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2811296962528615565}
+  m_GameObject: {fileID: 6112318400930928147}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0, y: -0.049999997, z: 0}
@@ -33,21 +33,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &9028495659161452711
+--- !u!33 &140721732582509896
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2811296962528615565}
+  m_GameObject: {fileID: 6112318400930928147}
   m_Mesh: {fileID: -7498024586208272092, guid: 9ebee07588262274aa7da05db5704912, type: 3}
---- !u!23 &8827001661064072876
+--- !u!23 &4409922747597955015
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2811296962528615565}
+  m_GameObject: {fileID: 6112318400930928147}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1

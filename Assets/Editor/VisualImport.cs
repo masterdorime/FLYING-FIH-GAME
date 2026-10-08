@@ -52,6 +52,14 @@ public static class VisualImport
         { "cliff_waterfall_rock", "V1NatureWater" }, { "cliff_waterfallTop_rock", "V1NatureWater" },
     };
 
+    // Watercraft models imported as Decor prefabs (white + colormap
+    // V1Watercraft, same pattern as pirate). Names are bare (no prefix).
+    private static readonly string[] WatercraftModels = new string[]
+    {
+        "ship-small", "ship-cargo-a", "buoy", "buoy-flag",
+        "cargo-container-a", "cargo-pile-a",
+    };
+
     [MenuItem("FlyingFish/Import Visual Art")]
     public static void BuildAll()
     {
@@ -74,6 +82,8 @@ public static class VisualImport
             { "V1NatureSand", GetOrCreateMaterial("V1NatureSand", new Color(0.8f, 0.7f, 0.5f), null) },
             { "V1NatureStatue", GetOrCreateMaterial("V1NatureStatue", new Color(0.75f, 0.76f, 0.8f), null) },
             { "V1NatureWater", GetOrCreateMaterial("V1NatureWater", new Color(0.3f, 0.65f, 0.85f), null) },
+            { "V1Watercraft", GetOrCreateMaterial("V1Watercraft", new Color(1f, 1f, 1f),
+                AssetDatabase.LoadAssetAtPath<Texture2D>(WatercraftTex)) },
         };
 
         int prefabs = 0;
@@ -82,6 +92,8 @@ public static class VisualImport
             prefabByName[baseName] = BuildPrefab(PirateDir + "/" + baseName + ".fbx", baseName, mats["V1Pirate"], DecorDir, ref prefabs);
         foreach (var kv in NatureModels)
             prefabByName[kv.Key] = BuildPrefab(NatureDir + "/" + kv.Key + ".fbx", "nature-" + kv.Key, mats[kv.Value], DecorDir, ref prefabs);
+        foreach (var baseName in WatercraftModels)
+            prefabByName[baseName] = BuildPrefab(WatercraftDir + "/" + baseName + ".fbx", baseName, mats["V1Watercraft"], DecorDir, ref prefabs);
 
         BuildSkin("Lagoon", "skybox-day.png",
             new string[] { "tree_palm", "tree_palmTall", "tree_palmShort", "tree_palmBend", "palm-bend", "palm-straight", "palm-detailed-bend", "palm-detailed-straight", "patch-sand", "patch-sand-foliage", "ship-wreck" },
@@ -91,14 +103,15 @@ public static class VisualImport
             new string[0], new string[0],
             prefabByName);
         BuildSkin("Gauntlet", "skybox-morning.png",
-            new string[] { "flag", "flag-high", "flag-pennant", "chest", "castle-wall", "tower-complete-small", "structure-fence", "grass-patch" },
-            new string[] { "platform_grass", "cliff_rock" },
-            new string[] { "tower-complete-small", "rock_tallC" },
-            new string[] { "castle-gate", "castle-wall", "tower-base" },
-            // Matched arch sets: tall towers read as pillars, wide castle
-            // pieces as lintels. One pick per arch keeps gates coherent.
-            new string[] { "tower-base", "tower-middle", "tower-complete-small" },
-            new string[] { "castle-wall", "castle-gate" },
+            new string[] { "buoy", "buoy-flag", "cargo-container-a", "cargo-pile-a", "chest", "flag", "flag-pennant", "grass-patch" },
+            new string[] { "ship-small", "ship-cargo-a", "cliff_rock" },
+            new string[] { "rock_tallA", "rock_tallC", "cliff_large_rock" },
+            new string[] { "rock_tallA", "cliff_rock" },
+            // Matched arch sets, all cliff rock (Durdle Door gates): tall
+            // rocks read as pillars, wide slabs as lintels. Medieval
+            // castle/tower pieces are purged from every Gauntlet array.
+            new string[] { "rock_tallA", "rock_tallB", "rock_tallC" },
+            new string[] { "cliff_rock", "cliff_large_rock" },
             prefabByName);
         BuildSkin("Storm", "skybox-night.png",
             new string[] { "rocks-a", "rocks-b", "rocks-c", "tree_pineTallA", "tree_cone", "rock_smallA", "rock_smallB" },
