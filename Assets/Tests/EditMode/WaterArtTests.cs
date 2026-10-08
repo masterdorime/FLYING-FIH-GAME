@@ -48,7 +48,7 @@ namespace FlyingFishMomentum.Tests.EditMode
         {
             // Paths mirror WaterArtImport.FoamPath/PuffPath (Editor class
             // invisible to this assembly): keep in sync by hand.
-            foreach (var path in new string[] { "Assets/Materials/WaterFoam.png", "Assets/Materials/WaterPuff.png" })
+            foreach (var path in new string[] { "Assets/Resources/WaterFoam.png", "Assets/Resources/WaterPuff.png" })
             {
                 var tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 Assert.IsNotNull(tex, "missing baked art (run WaterArtImport.WriteWaterArt): " + path);
@@ -57,6 +57,43 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.AreEqual(UnityEngine.TextureWrapMode.Mirror, importer.wrapMode,
                     "seamless tiling not set on " + path);
             }
+        }
+
+        [Test]
+        public void WaterMaterial_HasEmissionFoam()
+        {
+            // Foam rides the emission map so it stays white under every
+            // realm RGB tint (emission ignores the stamped base color).
+            var builder = NewBuilder();
+            var mat = builder.WaterMaterial;
+            Assert.IsNotNull(mat.GetTexture("_EmissionMap"), "no foam emission on water");
+        }
+
+        [Test]
+        public void SceneWaterMaterial_HasEmissionFoam()
+        {
+            var mat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/M1Water.mat");
+            Assert.IsNotNull(mat, "missing M1Water.mat");
+            Assert.IsNotNull(mat.GetTexture("_EmissionMap"), "no foam emission on M1Water.mat");
+            Assert.IsTrue(mat.IsKeywordEnabled("_EMISSION"), "emission keyword off on M1Water.mat");
+            // Stale EmissiveIsBlack suppresses emission even with map +
+            // keyword set (bisected): pin the realtime flag.
+            Assert.AreEqual(UnityEngine.MaterialGlobalIlluminationFlags.RealtimeEmissive,
+                mat.globalIlluminationFlags, "GI flag suppresses emission");
+        }
+
+        private GameObject _builderGo;
+
+        private ChunkBuilder NewBuilder()
+        {
+            _builderGo = new GameObject("chunkBuilder");
+            return _builderGo.AddComponent<ChunkBuilder>();
+        }
+
+        [TearDown]
+        public void TearDownBuilders()
+        {
+            if (_builderGo != null) Object.DestroyImmediate(_builderGo);
         }
 
         [Test]

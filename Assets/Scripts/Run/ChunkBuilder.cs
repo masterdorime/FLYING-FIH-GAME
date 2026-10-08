@@ -48,6 +48,8 @@ namespace FlyingFishMomentum.Run
         public const float CloudY = 35f;
         public const float CloudSize = 1200f;
         public const float CloudMaxAlpha = 0.95f;
+        // Foam scroll speed (UV/sec along travel). Tuned by eye; visual only.
+        public const float WaterFoamScroll = 0.05f;
 
         private readonly List<ChargeRing> _rings = new List<ChargeRing>();
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
@@ -208,6 +210,15 @@ namespace FlyingFishMomentum.Run
                 var p = _silhouettes[i].transform.position;
                 p.z = SilhouetteZ(_fish.position.z, i);
                 _silhouettes[i].transform.position = p;
+            }
+            // Foam drift: scroll the emission UV so water slides past the
+            // fish. Visual only (same precedent as coin bob); the offset
+            // never feeds judging, placement, or seeds.
+            if (_waterMat != null)
+            {
+                var o = _waterMat.GetTextureOffset("_EmissionMap");
+                o.y += Time.deltaTime * WaterFoamScroll;
+                _waterMat.SetTextureOffset("_EmissionMap", o);
             }
         }
 
@@ -1143,7 +1154,7 @@ namespace FlyingFishMomentum.Run
                 if (_waterMat == null)
                 {
                     _waterMat = new Material(Shader.Find("Standard"));
-                    _waterMat.color = new Color(0.2f, 0.6f, 0.75f, 0.6f);
+                    _waterMat.color = new Color(0.08f, 0.32f, 0.85f, 0.6f);
                     _waterMat.SetFloat("_Mode", 3f);
                     _waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                     _waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
@@ -1152,6 +1163,20 @@ namespace FlyingFishMomentum.Run
                     _waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
                     _waterMat.SetOverrideTag("RenderType", "Transparent");
                     _waterMat.renderQueue = 3000;
+                    // Foam rides emission so it stays white under every
+                    // realm RGB tint (emission ignores the stamped color).
+                    // Mirrored wrap + tiling set on the baked asset.
+                    var foam = Resources.Load<Texture2D>("WaterFoam");
+                    if (foam != null)
+                    {
+                        _waterMat.SetTexture("_EmissionMap", foam);
+                        _waterMat.SetColor("_EmissionColor", Color.white);
+                        _waterMat.EnableKeyword("_EMISSION");
+                        _waterMat.SetTextureScale("_EmissionMap", new Vector2(40f, 100f));
+                        // Stale EmissiveIsBlack suppresses emission even
+                        // with map + keyword set (found by bisect).
+                        _waterMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    }
                 }
                 return _waterMat;
             }
