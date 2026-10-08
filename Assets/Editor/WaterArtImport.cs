@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlyingFishMomentum;
 using FlyingFishMomentum.Run;
 
 // Water package task 1: bakes WaterArt painters to committed PNG
@@ -40,6 +41,19 @@ public static class WaterArtImport
         Debug.Log("[ProbeWater] after EnableKeyword: " + water.IsKeywordEnabled("_EMISSION"));
         EditorUtility.SetDirty(water);
         AssetDatabase.SaveAssets();
+    }
+
+    // Wake probe: does AddComponent<FishWake> fire Awake in this context?
+    // Run: unity run . -- -executeMethod WaterArtImport.ProbeWake
+    public static void ProbeWake()
+    {
+        var go = new GameObject("ProbeFish");
+        go.AddComponent<FishWake>();
+        var names = new System.Collections.Generic.List<string>();
+        foreach (var c in go.GetComponents<Component>())
+            names.Add(c == null ? "null" : c.GetType().Name);
+        Debug.Log("[ProbeWake] components: " + string.Join(",", names.ToArray()));
+        Object.DestroyImmediate(go);
     }
 
     // Foam bisect 2: isolate which M1Water.mat setting kills emission.
