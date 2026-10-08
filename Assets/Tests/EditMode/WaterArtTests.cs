@@ -25,20 +25,21 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void FoamTexture_HasFoamOverTransparency()
+        public void FoamTexture_CoverageMatchesReference()
         {
+            // Reference water: sparse streaks + dots (~15% white), not a
+            // milk ocean (dense foam minifies to horizon glare) and not
+            // invisible (too sparse to survive minification either).
             var tex = WaterArt.PaintFoam(128, 7);
             try
             {
                 var px = tex.GetPixels32();
-                int white = 0, transparent = 0;
+                int white = 0;
                 foreach (var c in px)
-                {
                     if (c.a > 128 && c.r > 200 && c.g > 200 && c.b > 200) white++;
-                    if (c.a == 0) transparent++;
-                }
-                Assert.Greater(white, 100, "no foam painted");
-                Assert.Greater(transparent, px.Length / 2, "background not mostly transparent");
+                float coverage = (float)white / px.Length;
+                Assert.Greater(coverage, 0.05f, "foam too sparse to survive minification");
+                Assert.Less(coverage, 0.30f, "foam too dense, minifies to glare");
             }
             finally { Object.DestroyImmediate(tex); }
         }

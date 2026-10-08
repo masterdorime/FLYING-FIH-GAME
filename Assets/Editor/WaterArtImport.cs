@@ -56,6 +56,52 @@ public static class WaterArtImport
         Object.DestroyImmediate(go);
     }
 
+    // Prebuilt trial: WaterProDaytime on a quad next to a foam-emission
+    // quad, same light/camera. Run: unity run . --
+    // -executeMethod WaterArtImport.ProbePrebuiltWater
+    public static void ProbePrebuiltWater()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/M1_MovementProof.unity");
+        var prebuilt = AssetDatabase.LoadAssetAtPath<Material>(
+            "Assets/ArtVendor/NaughtyWater/Materials/WaterProDaytime.mat");
+        if (prebuilt == null) { Debug.LogError("[ProbePrebuilt] missing WaterProDaytime.mat"); return; }
+        Debug.Log("[ProbePrebuilt] shader=" + (prebuilt.shader != null ? prebuilt.shader.name : "null"));
+        var fresh = new Material(Shader.Find("Standard"));
+        fresh.color = new Color(0.08f, 0.32f, 0.85f, 1f);
+        var foam = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/WaterFoam.png");
+        fresh.SetTexture("_EmissionMap", foam);
+        fresh.SetColor("_EmissionColor", Color.white);
+        fresh.EnableKeyword("_EMISSION");
+        var q1 = MakeQuad("ProbePrebuilt", new Vector3(-3f, 2f, 2052f), prebuilt);
+        var q2 = MakeQuad("ProbeCustom", new Vector3(3f, 2f, 2052f), fresh);
+        // [M1-SCAFFOLD] diagnostic staging: destroyed below, never saved.
+        var camGo = new GameObject("ProbeCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 2.5f, 2042f);
+        cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
+        var rt = new RenderTexture(960, 540, 24);
+        System.IO.Directory.CreateDirectory("Temp/VisualVerify");
+        ShootPrebuilt(cam, rt);
+        CleanupProbes(q1, q2, camGo);
+        Object.DestroyImmediate(rt);
+    }
+
+    private static void ShootPrebuilt(Camera cam, RenderTexture rt)
+    {
+        cam.targetTexture = rt;
+        cam.Render();
+        RenderTexture.active = rt;
+        var tex = new Texture2D(960, 540, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        cam.targetTexture = null;
+        System.IO.File.WriteAllBytes("Temp/VisualVerify/prebuilt-vs-custom.png", tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        Debug.Log("[ProbePrebuilt] wrote prebuilt-vs-custom.png");
+    }
+
     // Foam bisect 2: isolate which M1Water.mat setting kills emission.
     // Four quads: fresh opaque+foam, fresh+transparent block, fresh+
     // transparent+(40,100) scale, M1Water.mat itself. Run: unity run . --
@@ -78,10 +124,11 @@ public static class WaterArtImport
         trans.EnableKeyword("_EMISSION");
         var transScaled = new Material(trans);
         transScaled.SetTextureScale("_EmissionMap", new Vector2(40f, 100f));
-        MakeQuad("ProbeFresh", new Vector3(-9f, 2f, 2052f), fresh);
-        MakeQuad("ProbeTrans", new Vector3(-3f, 2f, 2052f), trans);
-        MakeQuad("ProbeScaled", new Vector3(3f, 2f, 2052f), transScaled);
-        MakeQuad("ProbeM1", new Vector3(9f, 2f, 2052f), m1);
+        // [M1-SCAFFOLD] diagnostic staging: destroyed below, never saved.
+        var f1 = MakeQuad("ProbeFresh", new Vector3(-9f, 2f, 2052f), fresh);
+        var f2 = MakeQuad("ProbeTrans", new Vector3(-3f, 2f, 2052f), trans);
+        var f3 = MakeQuad("ProbeScaled", new Vector3(3f, 2f, 2052f), transScaled);
+        var f4 = MakeQuad("ProbeM1", new Vector3(9f, 2f, 2052f), m1);
         var camGo = new GameObject("ProbeCam");
         var cam = camGo.AddComponent<Camera>();
         cam.farClipPlane = 4000f;
@@ -98,7 +145,7 @@ public static class WaterArtImport
         RenderTexture.active = null;
         System.IO.File.WriteAllBytes("Temp/VisualVerify/foam-bisect.png", tex.EncodeToPNG());
         Object.DestroyImmediate(tex);
-        Object.DestroyImmediate(camGo);
+        CleanupProbes(f1, f2, f3, f4, camGo);
         Object.DestroyImmediate(rt);
     }
 
@@ -117,7 +164,7 @@ public static class WaterArtImport
         return mat;
     }
 
-    private static void MakeQuad(string name, Vector3 pos, Material mat)
+    private static GameObject MakeQuad(string name, Vector3 pos, Material mat)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
         go.name = name;
@@ -125,6 +172,15 @@ public static class WaterArtImport
         go.transform.localScale = new Vector3(4f, 4f, 1f);
         Object.DestroyImmediate(go.GetComponent<MeshCollider>());
         go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        return go;
+    }
+
+    // Probes dirty the open scene: destroy everything staged so an
+    // accidental save can never bake diagnostics into the scene file.
+    private static void CleanupProbes(params GameObject[] staged)
+    {
+        foreach (var go in staged)
+            if (go != null) Object.DestroyImmediate(go);
     }
 
     private static void WireWaterMaterial()

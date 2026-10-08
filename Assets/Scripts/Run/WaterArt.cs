@@ -10,9 +10,9 @@ namespace FlyingFishMomentum.Run
     {
         // Tiling white streaks + dots over transparency. Every plot wraps
         // modulo size, so shapes continue across tile edges (the tiling is
-        // seamless by construction). Calibrated for ~10m tiles: streaks
-        // read as 1-6m foam lines, dots as flecks, ~30% white coverage so
-        // minification leaves visible texture instead of a gray average.
+        // seamless by construction). Calibrated for ~10m tiles: fine 1-6m
+        // lines and flecks at ~10-20% white coverage (pinned 5-30% by
+        // test) so minification leaves texture instead of glare.
         public static Texture2D PaintFoam(int size, int seed)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -23,8 +23,8 @@ namespace FlyingFishMomentum.Run
             {
                 int y = rng.Next(size);
                 int x0 = rng.Next(size);
-                int len = size / 8 + rng.Next(size / 4);
-                int thick = 2 + rng.Next(3);
+                int len = size / 16 + rng.Next(size / 8);
+                int thick = 1 + rng.Next(2);
                 byte alpha = (byte)(150 + rng.Next(106));
                 for (int i = 0; i < len; i++)
                     for (int t = 0; t < thick; t++)
