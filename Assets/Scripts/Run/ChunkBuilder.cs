@@ -385,7 +385,7 @@ namespace FlyingFishMomentum.Run
                 GameObject lintelPrefab = Draw(_lintelPrefabs, rng);
                 _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
                 _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 11.5f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
             }
 
             float cx = GateHalfWidth + IslandHalfX;
@@ -508,7 +508,7 @@ namespace FlyingFishMomentum.Run
                 }
                 _islands.Add(PlaceRock(root, anchor + new Vector3(-8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
                 _islands.Add(PlaceRock(root, anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f), "ChunkArchPillar", pillarPrefab));
-                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
+                _islands.Add(PlaceRock(root, anchor + new Vector3(0f, 11.5f, 0f), new Vector3(20f, 5f, 5f), "ChunkArchLintel", lintelPrefab));
             }
             var islands = layout.Islands ?? new ChunkLayout.IslandEntry[0];
             foreach (var e in islands)

@@ -155,7 +155,7 @@ namespace FlyingFishMomentum.Run
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' pillar",
                     new Bounds(e.Anchor + new Vector3(8f, 0f, 0f), new Vector3(6f, 18f, 6f))));
                 rocks.Add(new KeyValuePair<string, Bounds>("arch '" + e.Id + "' lintel",
-                    new Bounds(e.Anchor + new Vector3(0f, 12f, 0f), new Vector3(20f, 5f, 5f))));
+                    new Bounds(e.Anchor + new Vector3(0f, 11.5f, 0f), new Vector3(20f, 5f, 5f))));
             }
             foreach (var r in rings)
                 foreach (var rock in rocks)

@@ -98,7 +98,7 @@ namespace FlyingFishMomentum.Tests.EditMode
             // Arch: pillars flank the anchor, lintel clears above.
             Assert.AreEqual(new Vector3(-8f, -3f, 1400f), builder.Islands[0].transform.position);
             Assert.AreEqual(new Vector3(8f, -3f, 1400f), builder.Islands[1].transform.position);
-            Assert.AreEqual(new Vector3(0f, 9f, 1400f), builder.Islands[2].transform.position);
+            Assert.AreEqual(new Vector3(0f, 8.5f, 1400f), builder.Islands[2].transform.position);
             // Coins derive from the authored ring (trail of 2).
             Assert.AreEqual(2, builder.Coins.Count);
         }

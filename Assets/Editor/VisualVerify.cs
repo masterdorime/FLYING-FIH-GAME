@@ -124,7 +124,7 @@ public static class VisualVerify
             case VisualVerifyPlan.Subject.FirstSpire:
                 if (builder.Spires.Count > spiresBefore)
                     Aim(builder.Spires[spiresBefore].transform.position,
-                        new Vector3(0f, 6f, -26f), out pos, out look);
+                        new Vector3(0f, 10f, -60f), out pos, out look);
                 break;
         }
         cam.transform.position = pos;
