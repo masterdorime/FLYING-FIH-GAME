@@ -21,7 +21,7 @@ public static class VisualVerify
     [MenuItem("FlyingFish/Capture Visual Verify")]
     public static void CaptureAll()
     {
-        string outDir = "Temp/VisualVerify";
+        string outDir = "Logs/VisualVerify";
         Directory.CreateDirectory(outDir);
         // Never trash the user's open work: opening the M1 scene drops
         // the current one. Abort instead and let them save first.
@@ -259,15 +259,15 @@ public static class VisualVerify
         try
         {
         builder.BuildChunk(spec, 2000f, 7);
-        System.IO.Directory.CreateDirectory("Temp/VisualVerify");
+        System.IO.Directory.CreateDirectory("Logs/VisualVerify");
         var ringMark = new VisualVerifyPlan.Bookmark
             { Name = "showcase-ring", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstRing };
         Frame(cam, builder, ringMark, 2000f, 0, 0, 0);
-        Shoot(cam, rt, "Temp/VisualVerify/showcase-ring.png");
+        Shoot(cam, rt, "Logs/VisualVerify/showcase-ring.png");
         var archMark = new VisualVerifyPlan.Bookmark
             { Name = "showcase-arch", Spec = "Gauntlet", Seed = 7, Subject = VisualVerifyPlan.Subject.FirstArch };
         Frame(cam, builder, archMark, 2000f, 0, 0, 0);
-        Shoot(cam, rt, "Temp/VisualVerify/showcase-arch.png");
+        Shoot(cam, rt, "Logs/VisualVerify/showcase-arch.png");
         }
         finally
         {
@@ -296,8 +296,8 @@ public static class VisualVerify
         cam.transform.position = new Vector3(0f, 4f, 2034f);
         cam.transform.LookAt(new Vector3(1f, 1f, 2052f));
         var rt = new RenderTexture(Width, Height, 24);
-        Directory.CreateDirectory("Temp/VisualVerify");
-        Shoot(cam, rt, "Temp/VisualVerify/candidates.png");
+        Directory.CreateDirectory("Logs/VisualVerify");
+        Shoot(cam, rt, "Logs/VisualVerify/candidates.png");
         Object.DestroyImmediate(camGo);
         Object.DestroyImmediate(rt);
     }
@@ -349,8 +349,8 @@ public static class VisualVerify
         cam.transform.position = new Vector3(0f, 3.5f, 2038f);
         cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
         var rt = new RenderTexture(Width, Height, 24);
-        Directory.CreateDirectory("Temp/VisualVerify");
-        Shoot(cam, rt, "Temp/VisualVerify/gates.png");
+        Directory.CreateDirectory("Logs/VisualVerify");
+        Shoot(cam, rt, "Logs/VisualVerify/gates.png");
         Object.DestroyImmediate(camGo);
         Object.DestroyImmediate(rt);
     }

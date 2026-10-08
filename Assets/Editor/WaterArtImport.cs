@@ -81,7 +81,7 @@ public static class WaterArtImport
         cam.transform.position = new Vector3(0f, 2.5f, 2042f);
         cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
         var rt = new RenderTexture(960, 540, 24);
-        System.IO.Directory.CreateDirectory("Temp/VisualVerify");
+        System.IO.Directory.CreateDirectory("Logs/VisualVerify");
         ShootPrebuilt(cam, rt);
         CleanupProbes(q1, q2, camGo);
         Object.DestroyImmediate(rt);
@@ -97,7 +97,7 @@ public static class WaterArtImport
         tex.Apply();
         RenderTexture.active = null;
         cam.targetTexture = null;
-        System.IO.File.WriteAllBytes("Temp/VisualVerify/prebuilt-vs-custom.png", tex.EncodeToPNG());
+        System.IO.File.WriteAllBytes("Logs/VisualVerify/prebuilt-vs-custom.png", tex.EncodeToPNG());
         Object.DestroyImmediate(tex);
         Debug.Log("[ProbePrebuilt] wrote prebuilt-vs-custom.png");
     }
@@ -135,7 +135,7 @@ public static class WaterArtImport
         cam.transform.position = new Vector3(0f, 2.5f, 2038f);
         cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
         var rt = new RenderTexture(960, 540, 24);
-        System.IO.Directory.CreateDirectory("Temp/VisualVerify");
+        System.IO.Directory.CreateDirectory("Logs/VisualVerify");
         cam.targetTexture = rt;
         cam.Render();
         RenderTexture.active = rt;
@@ -143,7 +143,7 @@ public static class WaterArtImport
         tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
         tex.Apply();
         RenderTexture.active = null;
-        System.IO.File.WriteAllBytes("Temp/VisualVerify/foam-bisect.png", tex.EncodeToPNG());
+        System.IO.File.WriteAllBytes("Logs/VisualVerify/foam-bisect.png", tex.EncodeToPNG());
         Object.DestroyImmediate(tex);
         CleanupProbes(f1, f2, f3, f4, camGo);
         Object.DestroyImmediate(rt);
