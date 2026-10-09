@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FlyingFishMomentum.Runtime::FlyingFishMomentum.Run.RealmSkin
   SkyPanorama: {fileID: 2800000, guid: df051a6c95ea262468fdbaa0d1888ab8, type: 3}
-  SkyTint: {r: 0.6, g: 0.78, b: 0.95, a: 1}
+  SkyTint: {r: 0.33, g: 0.43, b: 0.52, a: 1}
   FogColor: {r: 0.7, g: 0.82, b: 0.92, a: 1}
   FogDensity: 0.004
   WaterTint: {r: 0.3, g: 0.4, b: 0.6, a: 1}

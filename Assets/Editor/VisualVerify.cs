@@ -426,6 +426,78 @@ public static class VisualVerify
         }
     }
 
+    // URP sky diagnosis (H1): is the washed-out Gauntlet/Sky sky fog?
+    // Same frame twice, fog on vs off; logs mean top-row color both
+    // ways. Run: unity run . -- -executeMethod VisualVerify.ProbeSkyFog
+    public static void ProbeSkyFog()
+    {
+        EditorSceneManager.OpenScene(M1Scene);
+        var builder = Object.FindFirstObjectByType<ChunkBuilder>();
+        if (builder == null) { Debug.LogError("[SkyFog] no ChunkBuilder"); return; }
+        var spec = AssetDatabase.LoadAssetAtPath<ChunkSpec>("Assets/Configs/ChunkSpec_Gauntlet.asset");
+        if (spec == null) { Debug.LogError("[SkyFog] missing Gauntlet spec"); return; }
+        builder.BuildChunk(spec, 2000f, 7);
+        var sky = RenderSettings.skybox;
+        Debug.Log("[SkyFog] skybox=" + (sky != null ? sky.name : "null")
+            + " shader=" + (sky != null && sky.shader != null ? sky.shader.name : "null")
+            + " _Tint=" + (sky != null ? sky.GetColor("_Tint").ToString("F3") : "-")
+            + " _MainTex=" + (sky != null && sky.GetTexture("_MainTex") != null ? sky.GetTexture("_MainTex").name : "null")
+            + " _Exposure=" + (sky != null ? sky.GetFloat("_Exposure").ToString("F3") : "-"));
+        var camGo = new GameObject("SkyFogCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 10f, 1970f);
+        cam.transform.LookAt(new Vector3(0f, 2f, 2090f));
+        var rt = new RenderTexture(Width, Height, 24);
+        Directory.CreateDirectory("Logs/VisualVerify");
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-on.png");
+        LogSkyMean(rt, "fog-on");
+        RenderSettings.fog = false;
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-off.png");
+        LogSkyMean(rt, "fog-off");
+        RenderSettings.skybox = null;
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-noskybox.png");
+        LogSkyMean(rt, "no-skybox");
+        RenderSettings.skybox = sky;
+        RenderSettings.fog = true;
+        RenderSettings.fogColor = Color.magenta;
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-magentafog.png");
+        LogSkyMean(rt, "magenta-fog");
+        sky.SetColor("_Tint", Color.red);
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-redtint.png");
+        LogSkyMean(rt, "red-tint");
+        var mainTex = sky.GetTexture("_MainTex");
+        Debug.Log("[SkyFog] maintex=" + (mainTex != null ? mainTex.name : "null")
+            + " w=" + (mainTex != null ? mainTex.width : -1)
+            + " fmt=" + (mainTex != null ? mainTex.graphicsFormat.ToString() : "-"));
+        sky.SetColor("_Tint", new Color(0.5f, 0.5f, 0.5f, 1f));
+        Shoot(cam, rt, "Logs/VisualVerify/skyfog-graytint.png");
+        LogSkyMean(rt, "gray-tint");
+        Object.DestroyImmediate(camGo);
+        Object.DestroyImmediate(rt);
+    }
+
+    private static void LogSkyMean(RenderTexture rt, string label)
+    {
+        RenderTexture.active = rt;
+        var tex = new Texture2D(Width, Height, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, Width, Height), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        long r = 0, g = 0, b = 0;
+        int n = 0;
+        for (int y = Height - 40; y < Height; y++)
+            for (int x = 0; x < Width; x += 4)
+            {
+                var c = tex.GetPixel(x, y);
+                r += (long)(c.r * 255f); g += (long)(c.g * 255f); b += (long)(c.b * 255f);
+                n++;
+            }
+        Object.DestroyImmediate(tex);
+        Debug.Log("[SkyFog] " + label + " skymean=(" + (r / n) + "," + (g / n) + "," + (b / n) + ")"
+            + " fog=" + RenderSettings.fog + " fogColor=" + RenderSettings.fogColor);
+    }
+
     private static void Shoot(Camera cam, RenderTexture rt, string path)
     {
         cam.targetTexture = rt;
