@@ -641,6 +641,14 @@ namespace FlyingFishMomentum.Tests.EditMode
                     builder.WaterMaterial.GetColor("_Color_Shallow").g,
                     builder.WaterMaterial.GetColor("_Color_Shallow").b, 1f));
                 Assert.AreEqual(0.6f, builder.WaterMaterial.GetColor("_Color_Shallow").a, 0.001f);
+                // Deep keeps the mood hue darker: gradient collapse (deep
+                // stamped flat, wrong ratio, alpha drift) fails here.
+                var shallow = builder.WaterMaterial.GetColor("_Color_Shallow");
+                var deep = builder.WaterMaterial.GetColor("_Color_Deep");
+                Assert.AreEqual(shallow.r * 0.5f, deep.r, 0.002f, "deep r");
+                Assert.AreEqual(shallow.g * 0.5f, deep.g, 0.002f, "deep g");
+                Assert.AreEqual(shallow.b * 0.5f, deep.b, 0.002f, "deep b");
+                Assert.AreEqual(0.6f, deep.a, 0.001f);
                 AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.GetColor("_BaseColor"));
             }
             finally

@@ -1164,6 +1164,7 @@ namespace FlyingFishMomentum.Run
                 if (_waterMat == null)
                 {
                     var uber = Resources.Load<Material>("M1WaterUber");
+                    if (uber == null) Debug.LogError("[Water] missing M1WaterUber (revert: M1Water.mat)");
                     _waterMat = uber != null ? new Material(uber) : new Material(Shader.Find(LitShader));
                     _waterMat.SetColor("_Color_Shallow", new Color(0.2f, 0.6f, 0.75f, 0.6f));
                     _waterMat.SetColor("_Color_Deep", new Color(0.1f, 0.3f, 0.375f, 0.6f));
