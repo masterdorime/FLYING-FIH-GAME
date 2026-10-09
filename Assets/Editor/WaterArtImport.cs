@@ -56,6 +56,55 @@ public static class WaterArtImport
         Object.DestroyImmediate(go);
     }
 
+    // Uber Stylized Water trial (MIT): template material on a quad next
+    // to current M1Water, same light/camera. Template kept at defaults
+    // (honest out-of-box look); staged asset untouched, nothing in the
+    // game scene is rewired. Run:
+    // unity run . -- -executeMethod WaterArtImport.ProbeUberWater
+    public static void ProbeUberWater()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/M1_MovementProof.unity");
+        var current = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/M1Water.mat");
+        var uber = AssetDatabase.LoadAssetAtPath<Material>(
+            "Assets/ArtVendor/UberStylizedWater/UWa-Template-Tropical.mat");
+        if (current == null || uber == null)
+        {
+            Debug.LogError("[ProbeUber] missing water materials (current=" + (current != null)
+                + " uber=" + (uber != null) + ")");
+            return;
+        }
+        Debug.Log("[ProbeUber] uber shader=" + (uber.shader != null ? uber.shader.name : "null"));
+        // Template ships with surface foam off (its look rides
+        // intersection foam, which needs a depth texture we don't
+        // render): evaluate with surface foam on, everything else at
+        // template defaults. In-memory clone — staged asset untouched.
+        var uberFoam = new Material(uber);
+        uberFoam.SetFloat("_Enable_SurfaceFoam", 1f);
+        var q1 = MakeQuad("ProbeCurrent", new Vector3(-3f, 2f, 2052f), current);
+        var q2 = MakeQuad("ProbeUber", new Vector3(3f, 2f, 2052f), uberFoam);
+        // [M1-SCAFFOLD] diagnostic staging: destroyed below, never saved.
+        var camGo = new GameObject("ProbeCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 2.5f, 2042f);
+        cam.transform.LookAt(new Vector3(0f, 2f, 2052f));
+        var rt = new RenderTexture(960, 540, 24);
+        System.IO.Directory.CreateDirectory("Logs/VisualVerify");
+        cam.targetTexture = rt;
+        cam.Render();
+        RenderTexture.active = rt;
+        var tex = new Texture2D(960, 540, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        cam.targetTexture = null;
+        System.IO.File.WriteAllBytes("Logs/VisualVerify/uber-vs-current.png", tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        Debug.Log("[ProbeUber] wrote uber-vs-current.png");
+        CleanupProbes(q1, q2, camGo);
+        Object.DestroyImmediate(rt);
+    }
+
     // Prebuilt trial: WaterProDaytime on a quad next to a foam-emission
     // quad, same light/camera. Run: unity run . --
     // -executeMethod WaterArtImport.ProbePrebuiltWater
