@@ -29,7 +29,7 @@ MonoBehaviour:
   Weight: 1
   MissionText: 2 clean rings
   MissionTarget: 2
-  SkyTint: {r: 1, g: 0.75, b: 0.45, a: 1}
+  SkyTint: {r: 0.55, g: 0.41, b: 0.25, a: 1}
   FogColor: {r: 0.95, g: 0.75, b: 0.55, a: 1}
   FogDensity: 0.003
   WaterTint: {r: 0.25, g: 0.5, b: 0.6, a: 1}
