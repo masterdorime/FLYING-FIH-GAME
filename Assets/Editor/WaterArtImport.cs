@@ -57,9 +57,10 @@ public static class WaterArtImport
     }
 
     // Uber Stylized Water trial (MIT): template material on a quad next
-    // to current M1Water, same light/camera. Template kept at defaults
-    // (honest out-of-box look); staged asset untouched, nothing in the
-    // game scene is rewired. Run:
+    // to current M1Water, same light/camera. Template defaults except
+    // surface foam forced on (it ships off; its look rides intersection
+    // foam, which needs a depth texture this URP asset does not render).
+    // Staged asset untouched, nothing in the game scene is rewired. Run:
     // unity run . -- -executeMethod WaterArtImport.ProbeUberWater
     public static void ProbeUberWater()
     {
@@ -102,6 +103,7 @@ public static class WaterArtImport
         Object.DestroyImmediate(tex);
         Debug.Log("[ProbeUber] wrote uber-vs-current.png");
         CleanupProbes(q1, q2, camGo);
+        Object.DestroyImmediate(uberFoam);
         Object.DestroyImmediate(rt);
     }
 
