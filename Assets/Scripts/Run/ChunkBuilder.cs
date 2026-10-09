@@ -48,8 +48,10 @@ namespace FlyingFishMomentum.Run
         public const float CloudY = 35f;
         public const float CloudSize = 1200f;
         public const float CloudMaxAlpha = 0.95f;
-        // Foam scroll speed (UV/sec along travel). Tuned by eye; visual only.
-        public const float WaterFoamScroll = 0.05f;
+        // Uber deep/shallow ratio: deep keeps the mood hue darker so the
+        // depth gradient survives every tint. Fixed ratio, not a tuned
+        // parameter (see WaterMaterial defaults for the Lagoon values).
+        private const float UberDeepShade = 0.5f;
 
         private readonly List<ChargeRing> _rings = new List<ChargeRing>();
         private readonly List<CoinPickup> _coins = new List<CoinPickup>();
@@ -216,15 +218,9 @@ namespace FlyingFishMomentum.Run
                 p.z = SilhouetteZ(_fish.position.z, i);
                 _silhouettes[i].transform.position = p;
             }
-            // Foam drift: scroll the emission UV so water slides past the
-            // fish. Visual only (same precedent as coin bob); the offset
-            // never feeds judging, placement, or seeds.
-            if (_waterMat != null)
-            {
-                var o = _waterMat.GetTextureOffset("_EmissionMap");
-                o.y += Time.deltaTime * WaterFoamScroll;
-                _waterMat.SetTextureOffset("_EmissionMap", o);
-            }
+            // Uber water self-animates in-shader (time-driven foam pan):
+            // no CPU scroll needed. The offset never fed judging,
+            // placement, or seeds.
         }
 
         // Horizon mesas: three dark slabs that always sit ahead, so the
@@ -282,8 +278,15 @@ namespace FlyingFishMomentum.Run
             SkyMaterial.SetColor("_BaseColor", skyTint);
             // Tint water RGB only: stamping the spec alpha (1 everywhere)
             // would turn the sea opaque and hide underwater gameplay.
-            var water = WaterMaterial.GetColor("_BaseColor");
-            WaterMaterial.SetColor("_BaseColor", new Color(waterTint.r, waterTint.g, waterTint.b, water.a));
+            // Uber shades deep from shallow: deep keeps the mood hue at
+            // DeepShade so the gradient survives every realm.
+            var shallow = WaterMaterial.GetColor("_Color_Shallow");
+            var deep = WaterMaterial.GetColor("_Color_Deep");
+            WaterMaterial.SetColor("_Color_Shallow",
+                new Color(waterTint.r, waterTint.g, waterTint.b, shallow.a));
+            WaterMaterial.SetColor("_Color_Deep", new Color(
+                waterTint.r * UberDeepShade, waterTint.g * UberDeepShade,
+                waterTint.b * UberDeepShade, deep.a));
             if (skin != null)
             {
                 // Rings keep game-asset colors (§34.1): never tinted here,
@@ -1150,40 +1153,22 @@ namespace FlyingFishMomentum.Run
 
         // Shared mood instances, created once (Task 6). Defaults match the
         // Lagoon starter; ApplyMood re-tints per chunk type. The sea keeps
-        // the M1 transparent blend (alpha 0.6) under every mood: opaque
-        // water hides the fish and the swim rings (live bug).
+        // alpha 0.6 under every mood: opaque water hides the fish and the
+        // swim rings (live bug). The M1WaterUber asset carries the full
+        // feature set (foam, keywords, textures); cloning it keeps the
+        // game tree free of scene wiring (Resources pattern).
         public Material WaterMaterial
         {
             get
             {
                 if (_waterMat == null)
                 {
-                    _waterMat = new Material(Shader.Find(LitShader));
-                    _waterMat.SetColor("_BaseColor", new Color(0.08f, 0.32f, 0.85f, 0.6f));
-                    _waterMat.SetFloat("_Surface", 1f);
-                    _waterMat.SetFloat("_Blend", 1f);
-                    _waterMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    _waterMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    _waterMat.SetInt("_ZWrite", 0);
-                    _waterMat.DisableKeyword("_ALPHATEST_ON");
-                    _waterMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                    _waterMat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    var uber = Resources.Load<Material>("M1WaterUber");
+                    _waterMat = uber != null ? new Material(uber) : new Material(Shader.Find(LitShader));
+                    _waterMat.SetColor("_Color_Shallow", new Color(0.2f, 0.6f, 0.75f, 0.6f));
+                    _waterMat.SetColor("_Color_Deep", new Color(0.1f, 0.3f, 0.375f, 0.6f));
                     _waterMat.SetOverrideTag("RenderType", "Transparent");
                     _waterMat.renderQueue = 3000;
-                    // Foam rides emission so it stays white under every
-                    // realm RGB tint (emission ignores the stamped color).
-                    // Mirrored wrap + tiling set on the baked asset.
-                    var foam = Resources.Load<Texture2D>("WaterFoam");
-                    if (foam != null)
-                    {
-                        _waterMat.SetTexture("_EmissionMap", foam);
-                        _waterMat.SetColor("_EmissionColor", Color.white);
-                        _waterMat.EnableKeyword("_EMISSION");
-                        _waterMat.SetTextureScale("_EmissionMap", new Vector2(40f, 100f));
-                        // Stale EmissiveIsBlack suppresses emission even
-                        // with map + keyword set (found by bisect).
-                        _waterMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                    }
                 }
                 return _waterMat;
             }

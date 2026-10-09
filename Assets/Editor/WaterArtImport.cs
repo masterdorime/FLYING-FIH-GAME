@@ -56,6 +56,139 @@ public static class WaterArtImport
         Object.DestroyImmediate(go);
     }
 
+    // Uber sea isolation: which layer makes the gray cobblestones?
+    // Same Lagoon frame, foam / caustics / normals toggled off one at
+    // a time on clones. Restores M1Water.mat; never saves.
+    // Run: unity run . -- -executeMethod WaterArtImport.ProbeUberIsolate
+    public static void ProbeUberIsolate()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/M1_MovementProof.unity");
+        var builderGo = new GameObject("UberIsolateBuilder");
+        var builder = builderGo.AddComponent<ChunkBuilder>();
+        var oldWater = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/M1Water.mat");
+        var spec = AssetDatabase.LoadAssetAtPath<ChunkSpec>("Assets/Configs/ChunkSpec_Lagoon.asset");
+        if (spec == null) { Debug.LogError("[UberIsolate] missing Lagoon spec"); return; }
+        builder.BuildChunk(spec, 2000f, 5);
+        var segs = new System.Collections.Generic.List<MeshRenderer>();
+        foreach (var r in Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            if (r != null && r.sharedMaterial == oldWater) segs.Add(r);
+        var camGo = new GameObject("UberIsolateCam");
+        var cam = camGo.AddComponent<Camera>();
+        cam.farClipPlane = 4000f;
+        cam.transform.position = new Vector3(0f, 10f, 1970f);
+        cam.transform.LookAt(new Vector3(0f, 2f, 2090f));
+        var rt = new RenderTexture(960, 540, 24);
+        System.IO.Directory.CreateDirectory("Logs/VisualVerify");
+        try
+        {
+            ShootVariant(cam, rt, segs, builder.WaterMaterial, "uberiso-base");
+            var noFoam = new Material(builder.WaterMaterial);
+            noFoam.SetFloat("_Enable_SurfaceFoam", 0f);
+            noFoam.DisableKeyword("_ENABLESURFACEFOAM");
+            ShootVariant(cam, rt, segs, noFoam, "uberiso-nofoam");
+            Object.DestroyImmediate(noFoam);
+            var noCaustics = new Material(builder.WaterMaterial);
+            noCaustics.DisableKeyword("_ENABLECAUSTICS");
+            ShootVariant(cam, rt, segs, noCaustics, "uberiso-nocaustics");
+            Object.DestroyImmediate(noCaustics);
+            var noNormal = new Material(builder.WaterMaterial);
+            noNormal.DisableKeyword("_ENABLENORMAL");
+            ShootVariant(cam, rt, segs, noNormal, "uberiso-nonormal");
+            Object.DestroyImmediate(noNormal);
+        }
+        finally
+        {
+            foreach (var r in segs)
+                if (r != null) r.sharedMaterial = oldWater;
+            Object.DestroyImmediate(builderGo);
+            Object.DestroyImmediate(camGo);
+            Object.DestroyImmediate(rt);
+            Debug.LogWarning("[UberIsolate] water materials restored — do NOT save the scene.");
+        }
+    }
+
+    private static void ShootVariant(Camera cam, RenderTexture rt,
+        System.Collections.Generic.List<MeshRenderer> segs, Material mat, string name)
+    {
+        foreach (var r in segs)
+            if (r != null) r.sharedMaterial = mat;
+        cam.targetTexture = rt;
+        cam.Render();
+        RenderTexture.active = rt;
+        var tex = new Texture2D(960, 540, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        cam.targetTexture = null;
+        System.IO.File.WriteAllBytes("Logs/VisualVerify/" + name + ".png", tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        Debug.Log("[UberIsolate] wrote " + name + ".png");
+    }
+
+    // Uber sea verification: full-sea frames with the game water
+    // swapped to builder.WaterMaterial (mirrors ChunkBuilder.Start,
+    // which edit-mode captures never run), one per realm mood.
+    // Restores M1Water.mat on every swapped renderer; never saves.
+    // Run: unity run . -- -executeMethod WaterArtImport.ProbeUberSea
+    public static void ProbeUberSea()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/M1_MovementProof.unity");
+        var builderGo = new GameObject("UberSeaBuilder");
+        var builder = builderGo.AddComponent<ChunkBuilder>();
+        var oldWater = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/M1Water.mat");
+        var swapped = new System.Collections.Generic.List<MeshRenderer>();
+        try
+        {
+            foreach (var r in Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            {
+                if (r != null && r.sharedMaterial == oldWater)
+                {
+                    r.sharedMaterial = builder.WaterMaterial;
+                    swapped.Add(r);
+                }
+            }
+            Debug.Log("[ProbeUberSea] swapped " + swapped.Count + " water segments to "
+                + builder.WaterMaterial.shader.name);
+            var camGo = new GameObject("UberSeaCam");
+            var cam = camGo.AddComponent<Camera>();
+            cam.farClipPlane = 4000f;
+            var rt = new RenderTexture(960, 540, 24);
+            System.IO.Directory.CreateDirectory("Logs/VisualVerify");
+            float z = 2000f;
+            foreach (var specName in new string[] { "Lagoon", "Gauntlet", "Storm", "Sky" })
+            {
+                var spec = AssetDatabase.LoadAssetAtPath<ChunkSpec>(
+                    "Assets/Configs/ChunkSpec_" + specName + ".asset");
+                if (spec == null) { Debug.LogError("[ProbeUberSea] missing spec " + specName); continue; }
+                builder.BuildChunk(spec, z, 5);
+                cam.transform.position = new Vector3(0f, 10f, z - 30f);
+                cam.transform.LookAt(new Vector3(0f, 2f, z + 90f));
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                var tex = new Texture2D(960, 540, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
+                tex.Apply();
+                RenderTexture.active = null;
+                cam.targetTexture = null;
+                System.IO.File.WriteAllBytes(
+                    "Logs/VisualVerify/ubersea-" + specName.ToLower() + ".png", tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+                Debug.Log("[ProbeUberSea] wrote ubersea-" + specName.ToLower() + ".png");
+                z += spec.Length;
+            }
+            Object.DestroyImmediate(camGo);
+            Object.DestroyImmediate(rt);
+        }
+        finally
+        {
+            foreach (var r in swapped)
+                if (r != null) r.sharedMaterial = oldWater;
+            Object.DestroyImmediate(builderGo);
+            Debug.LogWarning("[ProbeUberSea] water materials restored — do NOT save the scene.");
+        }
+    }
+
     // Uber Stylized Water trial (MIT): template material on a quad next
     // to current M1Water, same light/camera. Template defaults except
     // surface foam forced on (it ships off; its look rides intersection
