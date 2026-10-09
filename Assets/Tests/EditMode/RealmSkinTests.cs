@@ -58,7 +58,7 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.IsNotNull(RenderSettings.skybox);
                 Assert.AreEqual(Color.gray, RenderSettings.fogColor);
                 Assert.AreEqual(0.02f, RenderSettings.fogDensity, 0.0001f);
-                var water = builder.WaterMaterial.GetColor("_BaseColor");
+                var water = builder.WaterMaterial.GetColor("_Color_Shallow");
                 Assert.AreEqual(0.1f, water.r, 0.001f);
                 Assert.AreEqual(0.6f, water.a, 0.001f); // alpha never stamped
             }

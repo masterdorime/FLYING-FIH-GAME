@@ -61,13 +61,16 @@ namespace FlyingFishMomentum.Tests.EditMode
         }
 
         [Test]
-        public void WaterMaterial_HasEmissionFoam()
+        public void WaterMaterial_HasSurfaceFoam()
         {
-            // Foam rides the emission map so it stays white under every
-            // realm RGB tint (emission ignores the stamped base color).
+            // Uber adoption: foam rides the surface-foam map so it stays
+            // white under every realm RGB tint (replaces the Lit emission
+            // map). The M1Water.mat revert asset keeps its emission path
+            // (see SceneWaterMaterial_HasEmissionFoam below).
             var builder = NewBuilder();
             var mat = builder.WaterMaterial;
-            Assert.IsNotNull(mat.GetTexture("_EmissionMap"), "no foam emission on water");
+            Assert.IsNotNull(mat.GetTexture("_SurfFoam_Map"), "no surface foam on water");
+            Assert.AreEqual(1f, mat.GetFloat("_Enable_SurfaceFoam"), "surface foam off on water");
         }
 
         [Test]

@@ -637,10 +637,10 @@ namespace FlyingFishMomentum.Tests.EditMode
                 Assert.AreEqual(spec.FogColor, RenderSettings.fogColor);
                 Assert.AreEqual(spec.FogDensity, RenderSettings.fogDensity, 0.0001f);
                 AssertColorsEqual(spec.WaterTint, new Color(
-                    builder.WaterMaterial.GetColor("_BaseColor").r,
-                    builder.WaterMaterial.GetColor("_BaseColor").g,
-                    builder.WaterMaterial.GetColor("_BaseColor").b, 1f));
-                Assert.AreEqual(0.6f, builder.WaterMaterial.GetColor("_BaseColor").a, 0.001f);
+                    builder.WaterMaterial.GetColor("_Color_Shallow").r,
+                    builder.WaterMaterial.GetColor("_Color_Shallow").g,
+                    builder.WaterMaterial.GetColor("_Color_Shallow").b, 1f));
+                Assert.AreEqual(0.6f, builder.WaterMaterial.GetColor("_Color_Shallow").a, 0.001f);
                 AssertColorsEqual(spec.SkyTint, builder.SkyMaterial.GetColor("_BaseColor"));
             }
             finally
@@ -664,8 +664,25 @@ namespace FlyingFishMomentum.Tests.EditMode
             spec.WaterTint = new Color(0.12f, 0.22f, 0.3f, 1f);
             builder.BuildChunk(spec, 0f, 4);
             var mat = builder.WaterMaterial;
+            Assert.AreEqual("UberStylizedWater", mat.shader.name);
             Assert.AreEqual("Transparent", mat.GetTag("RenderType", false, ""));
-            Assert.Less(mat.GetColor("_BaseColor").a, 1f, "mood made the sea opaque");
+            Assert.Less(mat.GetColor("_Color_Shallow").a, 1f, "mood made the sea opaque");
+            Assert.Less(mat.GetColor("_Color_Deep").a, 1f, "mood made the sea opaque");
+        }
+
+        [Test]
+        public void WaterMaterial_UsesUberStylizedWater()
+        {
+            // Uber adoption: the game sea renders with the
+            // UberStylizedWater shader (transparent queue, blended)
+            // instead of URP/Lit. Underwater visibility itself is
+            // proven by captures (fish/rings visible through water),
+            // same as the original opaque-sea live bug.
+            var builder = NewBuilder();
+            var mat = builder.WaterMaterial;
+            Assert.AreEqual("UberStylizedWater", mat.shader.name);
+            Assert.AreEqual("Transparent", mat.GetTag("RenderType", false, ""));
+            Assert.AreEqual(3000, mat.renderQueue);
         }
 
         [Test]
